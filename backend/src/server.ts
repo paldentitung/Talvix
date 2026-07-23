@@ -1,16 +1,20 @@
-import express from "express";
-import cors from "cors";
+import "./config/env.js";
+import app from "./app.js";
+import pool from "./config/db.js";
+const PORT = process.env.PORT || 5000;
 
-const app = express();
-const PORT = 3000;
+const startServer = async () => {
+  try {
+    const result = await pool.query("SELECT NOW()");
+    console.log("✅ Database connected");
+    console.log(result.rows);
+    app.listen(PORT, () => {
+      console.log(`Server is running in ${PORT}`);
+    });
+  } catch (error) {
+    console.error("DB connection failed:", error);
+    process.exit(1);
+  }
+};
 
-app.use(cors());
-app.use(express.json());
-
-app.get("/", (req, res) => {
-  res.send("hello from server");
-});
-
-app.listen(PORT, () => {
-  console.log(`Server is running in ${PORT}`);
-});
+startServer();
