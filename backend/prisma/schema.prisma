@@ -15,6 +15,15 @@ model User {
   lastName  String
   role      Role     @default(CANDIDATE)
 
+
+  avatar    String?
+  phone     String?
+  bio       String?   @db.Text
+  location  String?
+  title     String?   
+
+  resumeUrl String?
+
   isVerified            Boolean   @default(false)
   verificationToken     String?
   verificationExpires   DateTime?
