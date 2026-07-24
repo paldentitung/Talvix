@@ -2,6 +2,7 @@ import express from "express";
 import {
   forgotPasswordController,
   loginController,
+  logoutController,
   registerController,
   resetPasswordController,
   verifyEmailController,
@@ -15,5 +16,5 @@ router.get("/verify-email/:token", asyncHandler(verifyEmailController));
 router.post("/login", asyncHandler(loginController));
 router.post("/forgot-password", asyncHandler(forgotPasswordController));
 router.post("/reset-password", asyncHandler(resetPasswordController));
-
+router.get("/logout", asyncHandler(logoutController));
 export default router;

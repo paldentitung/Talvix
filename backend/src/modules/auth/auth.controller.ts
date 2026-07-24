@@ -6,9 +6,14 @@ import {
   resetPasswordService,
   verifyEmailService,
 } from "./auth.service.js";
+import { signToken } from "../../utils/jwt.js";
+import { clearAuthCookie, setAuthCookie } from "../../utils/cookies.js";
 
 export const registerController = async (req: Request, res: Response) => {
   const result = await registerService(req.body);
+
+  const token = signToken({ id: result.id, role: result.role });
+  setAuthCookie(res, token);
 
   res.status(201).json({
     success: true,
@@ -34,6 +39,9 @@ export const verifyEmailController = async (req: Request, res: Response) => {
 export const loginController = async (req: Request, res: Response) => {
   const result = await loginService(req.body);
 
+  const token = signToken({ id: result.id, role: result.role });
+  setAuthCookie(res, token);
+
   res.status(200).json({
     success: true,
     message: "Login successfully",
@@ -52,4 +60,9 @@ export const forgotPasswordController = async (req: Request, res: Response) => {
 export const resetPasswordController = async (req: Request, res: Response) => {
   const result = await resetPasswordService(req.body);
   res.status(200).json(result);
+};
+
+export const logoutController = async (req: Request, res: Response) => {
+  clearAuthCookie(res);
+  res.status(200).json({ success: true, message: "Logged out successfully" });
 };
