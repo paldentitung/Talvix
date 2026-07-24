@@ -1,27 +1,22 @@
 import prisma from "../../lib/prisma.js";
 import AppError from "../../utils/AppError.js";
 import bcrypt from "bcrypt";
-import { ChangePasswordInput } from "./user.type.js";
+import { ChangePasswordInput, UpdateProfileBody } from "./user.type.js";
+import { toUserResponse } from "./user.mapper.js";
+import { userResponseSelect } from "./user.select.js";
 export const getMeService = async (userId: string) => {
   const user = await prisma.user.findUnique({
     where: {
       id: userId,
     },
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      email: true,
-      role: true,
-      isVerified: true,
-    },
+    select: userResponseSelect,
   });
 
   if (!user) {
     throw new AppError("User not found", 404);
   }
 
-  return user;
+  return toUserResponse(user);
 };
 export const changePasswordService = async (
   userId: string,
@@ -64,4 +59,26 @@ export const changePasswordService = async (
     success: true,
     message: "Password changed successfully",
   };
+};
+
+export const updateProfileService = async (
+  userId: string,
+  data: UpdateProfileBody,
+) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+  });
+
+  if (!user) {
+    throw new AppError("user not found", 404);
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data,
+  });
+
+  return toUserResponse(updatedUser);
 };
