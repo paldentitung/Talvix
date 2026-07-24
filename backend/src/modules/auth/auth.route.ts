@@ -7,6 +7,7 @@ import {
   registerController,
   resetPasswordController,
   verifyEmailController,
+  changePasswordController,
 } from "./auth.controller.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { requireAuth } from "../../middleware/auth.middleware.js";
@@ -19,6 +20,10 @@ router.get("/verify-email/:token", asyncHandler(verifyEmailController));
 router.post("/login", asyncHandler(loginController));
 router.post("/forgot-password", asyncHandler(forgotPasswordController));
 router.post("/reset-password", asyncHandler(resetPasswordController));
-router.get("/logout", asyncHandler(logoutController));
-
+router.post("/logout", requireAuth, asyncHandler(logoutController));
+router.patch(
+  "/change-password",
+  requireAuth,
+  asyncHandler(changePasswordController),
+);
 export default router;

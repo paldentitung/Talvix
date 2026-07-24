@@ -6,6 +6,7 @@ import {
   registerService,
   resetPasswordService,
   verifyEmailService,
+  changePasswordService,
 } from "./auth.service.js";
 import { signToken } from "../../utils/jwt.js";
 import { clearAuthCookie, setAuthCookie } from "../../utils/cookies.js";
@@ -37,6 +38,7 @@ export const verifyEmailController = async (req: Request, res: Response) => {
 
   res.status(200).json(result);
 };
+
 export const loginController = async (req: Request, res: Response) => {
   const result = await loginService(req.body);
 
@@ -75,4 +77,9 @@ export const getMeController = async (req: Request, res: Response) => {
     message: "User fetched successfully",
     data: result,
   });
+};
+
+export const changePasswordController = async (req: Request, res: Response) => {
+  const result = await changePasswordService(req.user!.id, req.body);
+  res.status(200).json(result);
 };
