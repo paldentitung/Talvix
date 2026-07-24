@@ -5,6 +5,7 @@ import {
   LoginInput,
   RegisterInput,
   ResetPasswordInput,
+  VerifyEmailInput,
 } from "./auth.types.js";
 import AppError from "../../utils/AppError.js";
 import sendEmail from "../../utils/sendEmail.js";
@@ -17,9 +18,11 @@ export const registerService = async (data: RegisterInput) => {
   });
 
   if (existingUser) {
-    throw new Error("User already exists");
+    throw new AppError("User already exists", 400);
   }
   const hashedPassword = await bcrypt.hash(data.password, 10);
+  const verificationToken = crypto.randomBytes(32).toString("hex");
+  const verificationTokenExpires = new Date(Date.now() + 1000 * 60 * 60);
 
   const user = await prisma.user.create({
     data: {
@@ -28,12 +31,62 @@ export const registerService = async (data: RegisterInput) => {
       email: data.email,
       password: hashedPassword,
       role: data.role,
+      verificationToken: verificationToken,
+      verificationExpires: verificationTokenExpires,
     },
   });
+
+  const verificationUrl = `${process.env.CLIENT_URL}/verify-email/${verificationToken}`;
+
+  const emailSent = await sendEmail({
+    to: user.email,
+    subject: "Verify your email",
+    html: `
+  <h2>Verify your email</h2>
+  <a href="${verificationUrl}">Verify Email</a>
+`,
+  });
+
+  if (!emailSent) {
+    await prisma.user.delete({
+      where: { id: user.id },
+    });
+
+    throw new AppError("Failed to send verification email", 500);
+  }
 
   const { password, ...safeUser } = user;
 
   return safeUser;
+};
+export const verifyEmailService = async (data: VerifyEmailInput) => {
+  const user = await prisma.user.findFirst({
+    where: {
+      verificationToken: data.token,
+      verificationExpires: {
+        gt: new Date(),
+      },
+    },
+  });
+
+  if (!user) {
+    throw new AppError("Invalid or expired verification token", 400);
+  }
+
+  await prisma.user.update({
+    where: {
+      id: user.id,
+    },
+    data: {
+      isVerified: true,
+      verificationToken: null,
+      verificationExpires: null,
+    },
+  });
+  return {
+    success: true,
+    message: "Email verified successfully",
+  };
 };
 
 export const loginService = async (data: LoginInput) => {

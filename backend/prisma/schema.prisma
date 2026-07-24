@@ -14,6 +14,11 @@ model User {
   firstName String
   lastName  String
   role      Role     @default(CANDIDATE)
+
+  isVerified            Boolean   @default(false)
+  verificationToken     String?
+  verificationExpires   DateTime?
+
   resetPasswordToken    String?
   resetPasswordExpires  DateTime?
 

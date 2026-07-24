@@ -5,6 +5,9 @@ export interface RegisterInput {
   password: string;
   role: "CANDIDATE" | "RECRUITER" | "ADMIN";
 }
+export interface VerifyEmailInput {
+  token: string;
+}
 
 export interface LoginInput {
   email: string;

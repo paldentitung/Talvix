@@ -4,6 +4,7 @@ import {
   loginService,
   registerService,
   resetPasswordService,
+  verifyEmailService,
 } from "./auth.service.js";
 
 export const registerController = async (req: Request, res: Response) => {
@@ -16,6 +17,20 @@ export const registerController = async (req: Request, res: Response) => {
   });
 };
 
+export const verifyEmailController = async (req: Request, res: Response) => {
+  const { token } = req.params;
+
+  if (typeof token !== "string") {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid verification token",
+    });
+  }
+
+  const result = await verifyEmailService({ token });
+
+  res.status(200).json(result);
+};
 export const loginController = async (req: Request, res: Response) => {
   const result = await loginService(req.body);
 
