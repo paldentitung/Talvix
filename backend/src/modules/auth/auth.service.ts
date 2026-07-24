@@ -165,7 +165,6 @@ export const forgotPasswordService = async (data: ForgotPasswordInput) => {
     message: "Reset email sent successfully",
   };
 };
-
 export const resetPasswordService = async (data: ResetPasswordInput) => {
   const user = await prisma.user.findFirst({
     where: {
@@ -195,4 +194,26 @@ export const resetPasswordService = async (data: ResetPasswordInput) => {
     success: true,
     message: "Password reset successfully",
   };
+};
+
+export const getMeService = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      role: true,
+      isVerified: true,
+    },
+  });
+
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  return user;
 };

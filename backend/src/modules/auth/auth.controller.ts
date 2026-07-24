@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import {
   forgotPasswordService,
+  getMeService,
   loginService,
   registerService,
   resetPasswordService,
@@ -65,4 +66,13 @@ export const resetPasswordController = async (req: Request, res: Response) => {
 export const logoutController = async (req: Request, res: Response) => {
   clearAuthCookie(res);
   res.status(200).json({ success: true, message: "Logged out successfully" });
+};
+
+export const getMeController = async (req: Request, res: Response) => {
+  const result = await getMeService(req.user!.id);
+  res.status(200).json({
+    success: true,
+    message: "User fetched successfully",
+    data: result,
+  });
 };
