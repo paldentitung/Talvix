@@ -4,6 +4,7 @@ import {
   ForgotPasswordInput,
   LoginInput,
   RegisterInput,
+  ResetPasswordInput,
 } from "./auth.types.js";
 import AppError from "../../utils/AppError.js";
 import sendEmail from "../../utils/sendEmail.js";
@@ -109,5 +110,36 @@ export const forgotPasswordService = async (data: ForgotPasswordInput) => {
   return {
     success: true,
     message: "Reset email sent successfully",
+  };
+};
+
+export const resetPasswordService = async (data: ResetPasswordInput) => {
+  const user = await prisma.user.findFirst({
+    where: {
+      resetPasswordToken: data.token,
+      resetPasswordExpires: {
+        gt: new Date(),
+      },
+    },
+  });
+
+  if (!user) throw new AppError("Invalid or expired reset token", 400);
+
+  const hashedPassword = await bcrypt.hash(data.newPassword, 10);
+
+  await prisma.user.update({
+    where: {
+      id: user.id,
+    },
+    data: {
+      password: hashedPassword,
+      resetPasswordToken: null,
+      resetPasswordExpires: null,
+    },
+  });
+
+  return {
+    success: true,
+    message: "Password reset successfully",
   };
 };

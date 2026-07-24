@@ -3,6 +3,7 @@ import {
   forgotPasswordService,
   loginService,
   registerService,
+  resetPasswordService,
 } from "./auth.service.js";
 
 export const registerController = async (req: Request, res: Response) => {
@@ -31,4 +32,9 @@ export const forgotPasswordController = async (req: Request, res: Response) => {
     success: true,
     message: "Email send successfully",
   });
+};
+
+export const resetPasswordController = async (req: Request, res: Response) => {
+  const result = await resetPasswordService(req.body);
+  res.status(200).json(result);
 };
