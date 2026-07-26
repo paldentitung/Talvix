@@ -1,7 +1,7 @@
 import { Route, Routes } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import { Toaster } from "react-hot-toast";
-import LoginPage from "./pages/LoginPage";
+import LoginPage from "./features/pages/LoginPage";
 import RegisterPage from "./features/pages/RegisterPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 

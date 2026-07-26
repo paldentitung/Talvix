@@ -5,3 +5,7 @@ export interface RegisterRequest {
   password: string;
   role: "CANDIDATE" | "RECRUITER";
 }
+export interface LoginRequest {
+  email: string;
+  password: string;
+}

@@ -1,11 +1,49 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from "lucide-react";
-import AuthLayout from "../components/layout/AuthLayout";
+import AuthLayout from "../../components/layout/AuthLayout";
+import { useLogin } from "../auth/hooks/useLogin";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+
+  const [errors, setErrors] = useState<{
+    email?: string;
+    password?: string;
+  }>({});
+
+  const loginMutation = useLogin();
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!validate()) return;
+
+    await loginMutation.mutateAsync(formData);
+  };
+
+  const validate = () => {
+    const newErrors: {
+      email?: string;
+      password?: string;
+    } = {};
+
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    }
+
+    if (!formData.password.trim()) {
+      newErrors.password = "Password is required";
+    }
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
+  };
 
   return (
     <AuthLayout>
@@ -52,13 +90,7 @@ export default function LoginPage() {
         <div className="h-px flex-1 bg-[var(--border)]" />
       </div>
 
-      <form
-        className="space-y-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          setHasError(true);
-        }}
-      >
+      <form className="space-y-4" onSubmit={handleSubmit}>
         <div>
           <label className="text-[13px] font-semibold text-[var(--text-primary)] mb-1.5 block">
             Email
@@ -68,9 +100,16 @@ export default function LoginPage() {
             <input
               type="email"
               placeholder="you@company.com"
+              value={formData.email}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
               className="w-full bg-white border border-[var(--border)] rounded-[8px] pl-9 pr-3 py-2.5 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--primary)] focus:ring-4 focus:ring-[var(--primary-light)]"
             />
           </div>
+          {errors.email && (
+            <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+          )}
         </div>
 
         <div>
@@ -90,6 +129,10 @@ export default function LoginPage() {
             <input
               type={showPassword ? "text" : "password"}
               placeholder="••••••••"
+              value={formData.password}
+              onChange={(e) =>
+                setFormData({ ...formData, password: e.target.value })
+              }
               className="w-full bg-white border border-[var(--border)] rounded-[8px] pl-9 pr-9 py-2.5 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--primary)] focus:ring-4 focus:ring-[var(--primary-light)]"
             />
             <button
@@ -104,6 +147,9 @@ export default function LoginPage() {
               )}
             </button>
           </div>
+          {errors.password && (
+            <p className="mt-1 text-sm text-red-500">{errors.password}</p>
+          )}
         </div>
 
         <label className="flex items-center gap-2 cursor-pointer select-none">
