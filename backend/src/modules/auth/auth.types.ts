@@ -1,9 +1,11 @@
+import { Role } from "@prisma/client";
+
 export interface RegisterInput {
   firstName: string;
   lastName: string;
   email: string;
   password: string;
-  role: "CANDIDATE" | "RECRUITER" | "ADMIN";
+  role: Role;
 }
 export interface VerifyEmailInput {
   token: string;
