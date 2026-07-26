@@ -7,7 +7,7 @@ export function useLogin() {
     mutationFn: login,
 
     onSuccess: () => {
-      toast.success("Logined!");
+      toast.success("Logged in successfully!");
     },
     onError: (error) => {
       toast.error(error.message);
