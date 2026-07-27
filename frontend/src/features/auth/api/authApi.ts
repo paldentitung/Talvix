@@ -1,5 +1,9 @@
 import request from "../../../shared/services/api";
-import type { RegisterRequest, LoginRequest } from "../types/auth.type";
+import type {
+  RegisterRequest,
+  LoginRequest,
+  ResetPasswordRequest,
+} from "../types/auth.type";
 
 export const register = async (data: RegisterRequest) => {
   return request(
@@ -45,6 +49,19 @@ export const forgotPassword = async (email: string) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ email }),
+    },
+    false,
+  );
+};
+export const resetPassword = async (data: ResetPasswordRequest) => {
+  return request(
+    "/auth/reset-password",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
     },
     false,
   );

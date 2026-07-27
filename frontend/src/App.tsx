@@ -5,6 +5,7 @@ import LoginPage from "./features/pages/LoginPage";
 import RegisterPage from "./features/pages/RegisterPage";
 import ForgotPasswordPage from "./features/pages/ForgotPasswordPage";
 import VerifyEmailPage from "./features/pages/VerifyEmailPage";
+import ResetPasswordPage from "./features/pages/ResetPasswordPage";
 
 const App = () => {
   return (
@@ -55,7 +56,7 @@ const App = () => {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<LoginPage />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
       </Routes>
     </>
   );
