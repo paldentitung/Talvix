@@ -36,3 +36,16 @@ export const verifyEmail = async (token: string) => {
     false,
   );
 };
+export const forgotPassword = async (email: string) => {
+  return request(
+    "/auth/forgot-password",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email }),
+    },
+    false,
+  );
+};

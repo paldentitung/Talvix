@@ -1,10 +1,32 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, KeyRound, Send, Clock, MailCheck } from "lucide-react";
-import AuthLayout from "../components/layout/AuthLayout";
-
+import AuthLayout from "../../components/layout/AuthLayout";
+import { useForgotPassword } from "../auth/hooks/useForgotPassword";
+import Button from "../../components/ui/Button";
 export default function ForgotPasswordPage() {
   const [sent, setSent] = useState(false);
+
+  const forgotPasswordMutation = useForgotPassword();
+
+  const [email, setEmail] = useState("");
+  const [errors, setErrors] = useState<{ email?: string }>({});
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!email) {
+      setErrors({ email: "Email is required" });
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setErrors({ email: "Enter a valid email address" });
+      return;
+    }
+    setErrors({});
+    await forgotPasswordMutation.mutateAsync(email);
+    setSent(true);
+  };
 
   return (
     <AuthLayout>
@@ -28,13 +50,7 @@ export default function ForgotPasswordPage() {
             No worries. Enter your email and we&apos;ll send a link to reset it.
           </p>
 
-          <form
-            className="space-y-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-              setSent(true);
-            }}
-          >
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
               <label className="text-[13px] font-semibold mb-1.5 block">
                 Email address
@@ -42,15 +58,24 @@ export default function ForgotPasswordPage() {
               <input
                 type="email"
                 placeholder="you@company.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-white border border-[var(--border)] rounded-[8px] px-3 py-2.5 text-sm outline-none focus:border-[var(--primary)] focus:ring-4 focus:ring-[var(--primary-light)]"
               />
+
+              {errors.email && (
+                <p className="text-xs text-red-500 mt-1">{errors.email}</p>
+              )}
             </div>
-            <button
+
+            <Button
+              className="w-full"
               type="submit"
-              className="w-full py-3 rounded-[8px] bg-[var(--primary)] text-white text-sm font-semibold flex items-center justify-center gap-2 transition hover:bg-[var(--primary-dark)]"
+              loading={forgotPasswordMutation.isPending}
+              loadingText="Sending..."
             >
               Send reset link <Send className="w-4 h-4" />
-            </button>
+            </Button>
           </form>
 
           <div className="mt-6 flex items-start gap-2.5 p-3 rounded-lg bg-[var(--warning-bg)]">
@@ -71,7 +96,7 @@ export default function ForgotPasswordPage() {
           <p className="text-sm text-[var(--text-secondary)] mb-1">
             We sent a reset link to
           </p>
-          <p className="text-sm font-semibold mb-7">sarah.chen@gmail.com</p>
+          <p className="text-sm font-semibold mb-7">{email}</p>
           <p className="text-sm text-[var(--text-secondary)]">
             Didn&apos;t get it?{" "}
             <button

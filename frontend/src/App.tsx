@@ -3,7 +3,7 @@ import HomePage from "./pages/HomePage";
 import { Toaster } from "react-hot-toast";
 import LoginPage from "./features/pages/LoginPage";
 import RegisterPage from "./features/pages/RegisterPage";
-import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ForgotPasswordPage from "./features/pages/ForgotPasswordPage";
 import VerifyEmailPage from "./features/pages/VerifyEmailPage";
 
 const App = () => {
