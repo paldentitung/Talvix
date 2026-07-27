@@ -27,3 +27,12 @@ export const login = async (data: LoginRequest) => {
     false,
   );
 };
+export const verifyEmail = async (token: string) => {
+  return request(
+    `/auth/verify-email/${token}`,
+    {
+      method: "GET",
+    },
+    false,
+  );
+};

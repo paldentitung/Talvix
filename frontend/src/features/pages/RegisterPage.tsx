@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   UserSearch,
   Building2,
@@ -58,6 +58,8 @@ export default function RegisterPage() {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     };
 
+  const navigate = useNavigate();
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -70,6 +72,8 @@ export default function RegisterPage() {
       ...formData,
       role: ROLE_MAP[role],
     });
+
+    // navigate("/verify-email", { state: formData.email });
   };
 
   const fieldClass = (hasError: boolean) =>

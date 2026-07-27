@@ -4,6 +4,7 @@ import { Toaster } from "react-hot-toast";
 import LoginPage from "./features/pages/LoginPage";
 import RegisterPage from "./features/pages/RegisterPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import VerifyEmailPage from "./features/pages/VerifyEmailPage";
 
 const App = () => {
   return (
@@ -52,6 +53,7 @@ const App = () => {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<LoginPage />} />
       </Routes>
