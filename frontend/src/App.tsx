@@ -1,9 +1,11 @@
 import { Route, Routes } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import { Toaster } from "react-hot-toast";
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
-import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import LoginPage from "./features/pages/LoginPage";
+import RegisterPage from "./features/pages/RegisterPage";
+import ForgotPasswordPage from "./features/pages/ForgotPasswordPage";
+import VerifyEmailPage from "./features/pages/VerifyEmailPage";
+import ResetPasswordPage from "./features/pages/ResetPasswordPage";
 
 const App = () => {
   return (
@@ -11,14 +13,38 @@ const App = () => {
       <Toaster
         position="bottom-right"
         toastOptions={{
+          duration: 4000,
+          style: {
+            background: "var(--card)",
+            color: "var(--text-primary)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius-md)",
+            boxShadow: "var(--shadow-lg)",
+            padding: "12px 14px",
+            fontFamily: "Inter, sans-serif",
+            fontSize: "14px",
+            fontWeight: 500,
+          },
           success: {
+            iconTheme: {
+              primary: "var(--success)",
+              secondary: "var(--success-bg)",
+            },
             style: {
-              background: "green",
+              background: "var(--success-bg)",
+              color: "var(--success)",
+              border: "1px solid rgba(22, 163, 74, 0.2)",
             },
           },
           error: {
+            iconTheme: {
+              primary: "var(--danger)",
+              secondary: "var(--danger-bg)",
+            },
             style: {
-              background: "red",
+              background: "var(--danger-bg)",
+              color: "var(--danger)",
+              border: "1px solid rgba(220, 38, 38, 0.2)",
             },
           },
         }}
@@ -28,8 +54,9 @@ const App = () => {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<LoginPage />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
       </Routes>
     </>
   );

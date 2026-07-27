@@ -1,10 +1,18 @@
 import { useMemo, useState } from "react";
 import { ShieldCheck, Lock, Check, Circle } from "lucide-react";
-import AuthLayout from "../components/layout/AuthLayout";
+import AuthLayout from "../../components/layout/AuthLayout";
+import { useResetPassword } from "../auth/hooks/useResetPassword";
+import { useNavigate, useParams } from "react-router-dom";
+import Button from "../../components/ui/Button";
 
 export default function ResetPasswordPage() {
+  const { token } = useParams();
+  const navigate = useNavigate();
+
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const resetPasswordMutation = useResetPassword();
 
   const checks = useMemo(
     () => ({
@@ -14,6 +22,35 @@ export default function ResetPasswordPage() {
     }),
     [password],
   );
+
+  const isFormInvalid =
+    !checks.length ||
+    !checks.uppercase ||
+    !checks.numberSymbol ||
+    password !== confirm ||
+    confirm.length === 0;
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!token) {
+      setError("Invalid or missing reset token.");
+      return;
+    }
+
+    setError(null);
+
+    try {
+      await resetPasswordMutation.mutateAsync({ token, newPassword: password });
+      navigate("/login", { replace: true });
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again.",
+      );
+    }
+  };
 
   return (
     <AuthLayout>
@@ -28,7 +65,7 @@ export default function ResetPasswordPage() {
         Choose a strong password you haven&apos;t used before.
       </p>
 
-      <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+      <form className="space-y-4" onSubmit={handleSubmit}>
         <div>
           <label className="text-[13px] font-semibold mb-1.5 block">
             New password
@@ -73,18 +110,19 @@ export default function ResetPasswordPage() {
           <Requirement met={checks.numberSymbol} label="One number & symbol" />
         </div>
 
-        <button
+        {error && (
+          <p className="text-sm text-[var(--danger)] text-center">{error}</p>
+        )}
+
+        <Button
+          className="w-full"
           type="submit"
-          disabled={
-            !checks.length ||
-            !checks.uppercase ||
-            !checks.numberSymbol ||
-            password !== confirm
-          }
-          className="w-full py-3 rounded-[8px] bg-[var(--primary)] text-white text-sm font-semibold transition hover:bg-[var(--primary-dark)] disabled:opacity-40 disabled:cursor-not-allowed"
+          disabled={isFormInvalid}
+          loading={resetPasswordMutation.isPending}
+          loadingText="Resetting..."
         >
-          Reset password
-        </button>
+          Reset Password
+        </Button>
       </form>
     </AuthLayout>
   );

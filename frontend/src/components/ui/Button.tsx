@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-
+import { Loader2 } from "lucide-react";
 type ButtonVariant = "primary" | "ghost" | "accent" | "dark" | "white";
 type ButtonSize = "sm" | "md";
 
@@ -8,11 +8,14 @@ interface ButtonProps {
   children: ReactNode;
   variant?: ButtonVariant;
   size?: ButtonSize;
-  href?: string; // renders as a router <Link to={href}>
+  href?: string;
   onClick?: () => void;
   className?: string;
   icon?: ReactNode;
   type?: "button" | "submit";
+  loading?: boolean;
+  loadingText?: string;
+  disabled?: boolean;
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
@@ -42,22 +45,47 @@ export default function Button({
   className = "",
   icon,
   type = "button",
+  loading = false,
+  loadingText,
+  disabled = false,
 }: ButtonProps) {
-  const classes = `inline-flex items-center justify-center gap-2 font-semibold whitespace-nowrap transition-all duration-150 hover:-translate-y-0.5 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`;
+  const isDisabled = disabled || loading;
 
-  if (href) {
+  const classes = `inline-flex items-center justify-center gap-2 font-semibold whitespace-nowrap transition-all duration-150 hover:-translate-y-0.5 ${variantClasses[variant]} ${sizeClasses[size]} ${className} ${
+    isDisabled
+      ? "opacity-60 cursor-not-allowed hover:-translate-y-0 hover:opacity-60"
+      : ""
+  }`;
+
+  const content = loading ? (
+    <>
+      <Loader2 className="w-4 h-4 animate-spin" />
+      {loadingText || children}
+    </>
+  ) : (
+    <>
+      {icon}
+      {children}
+    </>
+  );
+
+  // href-based buttons probably shouldn't be "loading", but guard anyway
+  if (href && !isDisabled) {
     return (
       <Link to={href} className={classes}>
-        {icon}
-        {children}
+        {content}
       </Link>
     );
   }
 
   return (
-    <button type={type} onClick={onClick} className={classes}>
-      {icon}
-      {children}
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={isDisabled}
+      className={classes}
+    >
+      {content}
     </button>
   );
 }
