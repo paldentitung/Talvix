@@ -7,6 +7,10 @@ import ForgotPasswordPage from "./features/auth/pages/ForgotPasswordPage";
 import VerifyEmailPage from "./features/auth/pages/VerifyEmailPage";
 import ResetPasswordPage from "./features/auth/pages/ResetPasswordPage";
 
+import CandidateDashboardPage from "./candidate/DashboardPage";
+import RecruiterDashboardPage from "./recruiter/DashboardPage";
+import AdminDashboardPage from "./admin/DashboardPage";
+
 const App = () => {
   return (
     <>
@@ -51,12 +55,30 @@ const App = () => {
       />
 
       <Routes>
+        {/* Public */}
         <Route path="/" element={<HomePage />} />
+
+        {/* Auth */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+
+        {/* Candidate */}
+        <Route path="/candidate">
+          <Route path="dashboard" element={<CandidateDashboardPage />} />
+        </Route>
+
+        {/* Recruiter */}
+        <Route path="/recruiter">
+          <Route path="dashboard" element={<RecruiterDashboardPage />} />
+        </Route>
+
+        {/* Admin */}
+        <Route path="/admin">
+          <Route path="dashboard" element={<AdminDashboardPage />} />
+        </Route>
       </Routes>
     </>
   );
