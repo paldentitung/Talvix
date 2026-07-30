@@ -1,11 +1,11 @@
 import { Route, Routes } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import { Toaster } from "react-hot-toast";
-import LoginPage from "./features/pages/LoginPage";
-import RegisterPage from "./features/pages/RegisterPage";
-import ForgotPasswordPage from "./features/pages/ForgotPasswordPage";
-import VerifyEmailPage from "./features/pages/VerifyEmailPage";
-import ResetPasswordPage from "./features/pages/ResetPasswordPage";
+import LoginPage from "./features/auth/pages/LoginPage";
+import RegisterPage from "./features/auth/pages/RegisterPage";
+import ForgotPasswordPage from "./features/auth/pages/ForgotPasswordPage";
+import VerifyEmailPage from "./features/auth/pages/VerifyEmailPage";
+import ResetPasswordPage from "./features/auth/pages/ResetPasswordPage";
 
 const App = () => {
   return (

@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, KeyRound, Send, Clock, MailCheck } from "lucide-react";
-import AuthLayout from "../../components/layout/AuthLayout";
-import { useForgotPassword } from "../auth/hooks/useForgotPassword";
-import Button from "../../components/ui/Button";
+import AuthLayout from "../../../components/layout/AuthLayout";
+import { useForgotPassword } from "../hooks/useForgotPassword";
+import Button from "../../../components/ui/Button";
 export default function ForgotPasswordPage() {
   const [sent, setSent] = useState(false);
 
