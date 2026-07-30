@@ -9,8 +9,8 @@ import {
   CheckCircle2,
   XCircle,
 } from "lucide-react";
-import AuthLayout from "../../components/layout/AuthLayout";
-import { useVerifyEmail } from "../auth/hooks/useVerifyEmail";
+import AuthLayout from "../../../components/layout/AuthLayout";
+import { useVerifyEmail } from "../hooks/useVerifyEmail";
 
 function StatusCard({
   icon,

@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from "lucide-react";
-import AuthLayout from "../../components/layout/AuthLayout";
-import { useLogin } from "../auth/hooks/useLogin";
+import AuthLayout from "../../../components/layout/AuthLayout";
+import { useLogin } from "../hooks/useLogin";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);

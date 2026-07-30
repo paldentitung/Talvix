@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
 import { ShieldCheck, Lock, Check, Circle } from "lucide-react";
-import AuthLayout from "../../components/layout/AuthLayout";
-import { useResetPassword } from "../auth/hooks/useResetPassword";
+import AuthLayout from "../../../components/layout/AuthLayout";
+import { useResetPassword } from "../hooks/useResetPassword";
 import { useNavigate, useParams } from "react-router-dom";
-import Button from "../../components/ui/Button";
+import Button from "../../../components/ui/Button";
 
 export default function ResetPasswordPage() {
   const { token } = useParams();

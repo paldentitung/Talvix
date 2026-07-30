@@ -8,8 +8,8 @@ import {
   EyeOff,
   AlertCircle,
 } from "lucide-react";
-import AuthLayout from "../../components/layout/AuthLayout";
-import { useRegister } from "../auth/hooks/useRegister";
+import AuthLayout from "../../../components/layout/AuthLayout";
+import { useRegister } from "../hooks/useRegister";
 
 type Role = "seeker" | "employer";
 const ROLE_MAP = {
