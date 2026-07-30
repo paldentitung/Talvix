@@ -6,13 +6,21 @@ export const userResponseSelect = {
   lastName: true,
   email: true,
   role: true,
+
   avatar: true,
   phone: true,
   bio: true,
   location: true,
   title: true,
   resumeUrl: true,
+
+  companyName: true,
+  companyLogo: true,
+  companyWebsite: true,
+  companyDescription: true,
+
   isVerified: true,
+
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.UserSelect;

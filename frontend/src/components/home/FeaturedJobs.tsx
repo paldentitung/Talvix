@@ -1,8 +1,18 @@
 import JobCard from "../jobs/JobCard";
 import SectionHead from "../ui/SectionHead";
-import { mockJobs } from "../../mocks/Job";
+import { useJobs } from "../../features/jobs/hooks/useJobs";
 
 export default function FeaturedJobs() {
+  const { data, isLoading, isError, error } = useJobs();
+
+  if (isLoading) {
+    return <p>Loading jobs...</p>;
+  }
+
+  if (isError) {
+    return <p>{error.message}</p>;
+  }
+
   return (
     <section id="jobs" className="py-16 bg-[var(--card)]">
       <div className="max-w-7xl mx-auto px-6">
@@ -13,8 +23,9 @@ export default function FeaturedJobs() {
           linkHref="/jobs"
           linkLabel="Browse all jobs"
         />
+
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {mockJobs.map((job) => (
+          {data?.data.map((job: any) => (
             <JobCard key={job.id} job={job} />
           ))}
         </div>
