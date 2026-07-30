@@ -6,10 +6,9 @@ import userRoutes from "./modules/users/user.routes.js";
 import jobRoutes from "./modules/jobs/job.routes.js";
 import cookieParser from "cookie-parser";
 const app = express();
-
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
     credentials: true,
   }),
 );

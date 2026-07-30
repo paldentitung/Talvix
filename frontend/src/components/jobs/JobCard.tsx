@@ -9,6 +9,63 @@ interface JobCardProps {
   onToggleSave?: (jobId: string, saved: boolean) => void;
 }
 
+const EMPLOYMENT_LABELS: Record<Job["employmentType"], string> = {
+  FULL_TIME: "Full-time",
+  PART_TIME: "Part-time",
+  CONTRACT: "Contract",
+  INTERNSHIP: "Internship",
+};
+
+const WORK_MODE_LABELS: Record<Job["workMode"], string> = {
+  ONSITE: "Onsite",
+  REMOTE: "Remote",
+  HYBRID: "Hybrid",
+};
+
+const LEVEL_LABELS: Record<Job["experienceLevel"], string> = {
+  ENTRY: "Entry",
+  MID: "Mid",
+  SENIOR: "Senior",
+  LEAD: "Lead",
+};
+
+// Deterministic color from company name so the same company always gets the same avatar color
+const AVATAR_COLORS = [
+  "#4f46e5",
+  "#0891b2",
+  "#c026d3",
+  "#ea580c",
+  "#16a34a",
+  "#dc2626",
+  "#2563eb",
+];
+function colorForName(name: string) {
+  const hash = name.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+}
+
+function formatSalary(job: Job) {
+  const { salaryMin, salaryMax, currency } = job;
+  if (salaryMin == null && salaryMax == null) return "Salary not disclosed";
+  const fmt = (n: number) => `${currency} ${n.toLocaleString()}`;
+  if (salaryMin != null && salaryMax != null)
+    return `${fmt(salaryMin)} - ${fmt(salaryMax)}`;
+  if (salaryMin != null) return `From ${fmt(salaryMin)}`;
+  return `Up to ${fmt(salaryMax as number)}`;
+}
+
+function formatPostedAt(createdAt: string) {
+  const diffMs = Date.now() - new Date(createdAt).getTime();
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (days <= 0) return "today";
+  if (days === 1) return "1 day ago";
+  if (days < 7) return `${days} days ago`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 4) return `${weeks}w ago`;
+  const months = Math.floor(days / 30);
+  return `${months}mo ago`;
+}
+
 /**
  * Reusable job card. Used on: Home (Featured Jobs), Job Search results,
  * Saved Jobs page, and Related Jobs on the Job Details page.
@@ -26,15 +83,33 @@ export default function JobCard({
     onToggleSave?.(job.id, next);
   };
 
+  const companyName =
+    job.recruiter?.companyName ??
+    (job.recruiter
+      ? `${job.recruiter.firstName} ${job.recruiter.lastName}`
+      : "Company");
+  const companyInitial = companyName.charAt(0).toUpperCase();
+  const companyColor = colorForName(companyName);
+  const isActivelyHiring = job.status === "OPEN" && (job.openings ?? 0) > 0;
+
   return (
     <div className="bg-[var(--card)] border border-[var(--border)] rounded-[var(--radius-lg)] p-6 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] hover:-translate-y-1 hover:border-[#d8dcf0] transition-all flex flex-col gap-4">
       <div className="flex items-start justify-between">
-        <div
-          className="w-[46px] h-[46px] rounded-xl flex items-center justify-center font-extrabold text-white text-base"
-          style={{ backgroundColor: job.companyColor }}
-        >
-          {job.companyInitial}
-        </div>
+        {job.recruiter?.companyLogo ? (
+          <img
+            src={job?.recruiter?.companyLogo}
+            alt={companyName}
+            loading="lazy"
+            className="w-[46px] h-[46px] rounded-xl object-cover"
+          />
+        ) : (
+          <div
+            className="w-[46px] h-[46px] rounded-xl flex items-center justify-center font-extrabold text-white text-base"
+            style={{ backgroundColor: companyColor }}
+          >
+            {companyInitial}
+          </div>
+        )}
         <button
           onClick={handleToggleSave}
           aria-label={saved ? "Remove from saved jobs" : "Save job"}
@@ -57,26 +132,32 @@ export default function JobCard({
           {job.title}
         </div>
         <div className="text-[13.5px] text-[var(--text-secondary)] flex items-center gap-1.5 mt-1">
-          <Building2 className="w-3.5 h-3.5" /> {job.company} · {job.location}
+          <Building2 className="w-3.5 h-3.5" /> {companyName} · {job.location}
         </div>
       </div>
 
+      {job.description && (
+        <p className="text-[13.5px] text-[var(--text-secondary)] leading-relaxed line-clamp-2">
+          {job.description}
+        </p>
+      )}
+
       <div className="flex gap-2 flex-wrap">
-        <Badge>{job.employmentType}</Badge>
-        {job.workMode && <Badge>{job.workMode}</Badge>}
-        {job.isActivelyHiring ? (
+        <Badge>{EMPLOYMENT_LABELS[job.employmentType]}</Badge>
+        <Badge>{WORK_MODE_LABELS[job.workMode]}</Badge>
+        {isActivelyHiring ? (
           <Badge variant="success">Actively hiring</Badge>
         ) : (
-          job.level && <Badge>{job.level}</Badge>
+          <Badge>{LEVEL_LABELS[job.experienceLevel]}</Badge>
         )}
       </div>
 
       <div className="flex items-center justify-between pt-3 border-t border-[var(--border)]">
         <span className="font-bold text-[14.5px] text-[var(--text-primary)]">
-          {job.salaryRange}
+          {formatSalary(job)}
         </span>
         <span className="text-xs text-[var(--text-muted)]">
-          Posted {job.postedAt}
+          Posted {formatPostedAt(job.createdAt)}
         </span>
       </div>
     </div>

@@ -31,12 +31,27 @@ export const createJobService = async (
     data: {
       title: data.title,
       description: data.description,
-      salary: data.salary,
+
+      salaryMin: data.salaryMin,
+      salaryMax: data.salaryMax,
+      currency: data.currency,
+
       location: data.location,
+
+      workMode: data.workMode,
+
       employmentType: data.employmentType,
-      experience: data.experience,
+
+      experienceLevel: data.experienceLevel,
+
       skills: data.skills,
+
+      openings: data.openings,
+
       deadline: data.deadline,
+
+      featured: data.featured,
+
       status: data.status,
 
       recruiterId,
@@ -74,12 +89,27 @@ export const updateJobService = async (
     data: {
       title: data.title,
       description: data.description,
-      salary: data.salary,
+
+      salaryMin: data.salaryMin,
+      salaryMax: data.salaryMax,
+      currency: data.currency,
+
       location: data.location,
+
+      workMode: data.workMode,
+
       employmentType: data.employmentType,
-      experience: data.experience,
+
+      experienceLevel: data.experienceLevel,
+
       skills: data.skills,
+
+      openings: data.openings,
+
       deadline: data.deadline,
+
+      featured: data.featured,
+
       status: data.status,
     },
     select: jobSelect,

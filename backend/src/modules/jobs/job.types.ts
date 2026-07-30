@@ -8,24 +8,35 @@ export const createJobSchema = z.object({
 
   description: z.string().min(20, "Description must be at least 20 characters"),
 
-  salary: z.number().positive("Salary must be greater than 0").optional(),
+  salaryMin: z.number().positive().optional(),
+
+  salaryMax: z.number().positive().optional(),
+
+  currency: z.string().default("NPR"),
 
   location: z.string().min(2, "Location is required"),
 
-  employmentType: z.enum(
-    ["FULL_TIME", "PART_TIME", "CONTRACT", "INTERNSHIP", "REMOTE"],
-    {
-      message: "Invalid employment type",
-    },
-  ),
+  workMode: z.enum(["ONSITE", "REMOTE", "HYBRID"], {
+    message: "Invalid work mode",
+  }),
 
-  experience: z.string().min(1, "Experience is required"),
+  employmentType: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERNSHIP"], {
+    message: "Invalid employment type",
+  }),
+
+  experienceLevel: z.enum(["ENTRY", "MID", "SENIOR", "LEAD"], {
+    message: "Invalid experience level",
+  }),
 
   skills: z.array(z.string()).min(1, "At least one skill is required"),
 
-  deadline: z.coerce.date(),
+  openings: z.number().int().positive().optional(),
 
-  status: z.enum(["ACTIVE", "CLOSED"], {
+  deadline: z.coerce.date().optional(),
+
+  featured: z.boolean().optional(),
+
+  status: z.enum(["DRAFT", "OPEN", "CLOSED"], {
     message: "Invalid job status",
   }),
 });
