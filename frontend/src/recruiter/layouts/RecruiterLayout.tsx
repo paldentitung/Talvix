@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
-import SideBar from "../components/SideBar";
 import Header from "../components/Header";
 import JobPostingModal from "../components/JobPostingModal";
+import Sidebar from "../components/Sidebar";
 
-const MainLayouts = () => {
+const RecruiterLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isPostOpen, setIsPostOpen] = useState(false);
 
@@ -24,7 +24,7 @@ const MainLayouts = () => {
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <SideBar onNavigate={() => setIsSidebarOpen(false)} />
+        <Sidebar onNavigate={() => setIsSidebarOpen(false)} />
       </div>
 
       {/* Content offset by the sidebar's width on large screens */}
@@ -50,4 +50,4 @@ const MainLayouts = () => {
   );
 };
 
-export default MainLayouts;
+export default RecruiterLayout;
