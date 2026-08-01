@@ -38,7 +38,7 @@ const defaultMeta = {
   subtitle: "Overview of your hiring activity",
 };
 
-const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
+const Header = ({ onMenuClick, openJobPostingModal }: any) => {
   const { pathname } = useLocation();
   const { title, subtitle } = pageMeta[pathname] ?? defaultMeta;
 
@@ -82,7 +82,11 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
           <User size={24} className="hidden sm:block" />
         </button>
 
-        <Button variant="primary" className="hidden sm:inline-flex">
+        <Button
+          variant="primary"
+          className="hidden sm:inline-flex"
+          onClick={openJobPostingModal}
+        >
           Post a Job
         </Button>
       </div>

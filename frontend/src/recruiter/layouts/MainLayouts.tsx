@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import SideBar from "../components/SideBar";
 import Header from "../components/Header";
+import JobPostingModal from "../components/JobPostingModal";
 
 const MainLayouts = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isPostOpen, setIsPostOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-(--bg)">
@@ -28,10 +30,22 @@ const MainLayouts = () => {
       {/* Content offset by the sidebar's width on large screens */}
       <div className="flex min-h-screen flex-col lg:ml-64">
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <Header onMenuClick={() => setIsSidebarOpen(true)} />
+          <Header
+            onMenuClick={() => setIsSidebarOpen(true)}
+            openJobPostingModal={() => setIsPostOpen(true)}
+          />
           <Outlet />
         </main>
       </div>
+
+      <JobPostingModal
+        isOpen={isPostOpen}
+        onClose={() => setIsPostOpen(false)}
+        onSubmit={(values) => {
+          // values.title, values.salaryMin, etc. — wire this to your create-job API call
+          console.log(values);
+        }}
+      />
     </div>
   );
 };
