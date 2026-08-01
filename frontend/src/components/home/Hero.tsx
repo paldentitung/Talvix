@@ -10,6 +10,11 @@ const ROTATING_WORDS = [
   "worth the leap",
 ];
 
+// Longest phrase — used only to reserve space so the layout doesn't shift
+const LONGEST_WORD = ROTATING_WORDS.reduce((a, b) =>
+  b.length > a.length ? b : a,
+);
+
 export default function Hero() {
   const [wordIndex, setWordIndex] = useState(0);
   const [visible, setVisible] = useState(true);
@@ -40,14 +45,23 @@ export default function Hero() {
             Find work you&apos;re
             <br />
             proud to{" "}
-            <span
-              className={`inline-block text-[var(--primary)] transition-opacity duration-200 ${
-                visible ? "opacity-100" : "opacity-0"
-              }`}
-            >
-              {ROTATING_WORDS[wordIndex]}
+            <span className="relative inline-grid text-left align-bottom">
+              {/* Sizer: invisible, reserves width/height for the longest word */}
+              <span
+                aria-hidden="true"
+                className="invisible col-start-1 row-start-1 text-[var(--primary)]"
+              >
+                {LONGEST_WORD}
+              </span>
+              {/* Visible rotating word, overlaid on top of the sizer */}
+              <span
+                className={`col-start-1 row-start-1 text-[var(--primary)] transition-opacity duration-200 ${
+                  visible ? "opacity-100" : "opacity-0"
+                }`}
+              >
+                {ROTATING_WORDS[wordIndex]}
+              </span>
             </span>
-            .
           </h1>
 
           <p className="text-[17.5px] text-[var(--text-secondary)] max-w-[480px] mb-8">
