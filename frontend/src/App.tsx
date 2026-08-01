@@ -11,7 +11,7 @@ import CandidateDashboardPage from "./candidate/DashboardPage";
 import RecruiterDashboardPage from "./recruiter/pages/DashboardPage.tsx";
 import AdminDashboardPage from "./admin/DashboardPage";
 
-import RecruiterMainLayout from "./recruiter/layouts/MainLayouts.tsx";
+import RecruiterMainLayout from "./recruiter/layouts/RecruiterLayout.tsx";
 import ManageJobsPage from "./recruiter/pages/ManageJobsPage.tsx";
 import CompanyProfilePage from "./recruiter/pages/CompanyProfilePage.tsx";
 import SettingsPage from "./recruiter/pages/SettingsPage.tsx";
