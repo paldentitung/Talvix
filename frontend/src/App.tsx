@@ -8,8 +8,15 @@ import VerifyEmailPage from "./features/auth/pages/VerifyEmailPage";
 import ResetPasswordPage from "./features/auth/pages/ResetPasswordPage";
 
 import CandidateDashboardPage from "./candidate/DashboardPage";
-import RecruiterDashboardPage from "./recruiter/DashboardPage";
+import RecruiterDashboardPage from "./recruiter/pages/DashboardPage.tsx";
 import AdminDashboardPage from "./admin/DashboardPage";
+
+import RecruiterMainLayout from "./recruiter/layouts/MainLayouts.tsx";
+import ManageJobsPage from "./recruiter/pages/ManageJobsPage.tsx";
+import CompanyProfilePage from "./recruiter/pages/CompanyProfilePage.tsx";
+import SettingsPage from "./recruiter/pages/SettingsPage.tsx";
+import ApplicantsPage from "./recruiter/pages/ApplicantsPage.tsx";
+import AnalyticsPage from "./recruiter/pages/AnalyticsPage.tsx";
 
 const App = () => {
   return (
@@ -71,8 +78,13 @@ const App = () => {
         </Route>
 
         {/* Recruiter */}
-        <Route path="/recruiter">
+        <Route path="/recruiter" element={<RecruiterMainLayout />}>
           <Route path="dashboard" element={<RecruiterDashboardPage />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
+          <Route path="applicants" element={<ApplicantsPage />} />
+          <Route path="company" element={<CompanyProfilePage />} />
+          <Route path="jobs" element={<ManageJobsPage />} />
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
 
         {/* Admin */}
