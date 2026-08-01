@@ -81,7 +81,7 @@ const Sidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
   return (
     <aside className="flex h-full w-64 flex-col border-r border-(--border) bg-(--card) shadow-(--shadow-sm) sm:w-72 lg:h-screen lg:w-64">
       <div className="flex items-center gap-2 px-5 py-6">
-        <Logo size={28} className="text-(--primary)" />
+        <Logo />
       </div>
 
       <nav className="flex flex-1 flex-col gap-6 overflow-y-auto px-3 pb-6">
