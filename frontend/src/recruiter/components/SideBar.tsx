@@ -7,7 +7,7 @@ import {
   BarChart3,
   Settings,
 } from "lucide-react";
-
+import Logo from "../../components/layout/Logo";
 const hiringLinks = [
   { label: "Dashboard", href: "/recruiter/dashboard", icon: LayoutDashboard },
   { label: "Manage Jobs", href: "/recruiter/jobs", icon: Briefcase },
@@ -81,12 +81,7 @@ const Sidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
   return (
     <aside className="flex h-full w-64 flex-col border-r border-(--border) bg-(--card) shadow-(--shadow-sm) sm:w-72 lg:h-screen lg:w-64">
       <div className="flex items-center gap-2 px-5 py-6">
-        <div className="flex h-9 w-9 items-center justify-center rounded-(--radius-md) bg-(--primary) font-display text-base font-bold text-white">
-          H
-        </div>
-        <span className="font-display text-lg font-bold text-(--text-primary)">
-          Hiring
-        </span>
+        <Logo size={28} className="text-(--primary)" />
       </div>
 
       <nav className="flex flex-1 flex-col gap-6 overflow-y-auto px-3 pb-6">
