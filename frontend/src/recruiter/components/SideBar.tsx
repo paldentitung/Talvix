@@ -8,6 +8,7 @@ import {
   Settings,
 } from "lucide-react";
 import Logo from "../../components/layout/Logo";
+
 const hiringLinks = [
   { label: "Dashboard", href: "/recruiter/dashboard", icon: LayoutDashboard },
   { label: "Manage Jobs", href: "/recruiter/jobs", icon: Briefcase },
@@ -79,12 +80,12 @@ const Sidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
   const { pathname } = useLocation();
 
   return (
-    <aside className="flex h-full w-64 flex-col border-r border-(--border) bg-(--card) shadow-(--shadow-sm) sm:w-72 lg:h-screen lg:w-64">
+    <aside className="flex h-full w-full flex-col border-r border-(--border) bg-(--card) shadow-(--shadow-sm) overflow-y-auto">
       <div className="flex items-center gap-2 px-5 py-6">
         <Logo />
       </div>
 
-      <nav className="flex flex-1 flex-col gap-6 overflow-y-auto px-3 pb-6">
+      <nav className="flex flex-1 flex-col gap-6 px-3 pb-6">
         <NavSection
           title="Hiring"
           links={hiringLinks}
