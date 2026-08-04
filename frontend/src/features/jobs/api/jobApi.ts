@@ -37,3 +37,25 @@ export const deleteJob = async (jobId: string) => {
     true,
   );
 };
+
+export const updateJob = async ({
+  jobId,
+  jobData,
+}: {
+  jobId: string;
+  jobData: Omit<JobFormValues, "deadline"> & { deadline: string | null };
+}): Promise<Job> => {
+  const res = await request(
+    `/jobs/${jobId}`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(jobData),
+    },
+    true,
+  );
+
+  return res.data as Job;
+};

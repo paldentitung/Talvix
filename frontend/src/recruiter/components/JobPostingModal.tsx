@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import Modal from "../../components/ui/Modal";
 import type {
@@ -107,10 +107,18 @@ type PostJobModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (values: JobFormValues) => void | Promise<void>;
+  initialValues?: JobFormValues; // NEW
+  mode?: "create" | "edit"; // NEW
 };
 
-const PostJobModal = ({ isOpen, onClose, onSubmit }: PostJobModalProps) => {
-  const [form, setForm] = useState<JobFormValues>(emptyForm);
+const PostJobModal = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  initialValues,
+  mode = "create",
+}: PostJobModalProps) => {
+  const [form, setForm] = useState<JobFormValues>(initialValues || emptyForm);
   const [skillInput, setSkillInput] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<
@@ -207,12 +215,25 @@ const PostJobModal = ({ isOpen, onClose, onSubmit }: PostJobModalProps) => {
         : "border-(--border) focus:border-(--primary)"
     }`;
 
+  useEffect(() => {
+    if (isOpen) {
+      setForm(initialValues ?? emptyForm);
+      setErrors({});
+      setTouched({});
+      setSubmitError(null);
+    }
+  }, [isOpen, initialValues]);
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Post a job"
-      description="Fill in the details candidates will see."
+      title={mode === "edit" ? "Edit job" : "Post a job"}
+      description={
+        mode === "edit"
+          ? "Update the details candidates will see."
+          : "Fill in the details candidates will see."
+      }
       maxWidth="max-w-2xl"
       footer={
         <>
@@ -228,7 +249,13 @@ const PostJobModal = ({ isOpen, onClose, onSubmit }: PostJobModalProps) => {
             disabled={isSubmitting}
             className="rounded-(--radius-md) bg-(--primary) px-4 py-2 text-sm font-semibold text-white hover:bg-(--primary-dark) disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isSubmitting ? "Posting…" : "Post job"}
+            {isSubmitting
+              ? mode === "edit"
+                ? "Saving…"
+                : "Posting…"
+              : mode === "edit"
+                ? "Save changes"
+                : "Post job"}
           </button>
         </>
       }

@@ -11,11 +11,14 @@ import {
   Trash2,
 } from "lucide-react";
 
-import type { Job } from "../../features/jobs/types/job.types";
+import type { Job, JobFormValues } from "../../features/jobs/types/job.types";
 import { useJob } from "../../features/jobs/hooks/useJob";
 import Button from "../../components/ui/Button";
 import { useDeleteJob } from "../../features/jobs/hooks/useDeleteJob";
 import { toast } from "react-hot-toast";
+import { useState } from "react";
+import PostJobModal from "../components/JobPostingModal";
+import { useUpdateJob } from "../../features/jobs/hooks/useUpdateJob";
 type JobStatus = Job["status"];
 
 const statusStyles: Record<JobStatus, string> = {
@@ -67,7 +70,24 @@ const JobDetailPage = () => {
 
   const { data: job, isLoading, isError } = useJob(jobId);
   const deleteJobMutation = useDeleteJob();
+  const updateJobMutation = useUpdateJob();
 
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const toFormValues = (job: Job): JobFormValues => ({
+    title: job.title,
+    description: job.description,
+    salaryMin: job.salaryMin,
+    salaryMax: job.salaryMax,
+    currency: job.currency,
+    location: job.location,
+    workMode: job.workMode,
+    employmentType: job.employmentType,
+    experienceLevel: job.experienceLevel,
+    skills: job.skills,
+    deadline: job.deadline ?? "",
+    openings: job.openings,
+    featured: job.featured,
+  });
   const handleDeleteJob = async () => {
     if (!jobId) return;
 
@@ -86,6 +106,24 @@ const JobDetailPage = () => {
     }
   };
 
+  const handleUpdateJob = async (values: JobFormValues) => {
+    if (!jobId) return;
+
+    try {
+      await updateJobMutation.mutateAsync({
+        jobId,
+        jobData: {
+          ...values,
+          deadline: values.deadline || null,
+        },
+      });
+      toast.success("Job updated successfully");
+      setIsEditOpen(false);
+    } catch (error) {
+      console.error("Failed to update job:", error);
+      alert("Failed to update job. Please try again.");
+    }
+  };
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-24 text-sm text-(--text-secondary)">
@@ -227,12 +265,12 @@ const JobDetailPage = () => {
       )}
 
       <div className="flex flex-wrap items-center gap-3">
-        <Link
-          to={`/recruiter/jobs/${job.id}/edit`}
+        <button
+          onClick={() => setIsEditOpen(true)}
           className="rounded-(--radius-md) bg-(--primary) px-4 py-2 text-sm font-semibold text-white hover:bg-(--primary-dark)"
         >
           Edit job
-        </Link>
+        </button>
         <Link
           to={`/recruiter/applicants?job=${job.id}`}
           className="rounded-(--radius-md) border border-(--border) px-4 py-2 text-sm font-semibold text-(--text-primary) hover:bg-(--bg)"
@@ -249,6 +287,13 @@ const JobDetailPage = () => {
           Delete Job
         </Button>
       </div>
+      <PostJobModal
+        isOpen={isEditOpen}
+        onClose={() => setIsEditOpen(false)}
+        onSubmit={handleUpdateJob}
+        initialValues={toFormValues(job)}
+        mode="edit"
+      />
     </div>
   );
 };
