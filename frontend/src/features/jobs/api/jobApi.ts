@@ -27,3 +27,13 @@ export const getJobById = async (jobId: string): Promise<Job> => {
   const res = await request(`/jobs/${jobId}`, {}, true);
   return res.data as Job;
 };
+
+export const deleteJob = async (jobId: string) => {
+  return await request(
+    `/jobs/${jobId}`,
+    {
+      method: "DELETE",
+    },
+    true,
+  );
+};

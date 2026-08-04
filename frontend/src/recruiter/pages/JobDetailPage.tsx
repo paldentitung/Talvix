@@ -8,11 +8,14 @@ import {
   DollarSign,
   Users,
   Building2,
+  Trash2,
 } from "lucide-react";
 
 import type { Job } from "../../features/jobs/types/job.types";
 import { useJob } from "../../features/jobs/hooks/useJob";
-
+import Button from "../../components/ui/Button";
+import { useDeleteJob } from "../../features/jobs/hooks/useDeleteJob";
+import { toast } from "react-hot-toast";
 type JobStatus = Job["status"];
 
 const statusStyles: Record<JobStatus, string> = {
@@ -63,6 +66,25 @@ const JobDetailPage = () => {
   const navigate = useNavigate();
 
   const { data: job, isLoading, isError } = useJob(jobId);
+  const deleteJobMutation = useDeleteJob();
+
+  const handleDeleteJob = async () => {
+    if (!jobId) return;
+
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this job? This action cannot be undone.",
+    );
+    if (!confirmed) return;
+
+    try {
+      await deleteJobMutation.mutateAsync(jobId);
+      toast.success("Job deleted successfully");
+      navigate("/recruiter/jobs");
+    } catch (error) {
+      console.error("Failed to delete job:", error);
+      alert("Failed to delete job. Please try again.");
+    }
+  };
 
   if (isLoading) {
     return (
@@ -217,6 +239,15 @@ const JobDetailPage = () => {
         >
           View applicants
         </Link>
+
+        <Button
+          size="sm"
+          className="bg-red-400 hover:bg-red-500"
+          onClick={handleDeleteJob}
+        >
+          <Trash2 size={14} />
+          Delete Job
+        </Button>
       </div>
     </div>
   );
