@@ -1,5 +1,5 @@
 import request from "../../../shared/services/api";
-import type { JobFormValues } from "../types/job.types";
+import type { Job, JobFormValues } from "../types/job.types";
 
 export const getJobs = async () => {
   return await request("/jobs", {}, false);
@@ -17,4 +17,9 @@ export const createJob = async (
     },
     true,
   );
+};
+
+export const getJobById = async (jobId: string): Promise<Job> => {
+  const res = await request(`/jobs/${jobId}`, {}, true);
+  return res.data as Job;
 };

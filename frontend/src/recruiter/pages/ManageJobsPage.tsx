@@ -153,7 +153,7 @@ const ManageJobsPage = () => {
 
             <div className="mt-4 flex items-center gap-3 border-t border-(--border) pt-3">
               <Link
-                to={`/recruiter/jobs/${job.id}`}
+                to={`${job.id}`}
                 className="text-sm font-semibold text-(--primary) hover:text-(--primary-dark)"
               >
                 Manage
