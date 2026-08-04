@@ -28,7 +28,7 @@ export const login = async (data: LoginRequest) => {
       },
       body: JSON.stringify(data),
     },
-    false,
+    true,
   );
 };
 export const verifyEmail = async (token: string) => {

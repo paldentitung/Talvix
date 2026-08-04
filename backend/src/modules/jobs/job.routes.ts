@@ -6,6 +6,7 @@ import {
   deleteJobController,
   getJobController,
   getJobsController,
+  getRecruiterJobsController,
   updateJobController,
 } from "./job.controller.js";
 import { requireRole } from "../../middleware/role.middleware.js";
@@ -14,7 +15,8 @@ import { createJobSchema, updateJobSchema } from "./job.types.js";
 
 const router = express.Router();
 
-router.get("/", requireAuth, asyncHandler(getJobsController));
+router.get("/", asyncHandler(getJobsController));
+router.get("/me", requireAuth, asyncHandler(getRecruiterJobsController));
 router.get("/:id", requireAuth, asyncHandler(getJobController));
 router.post(
   "/",

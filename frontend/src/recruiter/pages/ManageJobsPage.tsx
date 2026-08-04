@@ -2,89 +2,13 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, Star, Users, Calendar } from "lucide-react";
 
-type WorkMode = "REMOTE" | "ONSITE" | "HYBRID";
-type EmploymentType = "FULL_TIME" | "PART_TIME" | "CONTRACT" | "INTERNSHIP";
-type JobStatus = "OPEN" | "CLOSED" | "DRAFT";
-
-type Job = {
-  id: string;
-  title: string;
-  location: string;
-  workMode: WorkMode;
-  employmentType: EmploymentType;
-  salaryMin: number | null;
-  salaryMax: number | null;
-  currency: string;
-  status: JobStatus;
-  openings: number | null;
-  deadline: string | null;
-  featured: boolean;
-  applicationsCount: number;
-};
-
-const jobs: Job[] = [
-  {
-    id: "1",
-    title: "Senior Product Designer",
-    location: "Remote",
-    workMode: "REMOTE",
-    employmentType: "FULL_TIME",
-    salaryMin: 150000,
-    salaryMax: 190000,
-    currency: "NPR",
-    status: "OPEN",
-    openings: 1,
-    deadline: "2026-09-15",
-    featured: true,
-    applicationsCount: 128,
-  },
-  {
-    id: "2",
-    title: "Staff Software Engineer",
-    location: "San Francisco, CA",
-    workMode: "HYBRID",
-    employmentType: "FULL_TIME",
-    salaryMin: 220000,
-    salaryMax: 260000,
-    currency: "NPR",
-    status: "OPEN",
-    openings: 2,
-    deadline: "2026-08-30",
-    featured: false,
-    applicationsCount: 96,
-  },
-  {
-    id: "3",
-    title: "Product Marketing Manager",
-    location: "New York, NY",
-    workMode: "ONSITE",
-    employmentType: "FULL_TIME",
-    salaryMin: null,
-    salaryMax: null,
-    currency: "NPR",
-    status: "DRAFT",
-    openings: 1,
-    deadline: null,
-    featured: false,
-    applicationsCount: 0,
-  },
-  {
-    id: "4",
-    title: "Customer Success Lead",
-    location: "Remote",
-    workMode: "REMOTE",
-    employmentType: "CONTRACT",
-    salaryMin: 60000,
-    salaryMax: 80000,
-    currency: "NPR",
-    status: "CLOSED",
-    openings: 0,
-    deadline: "2026-06-01",
-    featured: false,
-    applicationsCount: 84,
-  },
-];
-
+import type {
+  Job,
+  EmploymentType,
+  WorkMode,
+} from "../../features/jobs/types/job.types";
+import { useRecruiterJobs } from "../../features/jobs/hooks/useRecruiterJobs";
+type JobStatus = "OPEN" | "DRAFT" | "CLOSED";
 const statusStyles: Record<JobStatus, string> = {
   OPEN: "bg-(--success-bg) text-(--success)",
   DRAFT: "bg-(--border) text-(--text-secondary)",
@@ -127,15 +51,17 @@ const ManageJobsPage = () => {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<JobStatus | "ALL">("ALL");
 
+  const { data: jobs = [] } = useRecruiterJobs();
+
   const filteredJobs = useMemo(() => {
-    return jobs.filter((job) => {
+    return jobs.filter((job: Job) => {
       const matchesStatus = status === "ALL" || job.status === status;
       const matchesQuery = job.title
         .toLowerCase()
         .includes(query.toLowerCase());
       return matchesStatus && matchesQuery;
     });
-  }, [query, status]);
+  }, [jobs, query, status]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -177,7 +103,7 @@ const ManageJobsPage = () => {
           </div>
         )}
 
-        {filteredJobs.map((job) => (
+        {filteredJobs.map((job: Job) => (
           <div
             key={job.id}
             className="rounded-(--radius-lg) border border-(--border) bg-(--card) p-4 shadow-(--shadow-sm) sm:p-5"
@@ -195,10 +121,10 @@ const ManageJobsPage = () => {
                     />
                   )}
                 </div>
-                <p className="mt-1 text-xs text-(--text-secondary) sm:text-sm">
+                {/* <p className="mt-1 text-xs text-(--text-secondary) sm:text-sm">
                   {job.location} · {workModeLabels[job.workMode]} ·{" "}
                   {employmentLabels[job.employmentType]}
-                </p>
+                </p> */}
               </div>
 
               <span
@@ -212,7 +138,7 @@ const ManageJobsPage = () => {
               <span>{formatSalary(job)}</span>
               <span className="flex items-center gap-1.5">
                 <Users size={14} />
-                {job.applicationsCount} applicants
+                {/* {job.applicationsCount} applicants */}
               </span>
               <span className="flex items-center gap-1.5">
                 <Calendar size={14} />
@@ -227,7 +153,7 @@ const ManageJobsPage = () => {
 
             <div className="mt-4 flex items-center gap-3 border-t border-(--border) pt-3">
               <Link
-                to={`/recruiter/jobs/${job.id}`}
+                to={`${job.id}`}
                 className="text-sm font-semibold text-(--primary) hover:text-(--primary-dark)"
               >
                 Manage

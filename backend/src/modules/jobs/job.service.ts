@@ -10,6 +10,18 @@ export const getJobsService = async (): Promise<JobResponse[]> => {
   return jobs;
 };
 
+export const getRecruiterJobsService = async (
+  userId: string | undefined,
+  userRole: string | undefined,
+): Promise<JobResponse[]> => {
+  const jobs = await prisma.job.findMany({
+    where: userRole === "ADMIN" ? {} : { recruiterId: userId },
+    select: jobSelect,
+  });
+
+  return jobs;
+};
+
 export const getJobService = async (
   jobId: string,
 ): Promise<JobResponse | null> => {

@@ -5,14 +5,30 @@ import {
   createJobService,
   deleteJobService,
   updateJobService,
+  getRecruiterJobsService,
 } from "./job.service.js";
-import { CreateJobInput } from "./job.types.js";
+
 export const getJobsController = async (req: Request, res: Response) => {
   const result = await getJobsService();
 
   res.status(200).json({
     success: true,
     message: "Jobs fetch sucessfully",
+    data: result,
+  });
+};
+
+export const getRecruiterJobsController = async (
+  req: Request,
+  res: Response,
+) => {
+  const userId = req.user?.id;
+  const userRole = req.user?.role;
+  const result = await getRecruiterJobsService(userId, userRole);
+
+  res.status(200).json({
+    success: true,
+    message: "Recruiter Jobs fetch sucessfully",
     data: result,
   });
 };

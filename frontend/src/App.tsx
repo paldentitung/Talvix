@@ -17,6 +17,7 @@ import CompanyProfilePage from "./recruiter/pages/CompanyProfilePage.tsx";
 import SettingsPage from "./recruiter/pages/SettingsPage.tsx";
 import ApplicantsPage from "./recruiter/pages/ApplicantsPage.tsx";
 import AnalyticsPage from "./recruiter/pages/AnalyticsPage.tsx";
+import JobDetailPage from "./recruiter/pages/JobDetailPage.tsx";
 
 const App = () => {
   return (
@@ -85,6 +86,7 @@ const App = () => {
           <Route path="company" element={<CompanyProfilePage />} />
           <Route path="jobs" element={<ManageJobsPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="jobs/:jobId" element={<JobDetailPage />} />
         </Route>
 
         {/* Admin */}
