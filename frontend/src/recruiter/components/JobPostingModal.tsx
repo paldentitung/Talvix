@@ -1,32 +1,18 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import Modal from "../../components/ui/Modal";
-
-type WorkMode = "REMOTE" | "ONSITE" | "HYBRID";
-type EmploymentType = "FULL_TIME" | "PART_TIME" | "CONTRACT" | "INTERNSHIP";
-type ExperienceLevel = "ENTRY" | "MID" | "SENIOR" | "LEAD";
-
-export type JobFormValues = {
-  title: string;
-  description: string;
-  salaryMin: string;
-  salaryMax: string;
-  currency: string;
-  location: string;
-  workMode: WorkMode;
-  employmentType: EmploymentType;
-  experienceLevel: ExperienceLevel;
-  skills: string[];
-  deadline: string;
-  openings: string;
-  featured: boolean;
-};
+import type {
+  JobFormValues,
+  WorkMode,
+  EmploymentType,
+  ExperienceLevel,
+} from "../../features/jobs/types/job.types";
 
 const emptyForm: JobFormValues = {
   title: "",
   description: "",
-  salaryMin: "",
-  salaryMax: "",
+  salaryMin: null,
+  salaryMax: null,
   currency: "NPR",
   location: "",
   workMode: "REMOTE",
@@ -34,7 +20,7 @@ const emptyForm: JobFormValues = {
   experienceLevel: "MID",
   skills: [],
   deadline: "",
-  openings: "1",
+  openings: null,
   featured: false,
 };
 
@@ -55,26 +41,103 @@ const labelize = (value: string) =>
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
 
+type FormErrors = Partial<Record<keyof JobFormValues, string>>;
+
+const validate = (form: JobFormValues): FormErrors => {
+  const errors: FormErrors = {};
+
+  if (!form.title.trim()) {
+    errors.title = "Title is required.";
+  } else if (form.title.trim().length < 3) {
+    errors.title = "Title must be at least 3 characters.";
+  } else if (form.title.trim().length > 100) {
+    errors.title = "Title must be under 100 characters.";
+  }
+
+  if (!form.description.trim()) {
+    errors.description = "Description is required.";
+  } else if (form.description.trim().length < 20) {
+    errors.description = `Description must be at least 20 characters (${form.description.trim().length}/20).`;
+  }
+
+  if (!form.location.trim()) {
+    errors.location = "Location is required.";
+  } else if (form.location.trim().length < 2) {
+    errors.location = "Location must be at least 2 characters.";
+  }
+
+  if (form.skills.length === 0) {
+    errors.skills = "Add at least one skill.";
+  }
+
+  if (form.salaryMin !== null && form.salaryMin <= 0) {
+    errors.salaryMin = "Salary min must be greater than 0.";
+  }
+
+  if (form.salaryMax !== null && form.salaryMax <= 0) {
+    errors.salaryMax = "Salary max must be greater than 0.";
+  }
+
+  if (
+    form.salaryMin !== null &&
+    form.salaryMax !== null &&
+    form.salaryMin > form.salaryMax
+  ) {
+    errors.salaryMax =
+      "Salary max must be greater than or equal to salary min.";
+  }
+
+  if (form.openings !== null && form.openings <= 0) {
+    errors.openings = "Openings must be at least 1.";
+  }
+
+  if (form.deadline) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const deadlineDate = new Date(form.deadline);
+    if (deadlineDate < today) {
+      errors.deadline = "Deadline can't be in the past.";
+    }
+  }
+
+  return errors;
+};
+
 type PostJobModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (values: JobFormValues) => void;
+  onSubmit: (values: JobFormValues) => void | Promise<void>;
 };
 
 const PostJobModal = ({ isOpen, onClose, onSubmit }: PostJobModalProps) => {
   const [form, setForm] = useState<JobFormValues>(emptyForm);
   const [skillInput, setSkillInput] = useState("");
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [touched, setTouched] = useState<
+    Partial<Record<keyof JobFormValues, boolean>>
+  >({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const update = <K extends keyof JobFormValues>(
     key: K,
     value: JobFormValues[K],
   ) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+    setTouched((prev) => ({ ...prev, [key]: true }));
+  };
+
+  const markTouched = (key: keyof JobFormValues) => {
+    setTouched((prev) => ({ ...prev, [key]: true }));
   };
 
   const addSkill = () => {
     const value = skillInput.trim();
-    if (!value || form.skills.includes(value)) {
+    if (!value) {
+      setSkillInput("");
+      return;
+    }
+    if (form.skills.includes(value)) {
       setSkillInput("");
       return;
     }
@@ -92,13 +155,57 @@ const PostJobModal = ({ isOpen, onClose, onSubmit }: PostJobModalProps) => {
   const handleClose = () => {
     setForm(emptyForm);
     setSkillInput("");
+    setErrors({});
+    setTouched({});
+    setSubmitError(null);
+    setIsSubmitting(false);
     onClose();
   };
 
-  const handleSubmit = () => {
-    onSubmit(form);
-    handleClose();
+  const handleSubmit = async () => {
+    const validationErrors = validate(form);
+    setErrors(validationErrors);
+    setSubmitError(null);
+
+    if (Object.keys(validationErrors).length > 0) {
+      // mark every field touched so all relevant errors show up
+      setTouched({
+        title: true,
+        description: true,
+        location: true,
+        skills: true,
+        salaryMin: true,
+        salaryMax: true,
+        openings: true,
+        deadline: true,
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      await onSubmit(form);
+      handleClose();
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while posting this job. Please try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  const fieldError = (key: keyof JobFormValues) =>
+    touched[key] ? errors[key] : undefined;
+
+  const inputClass = (hasError: boolean) =>
+    `rounded-(--radius-md) border px-3 py-2 text-sm text-(--text-primary) outline-none bg-(--card) ${
+      hasError
+        ? "border-red-500 focus:border-red-500"
+        : "border-(--border) focus:border-(--primary)"
+    }`;
 
   return (
     <Modal
@@ -111,29 +218,40 @@ const PostJobModal = ({ isOpen, onClose, onSubmit }: PostJobModalProps) => {
         <>
           <button
             onClick={handleClose}
-            className="rounded-(--radius-md) border border-(--border) bg-(--card) px-4 py-2 text-sm font-semibold text-(--text-secondary) hover:bg-(--bg)"
+            disabled={isSubmitting}
+            className="rounded-(--radius-md) border border-(--border) bg-(--card) px-4 py-2 text-sm font-semibold text-(--text-secondary) hover:bg-(--bg) disabled:cursor-not-allowed disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
-            disabled={!form.title || !form.location}
+            disabled={isSubmitting}
             className="rounded-(--radius-md) bg-(--primary) px-4 py-2 text-sm font-semibold text-white hover:bg-(--primary-dark) disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Post job
+            {isSubmitting ? "Posting…" : "Post job"}
           </button>
         </>
       }
     >
       <div className="flex flex-col gap-4">
+        {submitError && (
+          <div className="rounded-(--radius-md) border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-600">
+            {submitError}
+          </div>
+        )}
+
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium text-(--text-primary)">Job title</span>
           <input
             value={form.title}
             onChange={(e) => update("title", e.target.value)}
+            onBlur={() => markTouched("title")}
             placeholder="e.g. Senior Product Designer"
-            className="rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none focus:border-(--primary)"
+            className={inputClass(!!fieldError("title"))}
           />
+          {fieldError("title") && (
+            <span className="text-xs text-red-500">{fieldError("title")}</span>
+          )}
         </label>
 
         <label className="flex flex-col gap-1.5 text-sm">
@@ -141,10 +259,23 @@ const PostJobModal = ({ isOpen, onClose, onSubmit }: PostJobModalProps) => {
           <textarea
             value={form.description}
             onChange={(e) => update("description", e.target.value)}
+            onBlur={() => markTouched("description")}
             rows={4}
             placeholder="Role responsibilities, requirements, and what makes this role interesting"
-            className="resize-none rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none focus:border-(--primary)"
+            className={`resize-none ${inputClass(!!fieldError("description"))}`}
           />
+          <div className="flex items-center justify-between">
+            {fieldError("description") ? (
+              <span className="text-xs text-red-500">
+                {fieldError("description")}
+              </span>
+            ) : (
+              <span />
+            )}
+            <span className="text-xs text-(--text-secondary)">
+              {form.description.trim().length}/20 min
+            </span>
+          </div>
         </label>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -153,9 +284,15 @@ const PostJobModal = ({ isOpen, onClose, onSubmit }: PostJobModalProps) => {
             <input
               value={form.location}
               onChange={(e) => update("location", e.target.value)}
+              onBlur={() => markTouched("location")}
               placeholder="e.g. Remote, or San Francisco, CA"
-              className="rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none focus:border-(--primary)"
+              className={inputClass(!!fieldError("location"))}
             />
+            {fieldError("location") && (
+              <span className="text-xs text-red-500">
+                {fieldError("location")}
+              </span>
+            )}
           </label>
 
           <label className="flex flex-col gap-1.5 text-sm">
@@ -163,7 +300,7 @@ const PostJobModal = ({ isOpen, onClose, onSubmit }: PostJobModalProps) => {
             <select
               value={form.workMode}
               onChange={(e) => update("workMode", e.target.value as WorkMode)}
-              className="rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none focus:border-(--primary)"
+              className={inputClass(false)}
             >
               {workModeOptions.map((opt) => (
                 <option key={opt} value={opt}>
@@ -182,7 +319,7 @@ const PostJobModal = ({ isOpen, onClose, onSubmit }: PostJobModalProps) => {
               onChange={(e) =>
                 update("employmentType", e.target.value as EmploymentType)
               }
-              className="rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none focus:border-(--primary)"
+              className={inputClass(false)}
             >
               {employmentOptions.map((opt) => (
                 <option key={opt} value={opt}>
@@ -201,7 +338,7 @@ const PostJobModal = ({ isOpen, onClose, onSubmit }: PostJobModalProps) => {
               onChange={(e) =>
                 update("experienceLevel", e.target.value as ExperienceLevel)
               }
-              className="rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none focus:border-(--primary)"
+              className={inputClass(false)}
             >
               {experienceOptions.map((opt) => (
                 <option key={opt} value={opt}>
@@ -219,11 +356,23 @@ const PostJobModal = ({ isOpen, onClose, onSubmit }: PostJobModalProps) => {
             </span>
             <input
               type="number"
-              value={form.salaryMin}
-              onChange={(e) => update("salaryMin", e.target.value)}
+              min={1}
+              value={form.salaryMin ?? ""}
+              onChange={(e) =>
+                update(
+                  "salaryMin",
+                  e.target.value === "" ? null : Number(e.target.value),
+                )
+              }
+              onBlur={() => markTouched("salaryMin")}
               placeholder="Optional"
-              className="rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none focus:border-(--primary)"
+              className={inputClass(!!fieldError("salaryMin"))}
             />
+            {fieldError("salaryMin") && (
+              <span className="text-xs text-red-500">
+                {fieldError("salaryMin")}
+              </span>
+            )}
           </label>
 
           <label className="flex flex-col gap-1.5 text-sm">
@@ -232,11 +381,23 @@ const PostJobModal = ({ isOpen, onClose, onSubmit }: PostJobModalProps) => {
             </span>
             <input
               type="number"
-              value={form.salaryMax}
-              onChange={(e) => update("salaryMax", e.target.value)}
+              min={1}
+              value={form.salaryMax ?? ""}
+              onChange={(e) =>
+                update(
+                  "salaryMax",
+                  e.target.value === "" ? null : Number(e.target.value),
+                )
+              }
+              onBlur={() => markTouched("salaryMax")}
               placeholder="Optional"
-              className="rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none focus:border-(--primary)"
+              className={inputClass(!!fieldError("salaryMax"))}
             />
+            {fieldError("salaryMax") && (
+              <span className="text-xs text-red-500">
+                {fieldError("salaryMax")}
+              </span>
+            )}
           </label>
 
           <label className="flex flex-col gap-1.5 text-sm">
@@ -244,7 +405,7 @@ const PostJobModal = ({ isOpen, onClose, onSubmit }: PostJobModalProps) => {
             <select
               value={form.currency}
               onChange={(e) => update("currency", e.target.value)}
-              className="rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none focus:border-(--primary)"
+              className={inputClass(false)}
             >
               {currencyOptions.map((opt) => (
                 <option key={opt} value={opt}>
@@ -261,10 +422,21 @@ const PostJobModal = ({ isOpen, onClose, onSubmit }: PostJobModalProps) => {
             <input
               type="number"
               min={1}
-              value={form.openings}
-              onChange={(e) => update("openings", e.target.value)}
-              className="rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none focus:border-(--primary)"
+              value={form.openings ?? ""}
+              onChange={(e) =>
+                update(
+                  "openings",
+                  e.target.value === "" ? null : Number(e.target.value),
+                )
+              }
+              onBlur={() => markTouched("openings")}
+              className={inputClass(!!fieldError("openings"))}
             />
+            {fieldError("openings") && (
+              <span className="text-xs text-red-500">
+                {fieldError("openings")}
+              </span>
+            )}
           </label>
 
           <label className="flex flex-col gap-1.5 text-sm">
@@ -275,8 +447,14 @@ const PostJobModal = ({ isOpen, onClose, onSubmit }: PostJobModalProps) => {
               type="date"
               value={form.deadline}
               onChange={(e) => update("deadline", e.target.value)}
-              className="rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none focus:border-(--primary)"
+              onBlur={() => markTouched("deadline")}
+              className={inputClass(!!fieldError("deadline"))}
             />
+            {fieldError("deadline") && (
+              <span className="text-xs text-red-500">
+                {fieldError("deadline")}
+              </span>
+            )}
           </label>
         </div>
 
@@ -292,8 +470,9 @@ const PostJobModal = ({ isOpen, onClose, onSubmit }: PostJobModalProps) => {
                   addSkill();
                 }
               }}
+              onBlur={() => markTouched("skills")}
               placeholder="Type a skill and press Enter"
-              className="flex-1 rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none focus:border-(--primary)"
+              className={`flex-1 ${inputClass(!!fieldError("skills"))}`}
             />
             <button
               type="button"
@@ -303,6 +482,9 @@ const PostJobModal = ({ isOpen, onClose, onSubmit }: PostJobModalProps) => {
               Add
             </button>
           </div>
+          {fieldError("skills") && (
+            <span className="text-xs text-red-500">{fieldError("skills")}</span>
+          )}
           {form.skills.length > 0 && (
             <div className="mt-1 flex flex-wrap gap-2">
               {form.skills.map((skill) => (

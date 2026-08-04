@@ -3,10 +3,13 @@ import { Outlet } from "react-router-dom";
 import Header from "../components/Header";
 import JobPostingModal from "../components/JobPostingModal";
 import Sidebar from "../components/Sidebar";
+import { useCreateJob } from "../../features/jobs/hooks/useCreateJob";
 
 const RecruiterLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isPostOpen, setIsPostOpen] = useState(false);
+
+  const postJobMutation = useCreateJob();
 
   return (
     <div className="min-h-screen bg-(--bg)">
@@ -41,9 +44,16 @@ const RecruiterLayout = () => {
       <JobPostingModal
         isOpen={isPostOpen}
         onClose={() => setIsPostOpen(false)}
-        onSubmit={(values) => {
-          // values.title, values.salaryMin, etc. — wire this to your create-job API call
-          console.log(values);
+        onSubmit={async (values) => {
+          try {
+            await postJobMutation.mutateAsync({
+              ...values,
+              deadline: values.deadline || null,
+            });
+            setIsPostOpen(false);
+          } catch (error) {
+            console.error(error);
+          }
         }}
       />
     </div>

@@ -14,7 +14,7 @@ import { createJobSchema, updateJobSchema } from "./job.types.js";
 
 const router = express.Router();
 
-router.get("/", requireAuth, asyncHandler(getJobsController));
+router.get("/", asyncHandler(getJobsController));
 router.get("/:id", requireAuth, asyncHandler(getJobController));
 router.post(
   "/",

@@ -1,44 +1,29 @@
 import { z } from "zod";
 
 export const createJobSchema = z.object({
-  title: z
-    .string()
-    .min(3, "Title must be at least 3 characters")
-    .max(100, "Title cannot exceed 100 characters"),
+  title: z.string().min(3).max(100),
+  description: z.string().min(20),
 
-  description: z.string().min(20, "Description must be at least 20 characters"),
-
-  salaryMin: z.number().positive().optional(),
-
-  salaryMax: z.number().positive().optional(),
+  salaryMin: z.number().positive().nullable().optional(),
+  salaryMax: z.number().positive().nullable().optional(),
 
   currency: z.string().default("NPR"),
 
-  location: z.string().min(2, "Location is required"),
+  location: z.string().min(2),
 
-  workMode: z.enum(["ONSITE", "REMOTE", "HYBRID"], {
-    message: "Invalid work mode",
-  }),
+  workMode: z.enum(["ONSITE", "REMOTE", "HYBRID"]),
+  employmentType: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERNSHIP"]),
+  experienceLevel: z.enum(["ENTRY", "MID", "SENIOR", "LEAD"]),
 
-  employmentType: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERNSHIP"], {
-    message: "Invalid employment type",
-  }),
+  skills: z.array(z.string()).min(1),
 
-  experienceLevel: z.enum(["ENTRY", "MID", "SENIOR", "LEAD"], {
-    message: "Invalid experience level",
-  }),
+  openings: z.number().int().positive().nullable().optional(),
 
-  skills: z.array(z.string()).min(1, "At least one skill is required"),
-
-  openings: z.number().int().positive().optional(),
-
-  deadline: z.coerce.date().optional(),
+  deadline: z.coerce.date().nullable().optional(),
 
   featured: z.boolean().optional(),
 
-  status: z.enum(["DRAFT", "OPEN", "CLOSED"], {
-    message: "Invalid job status",
-  }),
+  status: z.enum(["DRAFT", "OPEN", "CLOSED"]).optional(),
 });
 
 export const updateJobSchema = createJobSchema.partial();
