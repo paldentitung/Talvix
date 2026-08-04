@@ -7,7 +7,7 @@ import type {
   EmploymentType,
   WorkMode,
 } from "../../features/jobs/types/job.types";
-import { useJobs } from "../../features/jobs/hooks/useJobs";
+import { useRecruiterJobs } from "../../features/jobs/hooks/useRecruiterJobs";
 type JobStatus = "OPEN" | "DRAFT" | "CLOSED";
 const statusStyles: Record<JobStatus, string> = {
   OPEN: "bg-(--success-bg) text-(--success)",
@@ -51,7 +51,7 @@ const ManageJobsPage = () => {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<JobStatus | "ALL">("ALL");
 
-  const { data: jobs = [] } = useJobs();
+  const { data: jobs = [] } = useRecruiterJobs();
 
   const filteredJobs = useMemo(() => {
     return jobs.filter((job: Job) => {

@@ -2,7 +2,11 @@ import request from "../../../shared/services/api";
 import type { Job, JobFormValues } from "../types/job.types";
 
 export const getJobs = async () => {
-  return await request("/jobs", {}, false);
+  return await request("/jobs", {});
+};
+
+export const getRecruiterJobs = async () => {
+  return await request("/jobs/me", {}, true);
 };
 
 export const createJob = async (

@@ -25,7 +25,7 @@ export default function FeaturedJobs() {
         />
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {data?.data.map((job: any) => (
+          {data?.map((job: any) => (
             <JobCard key={job.id} job={job} />
           ))}
         </div>
