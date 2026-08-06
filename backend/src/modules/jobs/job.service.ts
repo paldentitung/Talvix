@@ -7,6 +7,7 @@ import { Prisma } from "@prisma/client";
 export const getJobsService = async (
   page = 1,
   pageSize = 10,
+  search?: string,
 ): Promise<{
   jobs: JobResponse[];
   total: number;
@@ -15,6 +16,14 @@ export const getJobsService = async (
 }> => {
   const where: Prisma.JobWhereInput = {
     status: "OPEN",
+    ...(search && {
+      OR: [
+        { title: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+        { location: { contains: search, mode: "insensitive" } },
+        { skills: { hasSome: [search] } },
+      ],
+    }),
   };
 
   const [jobs, total] = await Promise.all([

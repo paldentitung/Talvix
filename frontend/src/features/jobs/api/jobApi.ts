@@ -5,8 +5,15 @@ import type {
   UpdateJobStatusPayload,
 } from "../types/job.types";
 
-export const getJobs = async () => {
-  return await request("/jobs", {});
+export const getJobs = async (page = 1, pageSize = 10, search?: string) => {
+  const params = new URLSearchParams();
+  params.append("page", page.toString());
+  params.append("pageSize", pageSize.toString());
+  if (search) {
+    params.append("search", search);
+  }
+
+  return await request(`/jobs?${params.toString()}`, {});
 };
 
 export const getRecruiterJobs = async () => {

@@ -9,7 +9,6 @@ import CTASection from "../components/home/CTASection";
 const HomePage = () => {
   return (
     <>
-      <Navbar />
       <Hero />
       <FeaturedJobs />
       <StatsBand />

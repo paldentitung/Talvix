@@ -12,7 +12,8 @@ import {
 export const getJobsController = async (req: Request, res: Response) => {
   const page = Number(req.query.page) || 1;
   const pageSize = Number(req.query.pageSize) || 10;
-  const result = await getJobsService(page, pageSize);
+  const search = req.query.search as string | undefined;
+  const result = await getJobsService(page, pageSize, search);
 
   res.status(200).json({
     success: true,
