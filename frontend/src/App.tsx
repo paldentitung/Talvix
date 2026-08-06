@@ -18,7 +18,8 @@ import SettingsPage from "./recruiter/pages/SettingsPage.tsx";
 import ApplicantsPage from "./recruiter/pages/ApplicantsPage.tsx";
 import AnalyticsPage from "./recruiter/pages/AnalyticsPage.tsx";
 import JobDetailPage from "./recruiter/pages/JobDetailPage.tsx";
-
+import JobsPage from "./pages/JobsPage.tsx";
+import PublicLayout from "./layouts/PublicLayout.tsx";
 const App = () => {
   return (
     <>
@@ -64,7 +65,22 @@ const App = () => {
 
       <Routes>
         {/* Public */}
-        <Route path="/" element={<HomePage />} />
+        <Route
+          path="/"
+          element={
+            <PublicLayout>
+              <HomePage />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/jobs"
+          element={
+            <PublicLayout>
+              <JobsPage />
+            </PublicLayout>
+          }
+        />
 
         {/* Auth */}
         <Route path="/login" element={<LoginPage />} />

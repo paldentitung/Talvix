@@ -1,12 +1,12 @@
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import Logo from "./Logo";
 import Button from "../ui/Button";
 
 const NAV_LINKS = [
+  { label: "Home", href: "/" },
   { label: "Find Jobs", href: "/jobs" },
-  { label: "Companies", href: "/companies" },
-  { label: "For Employers", href: "/employers" },
   { label: "About", href: "/about" },
+  { label: "Contact", href: "/contact" },
 ];
 
 export default function Navbar() {
@@ -17,13 +17,20 @@ export default function Navbar() {
 
         <div className="hidden md:flex items-center gap-8">
           {NAV_LINKS.map((link) => (
-            <Link
+            <NavLink
               key={link.href}
               to={link.href}
-              className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              end={link.href === "/"}
+              className={({ isActive }) =>
+                `text-sm font-medium transition-colors ${
+                  isActive
+                    ? "text-[var(--primary)] underline underline-offset-6 underline-3 decoration-[var(--primary)]"
+                    : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                }`
+              }
             >
               {link.label}
-            </Link>
+            </NavLink>
           ))}
         </div>
 

@@ -64,3 +64,18 @@ export type EmploymentType =
   | "CONTRACT"
   | "INTERNSHIP";
 export type ExperienceLevel = "ENTRY" | "MID" | "SENIOR" | "LEAD";
+export type JobStatus = "OPEN" | "DRAFT" | "CLOSED";
+export type UpdateJobStatusPayload = {
+  jobId: string;
+  status: JobStatus;
+};
+export interface JobFilters {
+  location?: string;
+  workMode?: WorkMode;
+  employmentType?: EmploymentType;
+  experienceLevel?: ExperienceLevel;
+  skills?: string[];
+  minSalary?: number;
+  maxSalary?: number;
+  currency?: string;
+}
