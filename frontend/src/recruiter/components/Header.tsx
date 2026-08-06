@@ -1,5 +1,5 @@
 import { useLocation } from "react-router-dom";
-import { Bell, User, Menu } from "lucide-react";
+import { Bell, User, Menu, Pencil } from "lucide-react";
 import Button from "../../components/ui/Button";
 
 const pageMeta: Record<string, { title: string; subtitle: string }> = {
@@ -82,13 +82,17 @@ const Header = ({ onMenuClick, openJobPostingModal }: any) => {
           <User size={24} className="hidden sm:block" />
         </button>
 
-        <Button
-          variant="primary"
-          className="hidden sm:inline-flex"
-          onClick={openJobPostingModal}
-        >
-          Post a Job
-        </Button>
+        <div>
+          <Button
+            variant="primary"
+            className="hidden sm:inline-flex"
+            onClick={openJobPostingModal}
+            size="sm"
+          >
+            <Pencil size={12} />
+            Post a Job
+          </Button>
+        </div>
       </div>
     </div>
   );
