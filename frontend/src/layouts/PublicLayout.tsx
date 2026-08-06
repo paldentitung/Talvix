@@ -3,7 +3,7 @@ import Navbar from "../components/layout/Navbar";
 
 const PublicLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div>
+    <div className="flex flex-col min-h-screen">
       <header>
         <Navbar />
       </header>

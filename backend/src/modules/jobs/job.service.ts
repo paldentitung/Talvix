@@ -1,6 +1,11 @@
 import { JobResponse, jobSelect } from "./job.select.js";
 import prisma from "../../lib/prisma.js";
-import { CreateJobInput, JobStatus, UpdateJobInput } from "./job.types.js";
+import {
+  CreateJobInput,
+  JobStatus,
+  UpdateJobInput,
+  JobFilters,
+} from "./job.types.js";
 import AppError from "../../utils/AppError.js";
 import { Prisma } from "@prisma/client";
 
@@ -8,6 +13,7 @@ export const getJobsService = async (
   page = 1,
   pageSize = 10,
   search?: string,
+  filters?: JobFilters,
 ): Promise<{
   jobs: JobResponse[];
   total: number;
@@ -22,6 +28,28 @@ export const getJobsService = async (
         { description: { contains: search, mode: "insensitive" } },
         { location: { contains: search, mode: "insensitive" } },
         { skills: { hasSome: [search] } },
+      ],
+    }),
+    ...(filters?.location && {
+      location: { contains: filters.location, mode: "insensitive" },
+    }),
+    ...(filters?.workMode && { workMode: filters.workMode }),
+    ...(filters?.employmentType && { employmentType: filters.employmentType }),
+    ...(filters?.experienceLevel && {
+      experienceLevel: filters.experienceLevel,
+    }),
+    ...(filters?.skills?.length && { skills: { hasSome: filters.skills } }),
+    ...(filters?.currency && { currency: filters.currency }),
+    ...((filters?.minSalary !== undefined ||
+      filters?.maxSalary !== undefined) && {
+      OR: undefined, // see note below
+      AND: [
+        ...(filters.minSalary !== undefined
+          ? [{ salaryMax: { gte: filters.minSalary } }]
+          : []),
+        ...(filters.maxSalary !== undefined
+          ? [{ salaryMin: { lte: filters.maxSalary } }]
+          : []),
       ],
     }),
   };
@@ -44,7 +72,6 @@ export const getJobsService = async (
     totalPages: Math.ceil(total / pageSize),
   };
 };
-
 export const getRecruiterJobsService = async (
   userId: string | undefined,
   userRole: string | undefined,

@@ -8,20 +8,29 @@ import {
   getRecruiterJobsService,
   updateJobStatusService,
 } from "./job.service.js";
-
+import { jobFiltersSchema } from "./job.types.js";
 export const getJobsController = async (req: Request, res: Response) => {
   const page = Number(req.query.page) || 1;
   const pageSize = Number(req.query.pageSize) || 10;
   const search = req.query.search as string | undefined;
-  const result = await getJobsService(page, pageSize, search);
+
+  const parsed = jobFiltersSchema.safeParse(req.query);
+  if (!parsed.success) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid filter parameters",
+      errors: parsed.error.flatten().fieldErrors,
+    });
+  }
+
+  const result = await getJobsService(page, pageSize, search, parsed.data);
 
   res.status(200).json({
     success: true,
-    message: "Jobs fetch sucessfully",
+    message: "Jobs fetched successfully",
     data: result,
   });
 };
-
 export const updateJobStatusController = async (
   req: Request<{ id: string }>,
   res: Response,
