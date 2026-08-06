@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bookmark, Building2 } from "lucide-react";
+import { Bookmark, Building2, Link } from "lucide-react";
 import type { Job } from "../../types/job.type";
 import Badge from "../ui/Badge";
 
@@ -93,7 +93,10 @@ export default function JobCard({
   const isActivelyHiring = job.status === "OPEN" && (job.openings ?? 0) > 0;
 
   return (
-    <div className="bg-[var(--card)] border border-[var(--border)] rounded-[var(--radius-lg)] p-6 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] hover:-translate-y-1 hover:border-[#d8dcf0] transition-all flex flex-col gap-4">
+    <Link
+      to={`/jobs/${job.id}`}
+      className="bg-[var(--card)] border border-[var(--border)] rounded-[var(--radius-lg)] p-6 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] hover:-translate-y-1 hover:border-[#d8dcf0] transition-all flex flex-col gap-4"
+    >
       <div className="flex items-start justify-between">
         {job.recruiter?.companyLogo ? (
           <img
@@ -160,6 +163,6 @@ export default function JobCard({
           Posted {formatPostedAt(job.createdAt)}
         </span>
       </div>
-    </div>
+    </Link>
   );
 }
