@@ -10,7 +10,9 @@ import {
 } from "./job.service.js";
 
 export const getJobsController = async (req: Request, res: Response) => {
-  const result = await getJobsService();
+  const page = Number(req.query.page) || 1;
+  const pageSize = Number(req.query.pageSize) || 10;
+  const result = await getJobsService(page, pageSize);
 
   res.status(200).json({
     success: true,
@@ -18,6 +20,7 @@ export const getJobsController = async (req: Request, res: Response) => {
     data: result,
   });
 };
+
 export const updateJobStatusController = async (
   req: Request<{ id: string }>,
   res: Response,

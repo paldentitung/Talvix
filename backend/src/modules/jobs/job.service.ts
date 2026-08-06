@@ -2,13 +2,38 @@ import { JobResponse, jobSelect } from "./job.select.js";
 import prisma from "../../lib/prisma.js";
 import { CreateJobInput, JobStatus, UpdateJobInput } from "./job.types.js";
 import AppError from "../../utils/AppError.js";
+import { Prisma } from "@prisma/client";
 
-export const getJobsService = async (): Promise<JobResponse[]> => {
-  const jobs = await prisma.job.findMany({
-    select: jobSelect,
-  });
+export const getJobsService = async (
+  page = 1,
+  pageSize = 10,
+): Promise<{
+  jobs: JobResponse[];
+  total: number;
+  page: number;
+  totalPages: number;
+}> => {
+  const where: Prisma.JobWhereInput = {
+    status: "OPEN",
+  };
 
-  return jobs;
+  const [jobs, total] = await Promise.all([
+    prisma.job.findMany({
+      where,
+      select: jobSelect,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.job.count({ where }),
+  ]);
+
+  return {
+    jobs,
+    total,
+    page,
+    totalPages: Math.ceil(total / pageSize),
+  };
 };
 
 export const getRecruiterJobsService = async (

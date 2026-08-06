@@ -1,6 +1,7 @@
 import JobCard from "../jobs/JobCard";
 import SectionHead from "../ui/SectionHead";
 import { useJobs } from "../../features/jobs/hooks/useJobs";
+import type { Job } from "../../types/job.type";
 
 export default function FeaturedJobs() {
   const { data, isLoading, isError, error } = useJobs();
@@ -24,10 +25,18 @@ export default function FeaturedJobs() {
           linkLabel="Browse all jobs"
         />
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {data?.map((job: any) => (
-            <JobCard key={job.id} job={job} />
-          ))}
+        <div className="w-full">
+          {data?.jobs?.length === 0 ? (
+            <p className="text-sm text-(--text-secondary)">
+              No featured jobs right now — check back soon.
+            </p>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {data?.jobs?.map((job: Job) => (
+                <JobCard key={job.id} job={job} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>
