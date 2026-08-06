@@ -1,6 +1,7 @@
 import { JobResponse, jobSelect } from "./job.select.js";
 import prisma from "../../lib/prisma.js";
-import { CreateJobInput, UpdateJobInput } from "./job.types.js";
+import { CreateJobInput, JobStatus, UpdateJobInput } from "./job.types.js";
+import AppError from "../../utils/AppError.js";
 
 export const getJobsService = async (): Promise<JobResponse[]> => {
   const jobs = await prisma.job.findMany({
@@ -20,6 +21,39 @@ export const getRecruiterJobsService = async (
   });
 
   return jobs;
+};
+
+export const updateJobStatusService = async (
+  jobId: string,
+  newStatus: JobStatus,
+  userId: string,
+  role: string,
+) => {
+  const job = await prisma.job.findUnique({ where: { id: jobId } });
+
+  if (!job) {
+    throw new AppError("Job not found", 404);
+  }
+
+  if (job.recruiterId !== userId && role !== "ADMIN") {
+    throw new AppError("You cannot update this job", 403);
+  }
+
+  // block reopening a job past its deadline
+  if (
+    newStatus === "OPEN" &&
+    job.status === "CLOSED" &&
+    job.deadline &&
+    new Date(job.deadline) < new Date()
+  ) {
+    throw new AppError("Cannot reopen a job past its deadline", 400);
+  }
+
+  return prisma.job.update({
+    where: { id: jobId },
+    data: { status: newStatus },
+    select: jobSelect,
+  });
 };
 
 export const getJobService = async (
@@ -43,29 +77,18 @@ export const createJobService = async (
     data: {
       title: data.title,
       description: data.description,
-
       salaryMin: data.salaryMin,
       salaryMax: data.salaryMax,
       currency: data.currency,
-
       location: data.location,
-
       workMode: data.workMode,
-
       employmentType: data.employmentType,
-
       experienceLevel: data.experienceLevel,
-
       skills: data.skills,
-
       openings: data.openings,
-
       deadline: data.deadline,
-
       featured: data.featured,
-
-      status: data.status,
-
+      status: "DRAFT",
       recruiterId,
     },
     select: jobSelect,
@@ -101,27 +124,17 @@ export const updateJobService = async (
     data: {
       title: data.title,
       description: data.description,
-
       salaryMin: data.salaryMin,
       salaryMax: data.salaryMax,
       currency: data.currency,
-
       location: data.location,
-
       workMode: data.workMode,
-
       employmentType: data.employmentType,
-
       experienceLevel: data.experienceLevel,
-
       skills: data.skills,
-
       openings: data.openings,
-
       deadline: data.deadline,
-
       featured: data.featured,
-
       status: data.status,
     },
     select: jobSelect,

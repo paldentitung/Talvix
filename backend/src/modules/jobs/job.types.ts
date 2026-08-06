@@ -30,3 +30,4 @@ export const updateJobSchema = createJobSchema.partial();
 
 export type CreateJobInput = z.infer<typeof createJobSchema>;
 export type UpdateJobInput = z.infer<typeof updateJobSchema>;
+export type JobStatus = "OPEN" | "DRAFT" | "CLOSED";

@@ -10,6 +10,9 @@ export const useCreateJob = () => {
       queryClient.invalidateQueries({
         queryKey: ["jobs"],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["recruiterJobs"],
+      });
     },
   });
 };

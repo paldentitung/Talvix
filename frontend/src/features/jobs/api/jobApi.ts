@@ -1,5 +1,9 @@
 import request from "../../../shared/services/api";
-import type { Job, JobFormValues } from "../types/job.types";
+import type {
+  Job,
+  JobFormValues,
+  UpdateJobStatusPayload,
+} from "../types/job.types";
 
 export const getJobs = async () => {
   return await request("/jobs", {});
@@ -53,6 +57,25 @@ export const updateJob = async ({
         "Content-Type": "application/json",
       },
       body: JSON.stringify(jobData),
+    },
+    true,
+  );
+
+  return res.data as Job;
+};
+
+export const updateJobStatus = async ({
+  jobId,
+  status,
+}: UpdateJobStatusPayload): Promise<Job> => {
+  const res = await request(
+    `/jobs/${jobId}/status`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status }),
     },
     true,
   );

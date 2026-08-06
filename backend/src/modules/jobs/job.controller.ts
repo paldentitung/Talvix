@@ -6,6 +6,7 @@ import {
   deleteJobService,
   updateJobService,
   getRecruiterJobsService,
+  updateJobStatusService,
 } from "./job.service.js";
 
 export const getJobsController = async (req: Request, res: Response) => {
@@ -17,7 +18,23 @@ export const getJobsController = async (req: Request, res: Response) => {
     data: result,
   });
 };
+export const updateJobStatusController = async (
+  req: Request<{ id: string }>,
+  res: Response,
+) => {
+  const result = await updateJobStatusService(
+    req.params.id,
+    req.body.status,
+    req.user!.id,
+    req.user!.role,
+  );
 
+  res.status(200).json({
+    success: true,
+    message: "Job status updated successfully",
+    data: result,
+  });
+};
 export const getRecruiterJobsController = async (
   req: Request,
   res: Response,

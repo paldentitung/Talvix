@@ -2,30 +2,22 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, Star, Users, Calendar } from "lucide-react";
 
-import type {
-  Job,
-  EmploymentType,
-  WorkMode,
-} from "../../features/jobs/types/job.types";
+import type { Job, JobStatus } from "../../features/jobs/types/job.types";
 import { useRecruiterJobs } from "../../features/jobs/hooks/useRecruiterJobs";
-type JobStatus = "OPEN" | "DRAFT" | "CLOSED";
+import { useUpdateJobStatus } from "../../features/jobs/hooks/useUpdateJobStatus";
+
 const statusStyles: Record<JobStatus, string> = {
   OPEN: "bg-(--success-bg) text-(--success)",
   DRAFT: "bg-(--border) text-(--text-secondary)",
   CLOSED: "bg-(--danger-bg) text-(--danger)",
 };
-
-const employmentLabels: Record<EmploymentType, string> = {
-  FULL_TIME: "Full-time",
-  PART_TIME: "Part-time",
-  CONTRACT: "Contract",
-  INTERNSHIP: "Internship",
-};
-
-const workModeLabels: Record<WorkMode, string> = {
-  REMOTE: "Remote",
-  ONSITE: "Onsite",
-  HYBRID: "Hybrid",
+const statusActions: Record<
+  JobStatus,
+  { label: string; next: JobStatus } | null
+> = {
+  DRAFT: { label: "Publish", next: "OPEN" },
+  OPEN: { label: "Close", next: "CLOSED" },
+  CLOSED: { label: "Reopen", next: "OPEN" },
 };
 
 const formatSalary = (job: Job) => {
@@ -52,6 +44,7 @@ const ManageJobsPage = () => {
   const [status, setStatus] = useState<JobStatus | "ALL">("ALL");
 
   const { data: jobs = [] } = useRecruiterJobs();
+  const { mutate: updateStatus, isPending } = useUpdateJobStatus();
 
   const filteredJobs = useMemo(() => {
     return jobs.filter((job: Job) => {
@@ -164,6 +157,20 @@ const ManageJobsPage = () => {
               >
                 View applicants
               </Link>
+              {statusActions[job.status] && (
+                <button
+                  disabled={isPending}
+                  onClick={() =>
+                    updateStatus({
+                      jobId: job.id,
+                      status: statusActions[job.status]!.next,
+                    })
+                  }
+                  className="text-sm font-semibold text-(--text-secondary) hover:text-(--text-primary) disabled:opacity-50"
+                >
+                  {statusActions[job.status]!.label}
+                </button>
+              )}
             </div>
           </div>
         ))}

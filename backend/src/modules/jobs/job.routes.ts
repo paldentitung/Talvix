@@ -8,6 +8,7 @@ import {
   getJobsController,
   getRecruiterJobsController,
   updateJobController,
+  updateJobStatusController,
 } from "./job.controller.js";
 import { requireRole } from "../../middleware/role.middleware.js";
 import { validate } from "../../middleware/validate.middleware.js";
@@ -17,6 +18,11 @@ const router = express.Router();
 
 router.get("/", asyncHandler(getJobsController));
 router.get("/me", requireAuth, asyncHandler(getRecruiterJobsController));
+router.patch(
+  "/:id/status",
+  requireAuth,
+  asyncHandler(updateJobStatusController),
+);
 router.get("/:id", requireAuth, asyncHandler(getJobController));
 router.post(
   "/",
