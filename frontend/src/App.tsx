@@ -22,6 +22,7 @@ import JobsPage from "./pages/JobsPage.tsx";
 import PublicLayout from "./layouts/PublicLayout.tsx";
 import SavedJobs from "./candidate/pages/SavedJobs.tsx";
 import CandidateLayout from "./layouts/CandidateLayout.tsx";
+import CandidateJobsPage from "./candidate/pages/CandidateJobsPage.tsx";
 const App = () => {
   return (
     <>
@@ -95,6 +96,7 @@ const App = () => {
         <Route path="/candidate" element={<CandidateLayout />}>
           <Route path="dashboard" element={<CandidateDashboardPage />} />
           <Route path="saved-jobs" element={<SavedJobs />} />
+          <Route path="jobs" element={<CandidateJobsPage />} />
         </Route>
 
         {/* Recruiter */}

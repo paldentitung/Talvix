@@ -204,25 +204,6 @@ const StatCard = ({ stat }: { stat: (typeof stats)[number] }) => {
 const DashboardPage = () => {
   return (
     <div className="flex flex-col gap-6">
-      {/* Greeting */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-(--text-primary)">
-            Good afternoon, Alex
-          </h1>
-          <p className="mt-1 text-sm text-(--text-secondary)">
-            Here's what's happening with your job search this week.
-          </p>
-        </div>
-        <Link
-          to="/candidate/jobs"
-          className="inline-flex items-center gap-2 rounded-(--radius-md) bg-(--primary) px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-(--primary-dark)"
-        >
-          Find new jobs
-          <ArrowRight size={16} />
-        </Link>
-      </div>
-
       {/* Stat cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
