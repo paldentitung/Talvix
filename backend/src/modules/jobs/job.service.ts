@@ -228,3 +228,65 @@ export const deleteJobService = async (
     select: jobSelect,
   });
 };
+
+export const saveJobService = async (userId: string, jobId: string) => {
+  const job = await prisma.job.findUnique({
+    where: { id: jobId },
+  });
+
+  if (!job) {
+    throw new AppError("Job not found", 404);
+  }
+
+  const existing = await prisma.savedJob.findUnique({
+    where: {
+      userId_jobId: {
+        userId,
+        jobId,
+      },
+    },
+  });
+
+  if (existing) {
+    await prisma.savedJob.delete({
+      where: {
+        userId_jobId: {
+          userId,
+          jobId,
+        },
+      },
+    });
+
+    return {
+      saved: false,
+    };
+  }
+
+  await prisma.savedJob.create({
+    data: {
+      userId,
+      jobId,
+    },
+  });
+
+  return {
+    saved: true,
+  };
+};
+export const getSavedJobsService = async (userId: string) => {
+  return prisma.savedJob.findMany({
+    where: {
+      userId,
+    },
+    include: {
+      job: {
+        include: {
+          recruiter: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+};
