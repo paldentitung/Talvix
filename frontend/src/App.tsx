@@ -7,7 +7,7 @@ import ForgotPasswordPage from "./features/auth/pages/ForgotPasswordPage";
 import VerifyEmailPage from "./features/auth/pages/VerifyEmailPage";
 import ResetPasswordPage from "./features/auth/pages/ResetPasswordPage";
 
-import CandidateDashboardPage from "./candidate/DashboardPage";
+import CandidateDashboardPage from "./candidate/pages/DashboardPage.tsx";
 import RecruiterDashboardPage from "./recruiter/pages/DashboardPage.tsx";
 import AdminDashboardPage from "./admin/DashboardPage";
 
@@ -20,6 +20,8 @@ import AnalyticsPage from "./recruiter/pages/AnalyticsPage.tsx";
 import JobDetailPage from "./recruiter/pages/JobDetailPage.tsx";
 import JobsPage from "./pages/JobsPage.tsx";
 import PublicLayout from "./layouts/PublicLayout.tsx";
+import SavedJobs from "./candidate/pages/SavedJobs.tsx";
+import CandidateLayout from "./layouts/CandidateLayout.tsx";
 const App = () => {
   return (
     <>
@@ -90,8 +92,9 @@ const App = () => {
         <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
 
         {/* Candidate */}
-        <Route path="/candidate">
+        <Route path="/candidate" element={<CandidateLayout />}>
           <Route path="dashboard" element={<CandidateDashboardPage />} />
+          <Route path="saved-jobs" element={<SavedJobs />} />
         </Route>
 
         {/* Recruiter */}

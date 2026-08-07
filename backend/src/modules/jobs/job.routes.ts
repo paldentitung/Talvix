@@ -7,6 +7,8 @@ import {
   getJobController,
   getJobsController,
   getRecruiterJobsController,
+  getSavedJobsController,
+  saveJobController,
   updateJobController,
   updateJobStatusController,
 } from "./job.controller.js";
@@ -18,6 +20,7 @@ const router = express.Router();
 
 router.get("/", asyncHandler(getJobsController));
 router.get("/me", requireAuth, asyncHandler(getRecruiterJobsController));
+router.get("/saved", requireAuth, asyncHandler(getSavedJobsController));
 router.patch(
   "/:id/status",
   requireAuth,
@@ -45,4 +48,5 @@ router.delete(
   asyncHandler(deleteJobController),
 );
 
+router.post("/:id/save-toggle", requireAuth, asyncHandler(saveJobController));
 export default router;

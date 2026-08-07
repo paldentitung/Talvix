@@ -7,6 +7,8 @@ import {
   updateJobService,
   getRecruiterJobsService,
   updateJobStatusService,
+  saveJobService,
+  getSavedJobsService,
 } from "./job.service.js";
 import { jobFiltersSchema } from "./job.types.js";
 export const getJobsController = async (req: Request, res: Response) => {
@@ -118,5 +120,27 @@ export const updateJobController = async (
     success: true,
     message: "Job updated successfully",
     data: result,
+  });
+};
+
+export const saveJobController = async (
+  req: Request<{ id: string }>,
+  res: Response,
+) => {
+  const result = await saveJobService(req.user!.id, req.params.id);
+
+  res.status(200).json({
+    success: true,
+    message: result.saved
+      ? "Job saved successfully"
+      : "Job removed from saved jobs",
+    data: result,
+  });
+};
+export const getSavedJobsController = async (req: Request, res: Response) => {
+  const savedJobs = await getSavedJobsService(req.user!.id);
+  res.status(200).json({
+    success: true,
+    data: savedJobs,
   });
 };

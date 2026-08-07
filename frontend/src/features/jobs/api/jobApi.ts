@@ -121,3 +121,18 @@ export const updateJobStatus = async ({
 
   return res.data as Job;
 };
+
+export const saveJob = async (jobId: string) => {
+  return await request(
+    `/jobs/${jobId}/save-toggle`,
+    {
+      method: "POST",
+    },
+    true,
+  );
+};
+export const getSavedJobs = async (): Promise<Job[]> => {
+  const res = await request("/jobs/saved", {}, true);
+  const savedJobs = res.data ?? [];
+  return savedJobs.map((saved: { job: Job }) => saved.job);
+};
