@@ -1,5 +1,4 @@
 import { Route, Routes } from "react-router-dom";
-import HomePage from "./pages/HomePage";
 import { Toaster } from "react-hot-toast";
 import LoginPage from "./features/auth/pages/LoginPage";
 import RegisterPage from "./features/auth/pages/RegisterPage";
@@ -28,6 +27,7 @@ import CandidateSettingsPage from "./candidate/pages/CandidateSettingsPage.tsx";
 import CandidateApplicationsPage from "./candidate/pages/CandidateApplicationsPage.tsx";
 import ProtectedRoute from "./routes/ProtectedRoute.tsx";
 import RoleRoute from "./routes/RoleRoute.tsx";
+import HomeRedirect from "./routes/HomeRedirect.tsx";
 const App = () => {
   return (
     <>
@@ -73,14 +73,7 @@ const App = () => {
 
       <Routes>
         {/* Public */}
-        <Route
-          path="/"
-          element={
-            <PublicLayout>
-              <HomePage />
-            </PublicLayout>
-          }
-        />
+        <Route path="/" element={<HomeRedirect />} />
         <Route
           path="/jobs"
           element={
