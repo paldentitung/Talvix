@@ -94,24 +94,6 @@ model Job {
   updatedAt DateTime @updatedAt
 }
 
-model Application {
-  id String @id @default(cuid())
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-
-  jobId String
-  job   Job    @relation(fields: [jobId], references: [id])
-
-  coverLetter String? @db.Text
-
-  resumeUrl String?
-
-  status ApplicationStatus @default(PENDING)
-
-  appliedAt DateTime @default(now())
-}
-
 model SavedJob {
   id String @id @default(cuid())
 
@@ -124,6 +106,31 @@ model SavedJob {
   createdAt DateTime @default(now())
 
   @@unique([userId, jobId])
+}
+
+model Application {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  jobId String
+  job   Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  coverLetter String? @db.Text
+  resumeUrl   String?
+
+  status ApplicationStatus @default(PENDING)
+
+  recruiterNotes String? @db.Text
+
+  appliedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, jobId])
+  @@index([jobId])
+  @@index([userId])
+  @@index([status])
 }
 
 enum Role {

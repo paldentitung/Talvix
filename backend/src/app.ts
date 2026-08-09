@@ -4,6 +4,7 @@ import authRoutes from "./modules/auth/auth.route.js";
 import errorMiddleware from "./middleware/error.middleware.js";
 import userRoutes from "./modules/users/user.routes.js";
 import jobRoutes from "./modules/jobs/job.routes.js";
+import applicationRoutes from "./modules/application/application.route.ts";
 import cookieParser from "cookie-parser";
 const app = express();
 app.use(
@@ -17,6 +18,7 @@ app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/applications", applicationRoutes);
 app.use("/api/jobs", jobRoutes);
 
 app.get("/", (req, res) => {
