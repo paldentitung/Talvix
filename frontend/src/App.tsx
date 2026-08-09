@@ -26,6 +26,8 @@ import CandidateJobsPage from "./candidate/pages/CandidateJobsPage.tsx";
 import CandidateProfilePage from "./candidate/pages/CandidateProfilePage.tsx";
 import CandidateSettingsPage from "./candidate/pages/CandidateSettingsPage.tsx";
 import CandidateApplicationsPage from "./candidate/pages/CandidateApplicationsPage.tsx";
+import ProtectedRoute from "./routes/ProtectedRoute.tsx";
+import RoleRoute from "./routes/RoleRoute.tsx";
 const App = () => {
   return (
     <>
@@ -102,28 +104,45 @@ const App = () => {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
         {/* Candidate */}
-        <Route path="/candidate" element={<CandidateLayout />}>
-          <Route path="dashboard" element={<CandidateDashboardPage />} />
-          <Route path="saved-jobs" element={<SavedJobs />} />
-          <Route path="jobs" element={<CandidateJobsPage />} />
-          <Route path="applications" element={<CandidateApplicationsPage />} />
-          <Route path="profile" element={<CandidateProfilePage />} />
-          <Route path="settings" element={<CandidateSettingsPage />} />
-          <Route path="jobs/:jobId" element={<JobDetailPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route element={<RoleRoute allowedRoles={["CANDIDATE"]} />}>
+            {" "}
+            <Route path="/candidate" element={<CandidateLayout />}>
+              <Route path="dashboard" element={<CandidateDashboardPage />} />
+              <Route path="saved-jobs" element={<SavedJobs />} />
+              <Route path="jobs" element={<CandidateJobsPage />} />
+              <Route
+                path="applications"
+                element={<CandidateApplicationsPage />}
+              />
+              <Route path="profile" element={<CandidateProfilePage />} />
+              <Route path="settings" element={<CandidateSettingsPage />} />
+              <Route path="jobs/:jobId" element={<JobDetailPage />} />
+            </Route>
+          </Route>
         </Route>
         {/* Recruiter */}
-        <Route path="/recruiter" element={<RecruiterMainLayout />}>
-          <Route path="dashboard" element={<RecruiterDashboardPage />} />
-          <Route path="analytics" element={<AnalyticsPage />} />
-          <Route path="applicants" element={<ApplicantsPage />} />
-          <Route path="company" element={<CompanyProfilePage />} />
-          <Route path="jobs" element={<ManageJobsPage />} />
-          <Route path="settings" element={<SettingsPage />} />
-          <Route path="jobs/:jobId" element={<JobDetailPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route element={<RoleRoute allowedRoles={["RECRUITER"]} />}>
+            <Route path="/recruiter" element={<RecruiterMainLayout />}>
+              <Route path="dashboard" element={<RecruiterDashboardPage />} />
+              <Route path="analytics" element={<AnalyticsPage />} />
+              <Route path="applicants" element={<ApplicantsPage />} />
+              <Route path="company" element={<CompanyProfilePage />} />
+              <Route path="jobs" element={<ManageJobsPage />} />
+              <Route path="settings" element={<SettingsPage />} />
+              <Route path="jobs/:jobId" element={<JobDetailPage />} />
+            </Route>
+          </Route>
         </Route>
         {/* Admin */}
-        <Route path="/admin">
-          <Route path="dashboard" element={<AdminDashboardPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route element={<RoleRoute allowedRoles={["ADMIN"]} />}>
+            {" "}
+            <Route path="/admin">
+              <Route path="dashboard" element={<AdminDashboardPage />} />
+            </Route>
+          </Route>
         </Route>
       </Routes>
     </>
