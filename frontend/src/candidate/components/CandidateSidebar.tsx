@@ -87,8 +87,9 @@ const CandidateSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
   const { pathname } = useLocation();
   const { mutate: logoutUser } = useLogout();
   const handleLogout = () => {
-    window.confirm("are you sure");
-    logoutUser();
+    if (window.confirm("Are you sure you want to log out?")) {
+      logoutUser();
+    }
   };
 
   return (
@@ -111,9 +112,15 @@ const CandidateSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
           onNavigate={onNavigate}
         />
       </nav>
-      <div>
-        <button className="flex gap-1" onClick={handleLogout}>
-          <LogOut />
+      <div className="border-t border-(--border) px-3 py-4">
+        <button
+          onClick={handleLogout}
+          className="group flex w-full items-center gap-3 rounded-(--radius-md) px-3 py-2.5 text-sm font-medium text-(--text-secondary) transition-colors hover:bg-(--danger-bg) hover:text-(--danger)"
+        >
+          <LogOut
+            size={18}
+            className="text-(--text-muted) transition-colors group-hover:text-(--danger)"
+          />
           Logout
         </button>
       </div>
