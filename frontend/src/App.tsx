@@ -86,15 +86,21 @@ const App = () => {
               <JobsPage />
             </PublicLayout>
           }
+        />{" "}
+        <Route
+          path="/jobs/:jobId"
+          element={
+            <PublicLayout>
+              <JobDetailPage />
+            </PublicLayout>
+          }
         />
-
         {/* Auth */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-
         {/* Candidate */}
         <Route path="/candidate" element={<CandidateLayout />}>
           <Route path="dashboard" element={<CandidateDashboardPage />} />
@@ -103,8 +109,8 @@ const App = () => {
           <Route path="applications" element={<CandidateApplicationsPage />} />
           <Route path="profile" element={<CandidateProfilePage />} />
           <Route path="settings" element={<CandidateSettingsPage />} />
+          <Route path="jobs/:jobId" element={<JobDetailPage />} />
         </Route>
-
         {/* Recruiter */}
         <Route path="/recruiter" element={<RecruiterMainLayout />}>
           <Route path="dashboard" element={<RecruiterDashboardPage />} />
@@ -115,7 +121,6 @@ const App = () => {
           <Route path="settings" element={<SettingsPage />} />
           <Route path="jobs/:jobId" element={<JobDetailPage />} />
         </Route>
-
         {/* Admin */}
         <Route path="/admin">
           <Route path="dashboard" element={<AdminDashboardPage />} />

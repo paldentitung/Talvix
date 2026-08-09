@@ -4,7 +4,7 @@ import authRoutes from "./modules/auth/auth.route.js";
 import errorMiddleware from "./middleware/error.middleware.js";
 import userRoutes from "./modules/users/user.routes.js";
 import jobRoutes from "./modules/jobs/job.routes.js";
-import applicationRoutes from "./modules/application/application.route.ts";
+import applicationRoutes from "./modules/application/application.route.js";
 import cookieParser from "cookie-parser";
 const app = express();
 app.use(
