@@ -69,6 +69,15 @@ export const getRecruiterApplicationsService = async (
     },
   };
 };
+
+export const getApplicationByIdService = async (id: string) => {
+  return prisma.application.findFirst({
+    where: {
+      id,
+    },
+  });
+};
+
 export const createApplicationservice = async (
   userId: string,
   data: CreateApplicationInput,

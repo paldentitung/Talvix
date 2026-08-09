@@ -3,6 +3,7 @@ import { requireAuth } from "../../middleware/auth.middleware.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import {
   createApplicationController,
+  getApplicationByIdController,
   getApplicationsController,
   getRecruiterApplicationsController,
 } from "./application.controller.js";
@@ -13,7 +14,7 @@ const router = express.Router();
 router.get(
   "/",
   requireAuth,
-  requireRole("ADMIN"),
+  //   requireRole("ADMIN"),
   asyncHandler(getApplicationsController),
 );
 
@@ -23,6 +24,8 @@ router.get(
   requireRole("RECRUITER"),
   asyncHandler(getRecruiterApplicationsController),
 );
+
+router.get("/:id", requireAuth, asyncHandler(getApplicationByIdController));
 
 router.post(
   "/",

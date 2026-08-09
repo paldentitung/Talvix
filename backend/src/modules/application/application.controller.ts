@@ -1,5 +1,6 @@
 import {
   createApplicationservice,
+  getApplicationByIdService,
   getApplicationsService,
   getRecruiterApplicationsService,
 } from "./application.service.js";
@@ -32,6 +33,21 @@ export const getRecruiterApplicationsController = async (
   res.status(200).json({
     success: true,
     message: "Applications fetched successfully",
+    data: result,
+  });
+};
+
+export const getApplicationByIdController = async (
+  req: Request<{ id: string }>,
+  res: Response,
+) => {
+  const { id } = req.params;
+
+  const result = await getApplicationByIdService(id);
+
+  res.status(200).json({
+    success: true,
+    message: "Application fetched successfully",
     data: result,
   });
 };
