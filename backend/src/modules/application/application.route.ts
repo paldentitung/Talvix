@@ -5,6 +5,7 @@ import {
   createApplicationController,
   getApplicationByIdController,
   getApplicationsController,
+  getMyApplicationsController,
   getRecruiterApplicationsController,
   withdrawApplicationController,
 } from "./application.controller.js";
@@ -24,6 +25,13 @@ router.get(
   requireAuth,
   requireRole("RECRUITER"),
   asyncHandler(getRecruiterApplicationsController),
+);
+
+router.get(
+  "/me",
+  requireAuth,
+  requireRole("CANDIDATE"),
+  asyncHandler(getMyApplicationsController),
 );
 
 router.get("/:id", requireAuth, asyncHandler(getApplicationByIdController));

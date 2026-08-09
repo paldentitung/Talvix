@@ -1,9 +1,6 @@
 import prisma from "../../lib/prisma.js";
 import AppError from ".././../utils/AppError.js";
-import {
-  ApplicationResponse,
-  CreateApplicationInput,
-} from "./application.types.js";
+import { CreateApplicationInput } from "./application.types.js";
 
 export const getApplicationsService = async (page = 1, limit = 10) => {
   const skip = (page - 1) * limit;
@@ -94,7 +91,46 @@ export const getApplicationByIdService = async (
     },
   });
 };
-export const createApplicationservice = async (
+export const getMyApplicationsService = async (
+  userId: string,
+  page = 1,
+  limit = 10,
+) => {
+  const skip = (page - 1) * limit;
+
+  const where = {
+    userId,
+  };
+
+  const [applications, total] = await Promise.all([
+    prisma.application.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: {
+        appliedAt: "desc",
+      },
+      include: {
+        job: true,
+      },
+    }),
+
+    prisma.application.count({
+      where,
+    }),
+  ]);
+
+  return {
+    applications,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+export const createApplicationService = async (
   userId: string,
   data: CreateApplicationInput,
 ) => {
@@ -142,7 +178,6 @@ export const createApplicationservice = async (
 
   return application;
 };
-
 export const withdrawApplicationService = async (
   applicationId: string,
   userId: string,
