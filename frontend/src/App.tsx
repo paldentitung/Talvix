@@ -25,6 +25,7 @@ import CandidateLayout from "./layouts/CandidateLayout.tsx";
 import CandidateJobsPage from "./candidate/pages/CandidateJobsPage.tsx";
 import CandidateProfilePage from "./candidate/pages/CandidateProfilePage.tsx";
 import CandidateSettingsPage from "./candidate/pages/CandidateSettingsPage.tsx";
+import CandidateApplicationsPage from "./candidate/pages/CandidateApplicationsPage.tsx";
 const App = () => {
   return (
     <>
@@ -99,6 +100,7 @@ const App = () => {
           <Route path="dashboard" element={<CandidateDashboardPage />} />
           <Route path="saved-jobs" element={<SavedJobs />} />
           <Route path="jobs" element={<CandidateJobsPage />} />
+          <Route path="applications" element={<CandidateApplicationsPage />} />
           <Route path="profile" element={<CandidateProfilePage />} />
           <Route path="settings" element={<CandidateSettingsPage />} />
         </Route>
