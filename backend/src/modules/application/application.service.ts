@@ -30,6 +30,45 @@ export const getApplicationsService = async (page = 1, limit = 10) => {
     },
   };
 };
+
+export const getRecruiterApplicationsService = async (
+  recruiterId: string,
+  page = 1,
+  limit = 10,
+) => {
+  const skip = (page - 1) * limit;
+
+  const where = {
+    job: {
+      recruiterId,
+    },
+  };
+
+  const [applications, total] = await Promise.all([
+    prisma.application.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: {
+        appliedAt: "desc",
+      },
+    }),
+
+    prisma.application.count({
+      where,
+    }),
+  ]);
+
+  return {
+    applications,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
 export const createApplicationservice = async (
   userId: string,
   data: CreateApplicationInput,
