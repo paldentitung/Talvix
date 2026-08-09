@@ -88,7 +88,7 @@ const Sidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
   };
 
   return (
-    <aside className="flex h-full w-full flex-col border-r border-(--border) bg-(--card) shadow-(--shadow-sm) overflow-y-auto">
+    <aside className="flex h-full w-full flex-col border-r border-(--border) bg-(--card) shadow-(--shadow-sm) overflow-y-auto z-40">
       <div className="flex items-center gap-2 px-5 py-6">
         <Logo />
       </div>
