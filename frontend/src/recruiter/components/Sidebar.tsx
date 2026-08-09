@@ -6,8 +6,10 @@ import {
   Building2,
   BarChart3,
   Settings,
+  LogOut,
 } from "lucide-react";
 import Logo from "../../components/layout/Logo";
+import { useLogout } from "../../features/auth/hooks/useLogout";
 
 const hiringLinks = [
   { label: "Dashboard", href: "/recruiter/dashboard", icon: LayoutDashboard },
@@ -78,13 +80,17 @@ const NavSection = ({
 
 const Sidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
   const { pathname } = useLocation();
+  const { mutate: logoutUser } = useLogout();
+  const handleLogout = () => {
+    window.confirm("are you sure");
+    logoutUser();
+  };
 
   return (
     <aside className="flex h-full w-full flex-col border-r border-(--border) bg-(--card) shadow-(--shadow-sm) overflow-y-auto">
       <div className="flex items-center gap-2 px-5 py-6">
         <Logo />
       </div>
-
       <nav className="flex flex-1 flex-col gap-6 px-3 pb-6">
         <NavSection
           title="Hiring"
@@ -98,7 +104,13 @@ const Sidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
           pathname={pathname}
           onNavigate={onNavigate}
         />
-      </nav>
+      </nav>{" "}
+      <div>
+        <button className="flex gap-1" onClick={handleLogout}>
+          <LogOut />
+          Logout
+        </button>
+      </div>
     </aside>
   );
 };
