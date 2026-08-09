@@ -6,6 +6,7 @@ import {
   getApplicationByIdController,
   getApplicationsController,
   getRecruiterApplicationsController,
+  withdrawApplicationController,
 } from "./application.controller.js";
 import { requireRole } from "../../middleware/role.middleware.js";
 
@@ -14,7 +15,7 @@ const router = express.Router();
 router.get(
   "/",
   requireAuth,
-  //   requireRole("ADMIN"),
+  requireRole("ADMIN"),
   asyncHandler(getApplicationsController),
 );
 
@@ -32,6 +33,13 @@ router.post(
   requireAuth,
   requireRole("CANDIDATE"),
   asyncHandler(createApplicationController),
+);
+
+router.delete(
+  "/:id/withdraw",
+  requireAuth,
+  requireRole("CANDIDATE"),
+  asyncHandler(withdrawApplicationController),
 );
 
 export default router;

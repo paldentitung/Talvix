@@ -3,6 +3,7 @@ import {
   getApplicationByIdService,
   getApplicationsService,
   getRecruiterApplicationsService,
+  withdrawApplicationService,
 } from "./application.service.js";
 import { Request, Response } from "express";
 
@@ -42,8 +43,9 @@ export const getApplicationByIdController = async (
   res: Response,
 ) => {
   const { id } = req.params;
+  const userId = req.user!.id;
 
-  const result = await getApplicationByIdService(id);
+  const result = await getApplicationByIdService(id, userId);
 
   res.status(200).json({
     success: true,
@@ -61,6 +63,22 @@ export const createApplicationController = async (
   res.status(200).json({
     success: true,
     message: "Application submitted successfully",
+    data: result,
+  });
+};
+
+export const withdrawApplicationController = async (
+  req: Request<{ id: string }>,
+  res: Response,
+) => {
+  const { id } = req.params;
+  const userId = req.user!.id;
+
+  const result = await withdrawApplicationService(id, userId);
+
+  res.status(200).json({
+    success: true,
+    message: "Application withdrawn successfully",
     data: result,
   });
 };

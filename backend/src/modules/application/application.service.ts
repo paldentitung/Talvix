@@ -70,14 +70,30 @@ export const getRecruiterApplicationsService = async (
   };
 };
 
-export const getApplicationByIdService = async (id: string) => {
+export const getApplicationByIdService = async (
+  applicationId: string,
+  userId: string,
+) => {
   return prisma.application.findFirst({
     where: {
-      id,
+      id: applicationId,
+      OR: [
+        {
+          userId,
+        },
+        {
+          job: {
+            recruiterId: userId,
+          },
+        },
+      ],
+    },
+    include: {
+      user: true,
+      job: true,
     },
   });
 };
-
 export const createApplicationservice = async (
   userId: string,
   data: CreateApplicationInput,
@@ -125,4 +141,26 @@ export const createApplicationservice = async (
   });
 
   return application;
+};
+
+export const withdrawApplicationService = async (
+  applicationId: string,
+  userId: string,
+) => {
+  const application = await prisma.application.findFirst({
+    where: {
+      id: applicationId,
+      userId,
+    },
+  });
+
+  if (!application) {
+    throw new AppError("Application not found", 404);
+  }
+
+  return prisma.application.delete({
+    where: {
+      id: applicationId,
+    },
+  });
 };
