@@ -1,6 +1,9 @@
 import prisma from "../../lib/prisma.js";
 import AppError from ".././../utils/AppError.js";
-import { CreateApplicationInput } from "./application.types.js";
+import {
+  CreateApplicationInput,
+  UpdateApplicationInput,
+} from "./application.types.js";
 
 export const getApplicationsService = async (page = 1, limit = 10) => {
   const skip = (page - 1) * limit;
@@ -197,5 +200,30 @@ export const withdrawApplicationService = async (
     where: {
       id: applicationId,
     },
+  });
+};
+export const updateApplicationService = async (
+  applicationId: string,
+  recruiterId: string,
+  data: UpdateApplicationInput,
+) => {
+  const application = await prisma.application.findFirst({
+    where: {
+      id: applicationId,
+      job: {
+        recruiterId,
+      },
+    },
+  });
+
+  if (!application) {
+    throw new AppError("Application not found", 404);
+  }
+
+  return prisma.application.update({
+    where: {
+      id: applicationId,
+    },
+    data,
   });
 };

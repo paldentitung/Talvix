@@ -21,3 +21,7 @@ export interface CreateApplicationInput {
   coverLetter?: string;
   resumeUrl?: string;
 }
+export interface UpdateApplicationInput {
+  status?: ApplicationStatus;
+  recruiterNotes?: string;
+}

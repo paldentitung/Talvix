@@ -8,6 +8,7 @@ import {
   getMyApplicationsController,
   getRecruiterApplicationsController,
   withdrawApplicationController,
+  updateApplicationController,
 } from "./application.controller.js";
 import { requireRole } from "../../middleware/role.middleware.js";
 
@@ -49,5 +50,10 @@ router.delete(
   requireRole("CANDIDATE"),
   asyncHandler(withdrawApplicationController),
 );
-
+router.patch(
+  "/:id",
+  requireAuth,
+  requireRole("RECRUITER"),
+  asyncHandler(updateApplicationController),
+);
 export default router;
