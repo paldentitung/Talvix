@@ -66,3 +66,10 @@ export const resetPassword = async (data: ResetPasswordRequest) => {
     false,
   );
 };
+
+export const getMe = async () => {
+  return request("/auth/me", {}, true);
+};
+export const logout = async () => {
+  return request("/auth/logout", { method: "POST" }, true);
+};

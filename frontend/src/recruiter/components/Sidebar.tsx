@@ -6,8 +6,10 @@ import {
   Building2,
   BarChart3,
   Settings,
+  LogOut,
 } from "lucide-react";
 import Logo from "../../components/layout/Logo";
+import { useLogout } from "../../features/auth/hooks/useLogout";
 
 const hiringLinks = [
   { label: "Dashboard", href: "/recruiter/dashboard", icon: LayoutDashboard },
@@ -78,13 +80,18 @@ const NavSection = ({
 
 const Sidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
   const { pathname } = useLocation();
+  const { mutate: logoutUser } = useLogout();
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to log out?")) {
+      logoutUser();
+    }
+  };
 
   return (
-    <aside className="flex h-full w-full flex-col border-r border-(--border) bg-(--card) shadow-(--shadow-sm) overflow-y-auto">
+    <aside className="flex h-full w-full flex-col border-r border-(--border) bg-(--card) shadow-(--shadow-sm) overflow-y-auto z-40">
       <div className="flex items-center gap-2 px-5 py-6">
         <Logo />
       </div>
-
       <nav className="flex flex-1 flex-col gap-6 px-3 pb-6">
         <NavSection
           title="Hiring"
@@ -98,7 +105,19 @@ const Sidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
           pathname={pathname}
           onNavigate={onNavigate}
         />
-      </nav>
+      </nav>{" "}
+      <div className="border-t border-(--border) px-3 py-4">
+        <button
+          onClick={handleLogout}
+          className="group flex w-full items-center gap-3 rounded-(--radius-md) px-3 py-2.5 text-sm font-medium text-(--text-secondary) transition-colors hover:bg-(--danger-bg) hover:text-(--danger)"
+        >
+          <LogOut
+            size={18}
+            className="text-(--text-muted) transition-colors group-hover:text-(--danger)"
+          />
+          Logout
+        </button>
+      </div>
     </aside>
   );
 };

@@ -2,19 +2,23 @@ import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { login } from "../api/authApi";
 import toast from "react-hot-toast";
+import { useAuth } from "../contexts/AuthContext";
 
 export function useLogin() {
   const navigate = useNavigate();
+  const { setUser } = useAuth();
 
   return useMutation({
     mutationFn: login,
 
     onSuccess: (data) => {
+      const user = data.data;
+
+      setUser(user);
+
       toast.success("Login successful!");
 
-      const role = data.data.role;
-
-      switch (role) {
+      switch (user.role) {
         case "ADMIN":
           navigate("/admin/dashboard");
           break;
