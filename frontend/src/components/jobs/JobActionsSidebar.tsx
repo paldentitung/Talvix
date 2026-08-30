@@ -8,6 +8,8 @@ import Button from "../../components/ui/Button";
 import { useDeleteJob } from "../../features/jobs/hooks/useDeleteJob";
 import { useUpdateJob } from "../../features/jobs/hooks/useUpdateJob";
 import PostJobModal from "../../recruiter/components/JobPostingModal";
+import { useApplyJob } from "../../features/applications/hooks/useApplyJob";
+import ApplyJobModal from "../../features/applications/components/ApplyJobModal";
 // TODO: swap these in once you confirm the hook names for candidate actions
 // import { useSaveJob } from "../../features/jobs/hooks/useSaveJob";
 // import { useApplyToJob } from "../../features/jobs/hooks/useApplyToJob";
@@ -108,16 +110,40 @@ const RecruiterActions = ({ job }: { job: Job }) => {
 const CandidateActions = ({ job }: { job: Job }) => {
   // TODO: wire real mutations once hook names are confirmed
   const handleSave = () => toast("Saved to your list");
-  const handleApply = () => toast("Application flow goes here");
+  const [isApplyOpen, setIsApplyOpen] = useState(false);
+  const applyJobMutation = useApplyJob();
+
+  const handleApply = async ({
+    coverLetter,
+    resume,
+  }: {
+    coverLetter: string;
+    resume: File;
+  }) => {
+    await applyJobMutation.mutateAsync({
+      jobId: job.id,
+      coverLetter,
+      resume,
+    });
+
+    toast.success("Application submitted successfully");
+    setIsApplyOpen(false);
+  };
 
   return (
     <div className="flex flex-col gap-2">
-      <Button size="sm" onClick={handleApply}>
+      <Button size="sm" onClick={() => setIsApplyOpen(true)}>
         Apply now
       </Button>
-      <Button size="sm" onClick={handleSave}>
+      <Button size="sm" onClick={handleSave} variant="accent">
         Save job
-      </Button>
+      </Button>{" "}
+      <ApplyJobModal
+        isOpen={isApplyOpen}
+        onClose={() => setIsApplyOpen(false)}
+        jobTitle={job.title}
+        onSubmit={handleApply}
+      />
     </div>
   );
 };

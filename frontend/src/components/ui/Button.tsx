@@ -1,10 +1,11 @@
-import type { ReactNode } from "react";
+import type { ReactNode, ButtonHTMLAttributes } from "react";
 import { Link } from "react-router-dom";
 import { Loader2 } from "lucide-react";
+
 type ButtonVariant = "primary" | "ghost" | "accent" | "dark" | "white";
 type ButtonSize = "sm" | "md";
 
-interface ButtonProps {
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
   variant?: ButtonVariant;
   size?: ButtonSize;
@@ -16,6 +17,7 @@ interface ButtonProps {
   loading?: boolean;
   loadingText?: string;
   disabled?: boolean;
+  form?: string;
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
@@ -48,6 +50,8 @@ export default function Button({
   loading = false,
   loadingText,
   disabled = false,
+  form,
+  ...rest
 }: ButtonProps) {
   const isDisabled = disabled || loading;
 
@@ -69,7 +73,6 @@ export default function Button({
     </>
   );
 
-  // href-based buttons probably shouldn't be "loading", but guard anyway
   if (href && !isDisabled) {
     return (
       <Link to={href} className={classes}>
@@ -81,9 +84,11 @@ export default function Button({
   return (
     <button
       type={type}
+      form={form}
       onClick={onClick}
       disabled={isDisabled}
       className={classes}
+      {...rest}
     >
       {content}
     </button>
