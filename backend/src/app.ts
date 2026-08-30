@@ -6,6 +6,7 @@ import userRoutes from "./modules/users/user.routes.js";
 import jobRoutes from "./modules/jobs/job.routes.js";
 import applicationRoutes from "./modules/application/application.route.js";
 import cookieParser from "cookie-parser";
+import path from "path";
 const app = express();
 app.use(
   cors({
@@ -15,6 +16,7 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
+app.use("/uplods", express.static(path.join(process.cwd(), "uploads")));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);

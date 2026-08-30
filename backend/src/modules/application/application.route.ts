@@ -11,6 +11,7 @@ import {
   updateApplicationController,
 } from "./application.controller.js";
 import { requireRole } from "../../middleware/role.middleware.js";
+import { uploadResume } from "../../middleware/upload.middleware.js";
 
 const router = express.Router();
 
@@ -41,6 +42,7 @@ router.post(
   "/",
   requireAuth,
   requireRole("CANDIDATE"),
+  uploadResume,
   asyncHandler(createApplicationController),
 );
 
