@@ -1,3 +1,4 @@
+import AppError from "../../utils/AppError.js";
 import {
   createApplicationService,
   getApplicationByIdService,
@@ -75,7 +76,13 @@ export const createApplicationController = async (
   req: Request,
   res: Response,
 ) => {
-  const result = await createApplicationService(req.user!.id, req.body);
+  if (!req.file) {
+    throw new AppError("Resume is required", 400);
+  }
+  const result = await createApplicationService(req.user!.id, {
+    ...req.body,
+    resumeUrl: `/uploads/resumes/${req.file.filename}`,
+  });
 
   res.status(200).json({
     success: true,
