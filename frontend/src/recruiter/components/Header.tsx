@@ -37,10 +37,20 @@ const defaultMeta = {
   title: "Dashboard",
   subtitle: "Overview of your hiring activity",
 };
+const getPageMeta = (pathname: string) => {
+  // Exact match first
+  if (pageMeta[pathname]) return pageMeta[pathname];
 
+  // Fall back to the longest registered path that this pathname starts with
+  const match = Object.keys(pageMeta)
+    .filter((path) => pathname.startsWith(path))
+    .sort((a, b) => b.length - a.length)[0];
+
+  return match ? pageMeta[match] : defaultMeta;
+};
 const Header = ({ onMenuClick, openJobPostingModal }: any) => {
   const { pathname } = useLocation();
-  const { title, subtitle } = pageMeta[pathname] ?? defaultMeta;
+  const { title, subtitle } = getPageMeta(pathname);
 
   return (
     <div className="mb-6 flex flex-wrap items-start justify-between gap-3">

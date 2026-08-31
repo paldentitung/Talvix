@@ -133,6 +133,35 @@ export const getMyApplicationsService = async (
     },
   };
 };
+
+export const getJobApplicationsService = async (
+  jobId: string,
+  recruiterId: string,
+) => {
+  const job = await prisma.job.findFirst({
+    where: {
+      id: jobId,
+      recruiterId,
+    },
+  });
+
+  if (!job) {
+    throw new AppError("Job not found", 404);
+  }
+
+  return prisma.application.findMany({
+    where: {
+      jobId,
+    },
+    include: {
+      user: true,
+      job: true,
+    },
+    orderBy: {
+      appliedAt: "desc",
+    },
+  });
+};
 export const createApplicationService = async (
   userId: string,
   data: CreateApplicationInput,

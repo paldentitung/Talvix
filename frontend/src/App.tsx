@@ -120,7 +120,7 @@ const App = () => {
             <Route path="/recruiter" element={<RecruiterMainLayout />}>
               <Route path="dashboard" element={<RecruiterDashboardPage />} />
               <Route path="analytics" element={<AnalyticsPage />} />
-              <Route path="applicants" element={<ApplicantsPage />} />
+              <Route path="applicants/:id" element={<ApplicantsPage />} />
               <Route path="company" element={<CompanyProfilePage />} />
               <Route path="jobs" element={<ManageJobsPage />} />
               <Route path="settings" element={<SettingsPage />} />

@@ -17,3 +17,7 @@ export const applyJob = (applicationData: ApplyJobData) => {
     true,
   );
 };
+
+export const getJobApplications = async (jobId: string) => {
+  return await request(`/applications/job/${jobId}`, {}, true);
+};
