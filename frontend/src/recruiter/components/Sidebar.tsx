@@ -14,12 +14,6 @@ import { useLogout } from "../../features/auth/hooks/useLogout";
 const hiringLinks = [
   { label: "Dashboard", href: "/recruiter/dashboard", icon: LayoutDashboard },
   { label: "Manage Jobs", href: "/recruiter/jobs", icon: Briefcase },
-  {
-    label: "Applicants",
-    href: "/recruiter/applicants",
-    icon: Users,
-    badge: 23,
-  },
 ];
 
 const companyLinks = [
@@ -43,7 +37,7 @@ const NavSection = ({
     <p className="px-3 text-xs font-semibold uppercase tracking-wider text-(--text-muted) mb-1">
       {title}
     </p>
-    {links.map(({ label, href, icon: Icon, badge }) => {
+    {links.map(({ label, href, icon: Icon }) => {
       const isActive = pathname === href;
       return (
         <Link
@@ -67,11 +61,11 @@ const NavSection = ({
             />
             {label}
           </span>
-          {badge !== undefined && (
+          {/* {badge !== undefined && (
             <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-(--primary) text-[11px] font-semibold text-white">
               {badge}
             </span>
-          )}
+          )} */}
         </Link>
       );
     })}

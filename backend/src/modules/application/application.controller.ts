@@ -7,6 +7,7 @@ import {
   getRecruiterApplicationsService,
   withdrawApplicationService,
   updateApplicationService,
+  getJobApplicationsService,
 } from "./application.service.js";
 import { Request, Response } from "express";
 
@@ -70,6 +71,21 @@ export const getMyApplicationsController = async (
     success: true,
     message: "Applications fetched successfully",
     data: result,
+  });
+};
+
+export const getJobApplicationsController = async (
+  req: Request<{ jobId: string }>,
+  res: Response,
+) => {
+  const { jobId } = req.params;
+
+  const applications = await getJobApplicationsService(jobId, req.user!.id);
+
+  res.status(200).json({
+    success: true,
+    message: "Job applications are fetched",
+    data: applications,
   });
 };
 export const createApplicationController = async (

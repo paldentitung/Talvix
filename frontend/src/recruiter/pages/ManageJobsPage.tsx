@@ -152,7 +152,7 @@ const ManageJobsPage = () => {
                 Manage
               </Link>
               <Link
-                to={`/recruiter/applicants?job=${job.id}`}
+                to={`/recruiter/applicants/${job.id}`}
                 className="text-sm font-semibold text-(--text-secondary) hover:text-(--text-primary)"
               >
                 View applicants

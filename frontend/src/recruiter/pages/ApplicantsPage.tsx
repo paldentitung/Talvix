@@ -1,99 +1,41 @@
 import { useMemo, useState } from "react";
 import { Search, Mail, FileText } from "lucide-react";
+import { useParams } from "react-router-dom";
+import { useJobApplications } from "../../features/applications/hooks/useJobApplications";
+import type {
+  Applicant,
+  RawApplication,
+  ApplicationStatus,
+} from "../../features/applications/types/application.types";
 
-type ApplicationStatus =
-  | "PENDING"
-  | "REVIEWED"
-  | "ADVANCED"
-  | "REJECTED"
-  | "HIRED";
+const API_BASE_URL = import.meta.env.VITE_API_BACKEND_URL;
 
-type Applicant = {
-  id: string;
-  initials: string;
-  name: string;
-  jobTitle: string;
-  experienceYears: number;
-  match: number;
-  source: string;
-  status: ApplicationStatus;
-  appliedAt: string;
-  about: string;
-  currentCompany: string;
-  location: string;
-  skills: string[];
-  resumeUrl?: string;
+const getResumeUrl = (resumeUrl: string | null): string | null => {
+  if (!resumeUrl) return null;
+  if (resumeUrl.startsWith("http")) return resumeUrl; // already absolute
+  return `${API_BASE_URL}${resumeUrl}`;
+};
+const getInitials = (first: string, last: string): string => {
+  return `${first?.[0] ?? ""}${last?.[0] ?? ""}`.toUpperCase() || "?";
 };
 
-const applicants: Applicant[] = [
-  {
-    id: "1",
-    initials: "PS",
-    name: "Priya Shah",
-    jobTitle: "Senior Product Designer",
-    experienceYears: 6,
-    match: 96,
-    source: "Referred",
-    status: "REVIEWED",
-    appliedAt: "2026-07-24",
-    about:
-      "Product designer with 6 years shipping polished B2B software. Previously at Airbnb and Loom.",
-    currentCompany: "Loom",
-    location: "Remote · US",
-    skills: ["Figma", "Design Systems", "Prototyping", "User Research"],
-    resumeUrl: "#",
-  },
-  {
-    id: "2",
-    initials: "ML",
-    name: "Marcus Lee",
-    jobTitle: "Staff Software Engineer",
-    experienceYears: 8,
-    match: 93,
-    source: "LinkedIn",
-    status: "PENDING",
-    appliedAt: "2026-07-22",
-    about:
-      "Backend-leaning full-stack engineer who has led platform rewrites at two Series C startups.",
-    currentCompany: "Stripe",
-    location: "San Francisco, CA",
-    skills: ["Node.js", "PostgreSQL", "AWS", "System Design"],
-    resumeUrl: "#",
-  },
-  {
-    id: "3",
-    initials: "AG",
-    name: "Ana García",
-    jobTitle: "Product Marketing Manager",
-    experienceYears: 5,
-    match: 91,
-    source: "Direct",
-    status: "ADVANCED",
-    appliedAt: "2026-07-20",
-    about:
-      "PMM focused on developer tools go-to-market, launch strategy, and lifecycle messaging.",
-    currentCompany: "Vercel",
-    location: "New York, NY",
-    skills: ["Positioning", "Lifecycle Marketing", "Analytics"],
-    resumeUrl: "#",
-  },
-  {
-    id: "4",
-    initials: "JK",
-    name: "Jordan Kim",
-    jobTitle: "Senior Product Designer",
-    experienceYears: 4,
-    match: 89,
-    source: "Direct",
-    status: "PENDING",
-    appliedAt: "2026-07-19",
-    about:
-      "Designer who moved from agency work into product, with a focus on onboarding and growth surfaces.",
-    currentCompany: "Notion",
-    location: "Remote",
-    skills: ["Figma", "Motion Design", "User Research"],
-  },
-];
+const toApplicant = (raw: RawApplication): Applicant => {
+  return {
+    id: raw.id,
+    initials: getInitials(raw.user.firstName, raw.user.lastName),
+    name: `${raw.user.firstName} ${raw.user.lastName}`.trim(),
+    jobTitle: raw.job.title,
+    status: raw.status,
+    appliedAt: raw.appliedAt,
+    about: raw.user.bio ?? "No bio provided.",
+    currentCompany: raw.user.title ?? "Not specified",
+    location: raw.user.location ?? raw.job.location,
+    skills: raw.job.skills ?? [],
+    resumeUrl: getResumeUrl(raw.resumeUrl),
+    coverLetter: raw.coverLetter,
+    email: raw.user.email,
+  };
+};
 
 const statusStyles: Record<ApplicationStatus, string> = {
   PENDING: "bg-(--border) text-(--text-secondary)",
@@ -103,8 +45,9 @@ const statusStyles: Record<ApplicationStatus, string> = {
   HIRED: "bg-(--accent-light) text-(--accent)",
 };
 
-const statusLabel = (status: ApplicationStatus) =>
-  status.charAt(0) + status.slice(1).toLowerCase();
+const statusLabel = (status: ApplicationStatus): string => {
+  return status.charAt(0) + status.slice(1).toLowerCase();
+};
 
 const statusFilters: (ApplicationStatus | "ALL")[] = [
   "ALL",
@@ -114,37 +57,74 @@ const statusFilters: (ApplicationStatus | "ALL")[] = [
   "REJECTED",
 ];
 
-const formatAppliedAt = (date: string) =>
-  new Date(date).toLocaleDateString(undefined, {
+const formatAppliedAt = (date: string): string => {
+  return new Date(date).toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
   });
+};
 
 const ApplicantsPage = () => {
-  const [query, setQuery] = useState("");
+  const { id } = useParams();
+  const { data, error, isLoading } = useJobApplications(id);
+
+  const [query, setQuery] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "ALL">(
     "ALL",
   );
-  const [selectedId, setSelectedId] = useState(applicants[0].id);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [localStatus, setLocalStatus] = useState<
     Record<string, ApplicationStatus>
   >({});
 
-  const filtered = useMemo(() => {
+  const applicants: Applicant[] = useMemo(() => {
+    return (data ?? []).map(toApplicant);
+  }, [data]);
+
+  const filtered: Applicant[] = useMemo(() => {
     return applicants.filter((a) => {
-      const status = localStatus[a.id] ?? a.status;
+      const status: ApplicationStatus = localStatus[a.id] ?? a.status;
       const matchesStatus = statusFilter === "ALL" || status === statusFilter;
       const matchesQuery = a.name.toLowerCase().includes(query.toLowerCase());
       return matchesStatus && matchesQuery;
     });
-  }, [query, statusFilter, localStatus]);
+  }, [applicants, query, statusFilter, localStatus]);
 
-  const selected = applicants.find((a) => a.id === selectedId) ?? applicants[0];
-  const selectedStatus = localStatus[selected.id] ?? selected.status;
-
-  const setStatusFor = (id: string, status: ApplicationStatus) => {
-    setLocalStatus((prev) => ({ ...prev, [id]: status }));
+  const setStatusFor = (
+    applicantId: string,
+    status: ApplicationStatus,
+  ): void => {
+    setLocalStatus((prev) => ({ ...prev, [applicantId]: status }));
   };
+
+  if (isLoading) {
+    return (
+      <div className="rounded-lg border border-(--border) bg-(--card) p-6 text-center text-sm text-(--text-secondary)">
+        Loading applicants…
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-lg border border-(--border) bg-(--card) p-6 text-center text-sm text-(--danger)">
+        Couldn't load applicants. Please try again.
+      </div>
+    );
+  }
+
+  if (applicants.length === 0) {
+    return (
+      <div className="rounded-lg border border-(--border) bg-(--card) p-6 text-center text-sm text-(--text-secondary)">
+        No applicants yet for this job.
+      </div>
+    );
+  }
+
+  const selected: Applicant =
+    applicants.find((a) => a.id === selectedId) ?? applicants[0];
+  const selectedStatus: ApplicationStatus =
+    localStatus[selected.id] ?? selected.status;
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -158,7 +138,7 @@ const ApplicantsPage = () => {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search applicants"
-            className="w-full rounded-(--radius-md) border border-(--border) bg-(--card) py-2 pl-9 pr-3 text-sm text-(--text-primary) outline-none focus:border-(--primary)"
+            className="w-full rounded-md border border-(--border) bg-(--card) py-2 pl-9 pr-3 text-sm text-(--text-primary) outline-none focus:border-(--primary)"
           />
         </div>
 
@@ -180,19 +160,19 @@ const ApplicantsPage = () => {
 
         <div className="flex flex-col gap-2">
           {filtered.length === 0 && (
-            <div className="rounded-(--radius-lg) border border-(--border) bg-(--card) p-6 text-center text-sm text-(--text-secondary)">
+            <div className="rounded-lg border border-(--border) bg-(--card) p-6 text-center text-sm text-(--text-secondary)">
               No applicants match your search.
             </div>
           )}
 
           {filtered.map((a) => {
-            const status = localStatus[a.id] ?? a.status;
-            const isActive = a.id === selectedId;
+            const status: ApplicationStatus = localStatus[a.id] ?? a.status;
+            const isActive = a.id === selected.id;
             return (
               <button
                 key={a.id}
                 onClick={() => setSelectedId(a.id)}
-                className={`flex items-center gap-3 rounded-(--radius-lg) border p-3 text-left transition-colors ${
+                className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
                   isActive
                     ? "border-(--primary) bg-(--primary-light)"
                     : "border-(--border) bg-(--card) hover:bg-(--bg)"
@@ -206,7 +186,7 @@ const ApplicantsPage = () => {
                     {a.name}
                   </p>
                   <p className="truncate text-xs text-(--text-secondary)">
-                    {a.jobTitle} · {a.match}% match
+                    {a.jobTitle}
                   </p>
                 </div>
                 <span
@@ -221,7 +201,7 @@ const ApplicantsPage = () => {
       </div>
 
       <div className="lg:col-span-2">
-        <div className="rounded-(--radius-lg) border border-(--border) bg-(--card) p-5 shadow-(--shadow-sm) sm:p-6">
+        <div className="rounded-lg border border-(--border) bg-(--card) p-5 shadow-(--shadow-sm) sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-(--primary-light) text-lg font-semibold text-(--primary)">
@@ -232,39 +212,43 @@ const ApplicantsPage = () => {
                   {selected.name}
                 </h2>
                 <p className="text-sm text-(--text-secondary)">
-                  {selected.jobTitle} · {selected.experienceYears} years
-                </p>
-                <p className="mt-1 text-sm font-semibold text-(--accent)">
-                  {selected.match}% match
+                  {selected.jobTitle}
                 </p>
               </div>
             </div>
 
-            <span className="shrink-0 rounded-full bg-(--accent-light) px-3 py-1 text-xs font-semibold text-(--accent)">
-              {selected.source}
+            <span
+              className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[selectedStatus]}`}
+            >
+              {statusLabel(selectedStatus)}
             </span>
           </div>
 
           <div className="mt-5 flex flex-wrap gap-2">
             <button
               onClick={() => setStatusFor(selected.id, "ADVANCED")}
-              className="rounded-(--radius-md) bg-(--primary) px-4 py-2 text-sm font-semibold text-white hover:bg-(--primary-dark)"
+              className="rounded-md bg-(--primary) px-4 py-2 text-sm font-semibold text-white hover:bg-(--primary-dark)"
             >
               Advance
             </button>
             <button
               onClick={() => setStatusFor(selected.id, "REJECTED")}
-              className="rounded-(--radius-md) border border-(--border) bg-(--card) px-4 py-2 text-sm font-semibold text-(--danger) hover:bg-(--danger-bg)"
+              className="rounded-md border border-(--border) bg-(--card) px-4 py-2 text-sm font-semibold text-(--danger) hover:bg-(--danger-bg)"
             >
               Reject
             </button>
-            <button className="flex items-center gap-2 rounded-(--radius-md) border border-(--border) bg-(--card) px-4 py-2 text-sm font-semibold text-(--text-secondary) hover:bg-(--bg)">
+            <a
+              href={`mailto:${selected.email}`}
+              className="flex items-center gap-2 rounded-md border border-(--border) bg-(--card) px-4 py-2 text-sm font-semibold text-(--text-secondary) hover:bg-(--bg)"
+            >
               <Mail size={16} />
               Message candidate
-            </button>
+            </a>
             {selected.resumeUrl && (
               <a
                 href={selected.resumeUrl}
+                target="_blank"
+                rel="noreferrer"
                 className="ml-auto flex items-center gap-2 text-sm font-semibold text-(--primary) hover:text-(--primary-dark)"
               >
                 <FileText size={16} />
@@ -283,7 +267,7 @@ const ApplicantsPage = () => {
 
             <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm text-(--text-secondary)">
               <span>
-                Currently:{" "}
+                Title:{" "}
                 <span className="font-medium text-(--text-primary)">
                   {selected.currentCompany}
                 </span>
@@ -293,21 +277,34 @@ const ApplicantsPage = () => {
             </div>
           </div>
 
-          <div className="mt-6 border-t border-(--border) pt-5">
-            <h3 className="text-sm font-semibold text-(--text-primary)">
-              Skills
-            </h3>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {selected.skills.map((skill) => (
-                <span
-                  key={skill}
-                  className="rounded-full bg-(--bg) px-3 py-1 text-xs font-medium text-(--text-secondary)"
-                >
-                  {skill}
-                </span>
-              ))}
+          {selected.coverLetter && (
+            <div className="mt-6 border-t border-(--border) pt-5">
+              <h3 className="text-sm font-semibold text-(--text-primary)">
+                Cover Letter
+              </h3>
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-(--text-secondary)">
+                {selected.coverLetter}
+              </p>
             </div>
-          </div>
+          )}
+
+          {selected.skills.length > 0 && (
+            <div className="mt-6 border-t border-(--border) pt-5">
+              <h3 className="text-sm font-semibold text-(--text-primary)">
+                Required Skills
+              </h3>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {selected.skills.map((skill) => (
+                  <span
+                    key={skill}
+                    className="rounded-full bg-(--bg) px-3 py-1 text-xs font-medium text-(--text-secondary)"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

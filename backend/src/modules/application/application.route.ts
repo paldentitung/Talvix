@@ -6,6 +6,7 @@ import {
   getApplicationByIdController,
   getApplicationsController,
   getMyApplicationsController,
+  getJobApplicationsController,
   getRecruiterApplicationsController,
   withdrawApplicationController,
   updateApplicationController,
@@ -37,7 +38,12 @@ router.get(
 );
 
 router.get("/:id", requireAuth, asyncHandler(getApplicationByIdController));
-
+router.get(
+  "/job/:jobId",
+  requireAuth,
+  requireRole("RECRUITER"),
+  asyncHandler(getJobApplicationsController),
+);
 router.post(
   "/",
   requireAuth,
