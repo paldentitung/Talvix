@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { Search, Mail, FileText } from "lucide-react";
-import { useParams } from "react-router-dom";
+import { ArrowLeft, Search, Mail, FileText } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useJobApplications } from "../../features/applications/hooks/useJobApplications";
 import type {
   Applicant,
@@ -67,6 +67,7 @@ const formatAppliedAt = (date: string): string => {
 const ApplicantsPage = () => {
   const { id } = useParams();
   const { data, error, isLoading } = useJobApplications(id);
+  const navigate = useNavigate();
 
   const [query, setQuery] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "ALL">(
@@ -115,8 +116,17 @@ const ApplicantsPage = () => {
 
   if (applicants.length === 0) {
     return (
-      <div className="rounded-lg border border-(--border) bg-(--card) p-6 text-center text-sm text-(--text-secondary)">
-        No applicants yet for this job.
+      <div className="space-y-4">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-sm font-semibold text-(--text-secondary) hover:text-(--text-primary)"
+        >
+          <ArrowLeft size={16} />
+          Back
+        </button>
+        <div className="rounded-lg border border-(--border) bg-(--card) p-6 text-center text-sm text-(--text-secondary)">
+          No applicants yet for this job.
+        </div>
       </div>
     );
   }
@@ -127,184 +137,193 @@ const ApplicantsPage = () => {
     localStatus[selected.id] ?? selected.status;
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-      <div className="flex flex-col gap-3 lg:col-span-1">
-        <div className="relative">
-          <Search
-            size={16}
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-(--text-muted)"
-          />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search applicants"
-            className="w-full rounded-md border border-(--border) bg-(--card) py-2 pl-9 pr-3 text-sm text-(--text-primary) outline-none focus:border-(--primary)"
-          />
-        </div>
+    <div className="space-y-4">
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-1 text-sm font-semibold text-(--text-secondary) hover:text-(--text-primary)"
+      >
+        <ArrowLeft size={16} />
+        Back
+      </button>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="flex flex-col gap-3 lg:col-span-1">
+          <div className="relative">
+            <Search
+              size={16}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-(--text-muted)"
+            />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search applicants"
+              className="w-full rounded-md border border-(--border) bg-(--card) py-2 pl-9 pr-3 text-sm text-(--text-primary) outline-none focus:border-(--primary)"
+            />
+          </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
-          {statusFilters.map((s) => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-                statusFilter === s
-                  ? "bg-(--primary) text-white"
-                  : "border border-(--border) bg-(--card) text-(--text-secondary) hover:bg-(--bg)"
-              }`}
-            >
-              {s === "ALL" ? "All" : statusLabel(s)}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex flex-col gap-2">
-          {filtered.length === 0 && (
-            <div className="rounded-lg border border-(--border) bg-(--card) p-6 text-center text-sm text-(--text-secondary)">
-              No applicants match your search.
-            </div>
-          )}
-
-          {filtered.map((a) => {
-            const status: ApplicationStatus = localStatus[a.id] ?? a.status;
-            const isActive = a.id === selected.id;
-            return (
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            {statusFilters.map((s) => (
               <button
-                key={a.id}
-                onClick={() => setSelectedId(a.id)}
-                className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
-                  isActive
-                    ? "border-(--primary) bg-(--primary-light)"
-                    : "border-(--border) bg-(--card) hover:bg-(--bg)"
+                key={s}
+                onClick={() => setStatusFilter(s)}
+                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  statusFilter === s
+                    ? "bg-(--primary) text-white"
+                    : "border border-(--border) bg-(--card) text-(--text-secondary) hover:bg-(--bg)"
                 }`}
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-(--primary-light) text-xs font-semibold text-(--primary)">
-                  {a.initials}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-(--text-primary)">
-                    {a.name}
-                  </p>
-                  <p className="truncate text-xs text-(--text-secondary)">
-                    {a.jobTitle}
-                  </p>
-                </div>
-                <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusStyles[status]}`}
-                >
-                  {statusLabel(status)}
-                </span>
+                {s === "ALL" ? "All" : statusLabel(s)}
               </button>
-            );
-          })}
-        </div>
-      </div>
+            ))}
+          </div>
 
-      <div className="lg:col-span-2">
-        <div className="rounded-lg border border-(--border) bg-(--card) p-5 shadow-(--shadow-sm) sm:p-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-(--primary-light) text-lg font-semibold text-(--primary)">
-                {selected.initials}
+          <div className="flex flex-col gap-2">
+            {filtered.length === 0 && (
+              <div className="rounded-lg border border-(--border) bg-(--card) p-6 text-center text-sm text-(--text-secondary)">
+                No applicants match your search.
               </div>
-              <div>
-                <h2 className="font-display text-lg font-bold text-(--text-primary)">
-                  {selected.name}
-                </h2>
-                <p className="text-sm text-(--text-secondary)">
-                  {selected.jobTitle}
+            )}
+
+            {filtered.map((a) => {
+              const status: ApplicationStatus = localStatus[a.id] ?? a.status;
+              const isActive = a.id === selected.id;
+              return (
+                <button
+                  key={a.id}
+                  onClick={() => setSelectedId(a.id)}
+                  className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
+                    isActive
+                      ? "border-(--primary) bg-(--primary-light)"
+                      : "border-(--border) bg-(--card) hover:bg-(--bg)"
+                  }`}
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-(--primary-light) text-xs font-semibold text-(--primary)">
+                    {a.initials}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-(--text-primary)">
+                      {a.name}
+                    </p>
+                    <p className="truncate text-xs text-(--text-secondary)">
+                      {a.jobTitle}
+                    </p>
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusStyles[status]}`}
+                  >
+                    {statusLabel(status)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="lg:col-span-2">
+          <div className="rounded-lg border border-(--border) bg-(--card) p-5 shadow-(--shadow-sm) sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-(--primary-light) text-lg font-semibold text-(--primary)">
+                  {selected.initials}
+                </div>
+                <div>
+                  <h2 className="font-display text-lg font-bold text-(--text-primary)">
+                    {selected.name}
+                  </h2>
+                  <p className="text-sm text-(--text-secondary)">
+                    {selected.jobTitle}
+                  </p>
+                </div>
+              </div>
+
+              <span
+                className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[selectedStatus]}`}
+              >
+                {statusLabel(selectedStatus)}
+              </span>
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              <button
+                onClick={() => setStatusFor(selected.id, "ADVANCED")}
+                className="rounded-md bg-(--primary) px-4 py-2 text-sm font-semibold text-white hover:bg-(--primary-dark)"
+              >
+                Advance
+              </button>
+              <button
+                onClick={() => setStatusFor(selected.id, "REJECTED")}
+                className="rounded-md border border-(--border) bg-(--card) px-4 py-2 text-sm font-semibold text-(--danger) hover:bg-(--danger-bg)"
+              >
+                Reject
+              </button>
+              <a
+                href={`mailto:${selected.email}`}
+                className="flex items-center gap-2 rounded-md border border-(--border) bg-(--card) px-4 py-2 text-sm font-semibold text-(--text-secondary) hover:bg-(--bg)"
+              >
+                <Mail size={16} />
+                Message candidate
+              </a>
+              {selected.resumeUrl && (
+                <a
+                  href={selected.resumeUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="ml-auto flex items-center gap-2 text-sm font-semibold text-(--primary) hover:text-(--primary-dark)"
+                >
+                  <FileText size={16} />
+                  View resume
+                </a>
+              )}
+            </div>
+
+            <div className="mt-6 border-t border-(--border) pt-5">
+              <h3 className="text-sm font-semibold text-(--text-primary)">
+                About
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-(--text-secondary)">
+                {selected.about}
+              </p>
+
+              <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm text-(--text-secondary)">
+                <span>
+                  Title:{" "}
+                  <span className="font-medium text-(--text-primary)">
+                    {selected.currentCompany}
+                  </span>
+                </span>
+                <span>{selected.location}</span>
+                <span>Applied {formatAppliedAt(selected.appliedAt)}</span>
+              </div>
+            </div>
+
+            {selected.coverLetter && (
+              <div className="mt-6 border-t border-(--border) pt-5">
+                <h3 className="text-sm font-semibold text-(--text-primary)">
+                  Cover Letter
+                </h3>
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-(--text-secondary)">
+                  {selected.coverLetter}
                 </p>
               </div>
-            </div>
+            )}
 
-            <span
-              className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[selectedStatus]}`}
-            >
-              {statusLabel(selectedStatus)}
-            </span>
-          </div>
-
-          <div className="mt-5 flex flex-wrap gap-2">
-            <button
-              onClick={() => setStatusFor(selected.id, "ADVANCED")}
-              className="rounded-md bg-(--primary) px-4 py-2 text-sm font-semibold text-white hover:bg-(--primary-dark)"
-            >
-              Advance
-            </button>
-            <button
-              onClick={() => setStatusFor(selected.id, "REJECTED")}
-              className="rounded-md border border-(--border) bg-(--card) px-4 py-2 text-sm font-semibold text-(--danger) hover:bg-(--danger-bg)"
-            >
-              Reject
-            </button>
-            <a
-              href={`mailto:${selected.email}`}
-              className="flex items-center gap-2 rounded-md border border-(--border) bg-(--card) px-4 py-2 text-sm font-semibold text-(--text-secondary) hover:bg-(--bg)"
-            >
-              <Mail size={16} />
-              Message candidate
-            </a>
-            {selected.resumeUrl && (
-              <a
-                href={selected.resumeUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="ml-auto flex items-center gap-2 text-sm font-semibold text-(--primary) hover:text-(--primary-dark)"
-              >
-                <FileText size={16} />
-                View resume
-              </a>
+            {selected.skills.length > 0 && (
+              <div className="mt-6 border-t border-(--border) pt-5">
+                <h3 className="text-sm font-semibold text-(--text-primary)">
+                  Required Skills
+                </h3>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {selected.skills.map((skill) => (
+                    <span
+                      key={skill}
+                      className="rounded-full bg-(--bg) px-3 py-1 text-xs font-medium text-(--text-secondary)"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
-
-          <div className="mt-6 border-t border-(--border) pt-5">
-            <h3 className="text-sm font-semibold text-(--text-primary)">
-              About
-            </h3>
-            <p className="mt-2 text-sm leading-relaxed text-(--text-secondary)">
-              {selected.about}
-            </p>
-
-            <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm text-(--text-secondary)">
-              <span>
-                Title:{" "}
-                <span className="font-medium text-(--text-primary)">
-                  {selected.currentCompany}
-                </span>
-              </span>
-              <span>{selected.location}</span>
-              <span>Applied {formatAppliedAt(selected.appliedAt)}</span>
-            </div>
-          </div>
-
-          {selected.coverLetter && (
-            <div className="mt-6 border-t border-(--border) pt-5">
-              <h3 className="text-sm font-semibold text-(--text-primary)">
-                Cover Letter
-              </h3>
-              <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-(--text-secondary)">
-                {selected.coverLetter}
-              </p>
-            </div>
-          )}
-
-          {selected.skills.length > 0 && (
-            <div className="mt-6 border-t border-(--border) pt-5">
-              <h3 className="text-sm font-semibold text-(--text-primary)">
-                Required Skills
-              </h3>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {selected.skills.map((skill) => (
-                  <span
-                    key={skill}
-                    className="rounded-full bg-(--bg) px-3 py-1 text-xs font-medium text-(--text-secondary)"
-                  >
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
