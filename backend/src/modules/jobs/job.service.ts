@@ -81,9 +81,18 @@ export const getRecruiterJobsService = async (
     select: jobSelect,
   });
 
-  return jobs;
-};
+  const counts = await prisma.application.groupBy({
+    by: ["jobId"],
+    where: { jobId: { in: jobs.map((j) => j.id) } },
+    _count: true,
+  });
+  const countMap = new Map(counts.map((c) => [c.jobId, c._count]));
 
+  return jobs.map((job) => ({
+    ...job,
+    applicationsCount: countMap.get(job.id) ?? 0,
+  }));
+};
 export const updateJobStatusService = async (
   jobId: string,
   newStatus: JobStatus,

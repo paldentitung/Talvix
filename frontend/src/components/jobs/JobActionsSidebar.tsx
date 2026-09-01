@@ -78,14 +78,13 @@ const RecruiterActions = ({ job }: { job: Job }) => {
           <Pencil size={14} />
           Edit job
         </Button>
-
         <Link
-          to={`/recruiter/applicants?job=${job.id}`}
+          to={`/recruiter/applicants/${job.id}`}
           className="inline-flex items-center justify-center gap-1.5 rounded-(--radius-md) border border-(--border) px-4 py-2 text-sm font-semibold text-(--text-primary) hover:bg-(--bg)"
         >
           View applicants
         </Link>
-
+        {/* // TODO: add modal for delete */}
         <Button
           size="sm"
           className="bg-red-500  hover:bg-red-700"
