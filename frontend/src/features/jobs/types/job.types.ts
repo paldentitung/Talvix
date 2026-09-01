@@ -36,7 +36,7 @@ export interface Job {
     companyName: string | null;
     companyLogo: string | null;
   };
-
+  applicationsCount?: number;
   createdAt: string;
   updatedAt: string;
 }

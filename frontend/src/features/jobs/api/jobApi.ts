@@ -48,10 +48,9 @@ export const getJobs = async (
   return await request(`/jobs?${params.toString()}`, {});
 };
 
-export const getRecruiterJobs = async () => {
-  return await request("/jobs/me", {}, true);
+export const getRecruiterJobs = async (page = 1, limit = 10) => {
+  return await request(`/jobs/me?page=${page}&limit=${limit}`, {}, true);
 };
-
 export const createJob = async (
   jobData: Omit<JobFormValues, "deadline"> & { deadline: string | null },
 ) => {

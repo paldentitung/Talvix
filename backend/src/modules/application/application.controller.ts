@@ -79,8 +79,15 @@ export const getJobApplicationsController = async (
   res: Response,
 ) => {
   const { jobId } = req.params;
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
 
-  const applications = await getJobApplicationsService(jobId, req.user!.id);
+  const applications = await getJobApplicationsService(
+    jobId,
+    req.user!.id,
+    page,
+    limit,
+  );
 
   res.status(200).json({
     success: true,

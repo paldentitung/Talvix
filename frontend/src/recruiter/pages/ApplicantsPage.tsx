@@ -1,5 +1,12 @@
 import { useMemo, useState } from "react";
-import { ArrowLeft, Search, Mail, FileText } from "lucide-react";
+import {
+  ArrowLeft,
+  Search,
+  Mail,
+  FileText,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useJobApplications } from "../../features/applications/hooks/useJobApplications";
 import type {
@@ -66,7 +73,21 @@ const formatAppliedAt = (date: string): string => {
 
 const ApplicantsPage = () => {
   const { id } = useParams();
-  const { data, error, isLoading } = useJobApplications(id);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+
+  const { data, error, isLoading, isFetching } = useJobApplications(
+    id,
+    page,
+    limit,
+  );
+  const applicants = useMemo(
+    () => (data?.applications ?? []).map(toApplicant),
+    [data?.applications],
+  );
+  const total = data?.total ?? 0;
+  const totalPages = data?.totalPages ?? 1;
+
   const navigate = useNavigate();
 
   const [query, setQuery] = useState<string>("");
@@ -78,18 +99,30 @@ const ApplicantsPage = () => {
     Record<string, ApplicationStatus>
   >({});
 
-  const applicants: Applicant[] = useMemo(() => {
-    return (data ?? []).map(toApplicant);
-  }, [data]);
-
   const filtered: Applicant[] = useMemo(() => {
-    return applicants.filter((a) => {
+    return applicants.filter((a: Applicant) => {
       const status: ApplicationStatus = localStatus[a.id] ?? a.status;
       const matchesStatus = statusFilter === "ALL" || status === statusFilter;
       const matchesQuery = a.name.toLowerCase().includes(query.toLowerCase());
       return matchesStatus && matchesQuery;
     });
   }, [applicants, query, statusFilter, localStatus]);
+
+  const handleQueryChange = (value: string) => {
+    setQuery(value);
+    setPage(1);
+  };
+
+  const handleStatusFilterChange = (value: ApplicationStatus | "ALL") => {
+    setStatusFilter(value);
+    setPage(1);
+  };
+
+  const pageNumbers = useMemo(() => {
+    return Array.from({ length: totalPages }, (_, i) => i + 1).filter(
+      (p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1,
+    );
+  }, [totalPages, page]);
 
   const setStatusFor = (
     applicantId: string,
@@ -132,10 +165,9 @@ const ApplicantsPage = () => {
   }
 
   const selected: Applicant =
-    applicants.find((a) => a.id === selectedId) ?? applicants[0];
+    applicants.find((a: Applicant) => a.id === selectedId) ?? applicants[0];
   const selectedStatus: ApplicationStatus =
     localStatus[selected.id] ?? selected.status;
-
   return (
     <div className="space-y-4">
       <button
@@ -154,7 +186,7 @@ const ApplicantsPage = () => {
             />
             <input
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => handleQueryChange(e.target.value)}
               placeholder="Search applicants"
               className="w-full rounded-md border border-(--border) bg-(--card) py-2 pl-9 pr-3 text-sm text-(--text-primary) outline-none focus:border-(--primary)"
             />
@@ -164,7 +196,7 @@ const ApplicantsPage = () => {
             {statusFilters.map((s) => (
               <button
                 key={s}
-                onClick={() => setStatusFilter(s)}
+                onClick={() => handleStatusFilterChange(s)}
                 className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
                   statusFilter === s
                     ? "bg-(--primary) text-white"
@@ -216,6 +248,55 @@ const ApplicantsPage = () => {
               );
             })}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-(--border) pt-3">
+              <p className="text-xs text-(--text-secondary)">
+                Page {page} of {totalPages} · {total} total
+              </p>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1 || isFetching}
+                  aria-label="Previous page"
+                  className="flex h-7 w-7 items-center justify-center rounded-md border border-(--border) text-(--text-secondary) hover:bg-(--bg) hover:text-(--text-primary) disabled:opacity-40 disabled:hover:bg-transparent"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+
+                {pageNumbers.map((p, idx) => (
+                  <span key={p} className="flex items-center">
+                    {idx > 0 && pageNumbers[idx - 1] !== p - 1 && (
+                      <span className="px-1 text-xs text-(--text-muted)">
+                        …
+                      </span>
+                    )}
+                    <button
+                      onClick={() => setPage(p)}
+                      disabled={isFetching}
+                      className={`flex h-7 w-7 items-center justify-center rounded-md text-xs font-semibold transition-colors ${
+                        p === page
+                          ? "bg-(--primary) text-white"
+                          : "text-(--text-secondary) hover:bg-(--bg) hover:text-(--text-primary)"
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  </span>
+                ))}
+
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages || isFetching}
+                  aria-label="Next page"
+                  className="flex h-7 w-7 items-center justify-center rounded-md border border-(--border) text-(--text-secondary) hover:bg-(--bg) hover:text-(--text-primary) disabled:opacity-40 disabled:hover:bg-transparent"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="lg:col-span-2">

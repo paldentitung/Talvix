@@ -10,6 +10,7 @@ import { useUpdateJob } from "../../features/jobs/hooks/useUpdateJob";
 import PostJobModal from "../../recruiter/components/JobPostingModal";
 import { useApplyJob } from "../../features/applications/hooks/useApplyJob";
 import ApplyJobModal from "../../features/applications/components/ApplyJobModal";
+import Modal from "../ui/Modal";
 // TODO: swap these in once you confirm the hook names for candidate actions
 // import { useSaveJob } from "../../features/jobs/hooks/useSaveJob";
 // import { useApplyToJob } from "../../features/jobs/hooks/useApplyToJob";
@@ -37,18 +38,17 @@ const toFormValues = (job: Job): JobFormValues => ({
 
 const RecruiterActions = ({ job }: { job: Job }) => {
   const navigate = useNavigate();
+
   const deleteJobMutation = useDeleteJob();
   const updateJobMutation = useUpdateJob();
+
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const handleDeleteJob = async () => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this job? This action cannot be undone.",
-    );
-    if (!confirmed) return;
-
     try {
       await deleteJobMutation.mutateAsync(job.id);
+      setIsDeleteOpen(false);
       toast.success("Job deleted successfully");
       navigate("/recruiter/jobs");
     } catch (error) {
@@ -61,8 +61,12 @@ const RecruiterActions = ({ job }: { job: Job }) => {
     try {
       await updateJobMutation.mutateAsync({
         jobId: job.id,
-        jobData: { ...values, deadline: values.deadline || null },
+        jobData: {
+          ...values,
+          deadline: values.deadline || null,
+        },
       });
+
       toast.success("Job updated successfully");
       setIsEditOpen(false);
     } catch (error) {
@@ -71,16 +75,24 @@ const RecruiterActions = ({ job }: { job: Job }) => {
     }
   };
 
+  const handleDeleteClick = () => {
+    setIsDeleteOpen(true);
+  };
+
   return (
     <>
       <div className="flex flex-col gap-2">
-        <Button size="sm" onClick={() => setIsEditOpen(true)}>
+        <Button
+          size="sm"
+          onClick={() => setIsEditOpen(true)}
+          disabled={updateJobMutation.isPending}
+        >
           <Pencil size={14} />
           Edit job
         </Button>
 
         <Link
-          to={`/recruiter/applicants?job=${job.id}`}
+          to={`/recruiter/applicants/${job.id}`}
           className="inline-flex items-center justify-center gap-1.5 rounded-(--radius-md) border border-(--border) px-4 py-2 text-sm font-semibold text-(--text-primary) hover:bg-(--bg)"
         >
           View applicants
@@ -88,8 +100,9 @@ const RecruiterActions = ({ job }: { job: Job }) => {
 
         <Button
           size="sm"
-          className="bg-red-500  hover:bg-red-700"
-          onClick={handleDeleteJob}
+          className="bg-red-500 hover:bg-red-700"
+          onClick={handleDeleteClick}
+          disabled={deleteJobMutation.isPending}
         >
           <Trash2 size={14} />
           Delete job
@@ -102,6 +115,34 @@ const RecruiterActions = ({ job }: { job: Job }) => {
         onSubmit={handleUpdateJob}
         initialValues={toFormValues(job)}
         mode="edit"
+      />
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        title="Confirm Delete"
+        description="Are you sure you want to delete this job? This action cannot be undone."
+        footer={
+          <>
+            <Button
+              size="sm"
+              onClick={() => setIsDeleteOpen(false)}
+              disabled={deleteJobMutation.isPending}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              size="sm"
+              className="bg-red-500 hover:bg-red-700"
+              onClick={handleDeleteJob}
+              disabled={deleteJobMutation.isPending}
+            >
+              {deleteJobMutation.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </>
+        }
       />
     </>
   );
