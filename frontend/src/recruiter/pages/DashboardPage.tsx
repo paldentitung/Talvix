@@ -11,6 +11,8 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import { useRecruiterJobs } from "../../features/jobs/hooks/useRecruiterJobs";
+import type { Job, JobStatus } from "../../features/jobs/types/job.types";
 
 type Stat = {
   label: string;
@@ -40,50 +42,11 @@ const sources = [
   { label: "Other", value: 16, color: "var(--text-muted)" },
 ];
 
-type JobStatus = "Live" | "Draft" | "Paused";
-
 const statusStyles: Record<JobStatus, string> = {
-  Live: "bg-(--success-bg) text-(--success)",
-  Draft: "bg-(--border) text-(--text-secondary)",
-  Paused: "bg-(--warning-bg) text-(--warning)",
+  OPEN: "bg-(--success-bg) text-(--success)",
+  DRAFT: "bg-(--border) text-(--text-secondary)",
+  CLOSED: "bg-(--danger-bg) text-(--danger)",
 };
-
-const jobs: {
-  title: string;
-  location: string;
-  applicants: number;
-  views: string;
-  status: JobStatus;
-}[] = [
-  {
-    title: "Senior Product Designer",
-    location: "Remote · US",
-    applicants: 128,
-    views: "3.2k",
-    status: "Live",
-  },
-  {
-    title: "Staff Software Engineer",
-    location: "SF, CA",
-    applicants: 96,
-    views: "4.1k",
-    status: "Live",
-  },
-  {
-    title: "Product Marketing Manager",
-    location: "NY, NY",
-    applicants: 54,
-    views: "2.8k",
-    status: "Draft",
-  },
-  {
-    title: "Customer Success Lead",
-    location: "Remote",
-    applicants: 84,
-    views: "1.9k",
-    status: "Paused",
-  },
-];
 
 const candidates = [
   { initials: "PS", name: "Priya Shah", role: "Designer", match: 96 },
@@ -115,6 +78,8 @@ const StatCard = ({ label, value, delta }: Stat) => (
 );
 
 const DashboardPage = () => {
+  const { data: jobs = [] } = useRecruiterJobs();
+
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -229,29 +194,34 @@ const DashboardPage = () => {
           </div>
 
           <div className="mt-4 flex flex-col divide-y divide-(--border)">
-            {jobs.map((job) => (
-              <div
+            {jobs.slice(0, Math.ceil(jobs.length * 0.4)).map((job: Job) => (
+              <Link
+                to={`/recruiter/jobs/${job.id}`}
                 key={job.title}
-                className="flex items-center justify-between gap-3 py-3"
+                className="group flex items-center justify-between gap-4 py-4 px-2 -mx-2 rounded-lg transition-colors hover:bg-(--surface-hover)"
               >
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-(--text-primary)">
                     {job.title}
                   </p>
-                  <p className="text-xs text-(--text-secondary)">
+                  <p className="mt-0.5 text-xs text-(--text-secondary)">
                     {job.location}
                   </p>
                 </div>
-                <div className="hidden shrink-0 text-right text-xs text-(--text-secondary) sm:block">
-                  <p>{job.applicants} applicants</p>
-                  <p>{job.views} views</p>
+
+                <div className="hidden shrink-0 items-baseline gap-1 text-xs text-(--text-secondary) sm:flex">
+                  <span className="font-medium text-(--text-primary)">
+                    {job.applicationsCount ?? 0}
+                  </span>
+                  <span>applicants</span>
                 </div>
+
                 <span
-                  className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[job.status]}`}
+                  className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium transition-transform group-hover:scale-105 ${statusStyles[job.status]}`}
                 >
                   {job.status}
                 </span>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
