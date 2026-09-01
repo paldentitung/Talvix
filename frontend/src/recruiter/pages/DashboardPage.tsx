@@ -78,7 +78,9 @@ const StatCard = ({ label, value, delta }: Stat) => (
 );
 
 const DashboardPage = () => {
-  const { data: jobs = [] } = useRecruiterJobs();
+  const { data } = useRecruiterJobs();
+
+  const jobs = data?.jobs ?? [];
 
   return (
     <div className="flex flex-col gap-6">
@@ -197,13 +199,14 @@ const DashboardPage = () => {
             {jobs.slice(0, Math.ceil(jobs.length * 0.4)).map((job: Job) => (
               <Link
                 to={`/recruiter/jobs/${job.id}`}
-                key={job.title}
+                key={job.id}
                 className="group flex items-center justify-between gap-4 py-4 px-2 -mx-2 rounded-lg transition-colors hover:bg-(--surface-hover)"
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-(--text-primary)">
                     {job.title}
                   </p>
+
                   <p className="mt-0.5 text-xs text-(--text-secondary)">
                     {job.location}
                   </p>

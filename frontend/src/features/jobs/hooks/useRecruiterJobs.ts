@@ -1,10 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
+
 import { getRecruiterJobs } from "../api/jobApi";
 
-export function useRecruiterJobs() {
+export function useRecruiterJobs(page = 1, limit = 10) {
   return useQuery({
-    queryKey: ["recruiterJobs"],
-    queryFn: getRecruiterJobs,
-    select: (data) => data?.data ?? [],
+    queryKey: ["recruiterJobs", page, limit],
+
+    queryFn: () => getRecruiterJobs(page, limit),
+
+    select: (res) => res.data,
   });
 }

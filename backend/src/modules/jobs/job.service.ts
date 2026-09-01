@@ -75,23 +75,55 @@ export const getJobsService = async (
 export const getRecruiterJobsService = async (
   userId: string | undefined,
   userRole: string | undefined,
-): Promise<JobResponse[]> => {
-  const jobs = await prisma.job.findMany({
-    where: userRole === "ADMIN" ? {} : { recruiterId: userId },
-    select: jobSelect,
-  });
+  page = 1,
+  limit = 10,
+) => {
+  const skip = (page - 1) * limit;
+
+  const where = userRole === "ADMIN" ? {} : { recruiterId: userId };
+
+  const [jobs, total] = await Promise.all([
+    prisma.job.findMany({
+      where,
+      select: jobSelect,
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+
+    prisma.job.count({
+      where,
+    }),
+  ]);
 
   const counts = await prisma.application.groupBy({
     by: ["jobId"],
-    where: { jobId: { in: jobs.map((j) => j.id) } },
+    where: {
+      jobId: {
+        in: jobs.map((j) => j.id),
+      },
+    },
     _count: true,
   });
+
   const countMap = new Map(counts.map((c) => [c.jobId, c._count]));
 
-  return jobs.map((job) => ({
+  const jobsWithApplications = jobs.map((job) => ({
     ...job,
     applicationsCount: countMap.get(job.id) ?? 0,
   }));
+
+  return {
+    jobs: jobsWithApplications,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 };
 export const updateJobStatusService = async (
   jobId: string,
