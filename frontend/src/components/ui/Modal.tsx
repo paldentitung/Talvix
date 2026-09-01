@@ -6,7 +6,7 @@ type ModalProps = {
   onClose: () => void;
   title: string;
   description?: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   footer?: React.ReactNode;
   maxWidth?: string;
 };
@@ -70,9 +70,11 @@ const Modal = ({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-6">
-          {children}
-        </div>
+        {children && (
+          <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+            {children}
+          </div>
+        )}
 
         {footer && (
           <div className="flex flex-col-reverse gap-2 border-t border-(--border) px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
