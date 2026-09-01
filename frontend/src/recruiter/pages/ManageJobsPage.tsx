@@ -57,6 +57,8 @@ const statusFilters: (JobStatus | "ALL")[] = ["ALL", "OPEN", "DRAFT", "CLOSED"];
 const ManageJobsPage = () => {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<JobStatus | "ALL">("ALL");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   const { data: jobs = [] } = useRecruiterJobs();
   const { mutate: updateStatus, isPending } = useUpdateJobStatus();

@@ -137,7 +137,11 @@ export const getMyApplicationsService = async (
 export const getJobApplicationsService = async (
   jobId: string,
   recruiterId: string,
+  page = 1,
+  limit = 10,
 ) => {
+  const skip = (page - 1) * limit;
+
   const job = await prisma.job.findFirst({
     where: {
       id: jobId,
@@ -149,18 +153,38 @@ export const getJobApplicationsService = async (
     throw new AppError("Job not found", 404);
   }
 
-  return prisma.application.findMany({
-    where: {
-      jobId,
+  const [applications, total] = await Promise.all([
+    prisma.application.findMany({
+      where: {
+        jobId,
+      },
+      include: {
+        user: true,
+        job: true,
+      },
+      orderBy: {
+        appliedAt: "desc",
+      },
+      skip,
+      take: limit,
+    }),
+
+    prisma.application.count({
+      where: {
+        jobId,
+      },
+    }),
+  ]);
+
+  return {
+    applications,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
     },
-    include: {
-      user: true,
-      job: true,
-    },
-    orderBy: {
-      appliedAt: "desc",
-    },
-  });
+  };
 };
 export const createApplicationService = async (
   userId: string,

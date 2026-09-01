@@ -18,6 +18,14 @@ export const applyJob = (applicationData: ApplyJobData) => {
   );
 };
 
-export const getJobApplications = async (jobId: string) => {
-  return await request(`/applications/job/${jobId}`, {}, true);
+export const getJobApplications = async (
+  jobId: string,
+  page = 1,
+  limit = 10,
+) => {
+  return await request(
+    `/applications/job/${jobId}?page=${page}&limit=${limit}`,
+    {},
+    true,
+  );
 };
