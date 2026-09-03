@@ -13,6 +13,8 @@ import {
 import type { Job, JobStatus } from "../../features/jobs/types/job.types";
 import { useRecruiterJobs } from "../../features/jobs/hooks/useRecruiterJobs";
 import { useUpdateJobStatus } from "../../features/jobs/hooks/useUpdateJobStatus";
+import Modal from "../../components/ui/Modal";
+import Button from "../../components/ui/Button";
 
 const statusStyles: Record<JobStatus, string> = {
   OPEN: "bg-(--success-bg) text-(--success)",
@@ -57,7 +59,11 @@ const ManageJobsPage = () => {
   const [status, setStatus] = useState<JobStatus | "ALL">("ALL");
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
-
+  const [isOpen, setIsOpen] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<{
+    jobId: string;
+    status: JobStatus;
+  } | null>(null);
   const { data, isFetching } = useRecruiterJobs(page, limit);
 
   const jobs = data?.jobs ?? [];
@@ -90,7 +96,13 @@ const ManageJobsPage = () => {
       (p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1,
     );
   }, [totalPages, page]);
+  const handleConfirmStatusUpdate = () => {
+    if (!pendingStatus) return;
 
+    updateStatus(pendingStatus);
+    setIsOpen(false);
+    setPendingStatus(null);
+  };
   return (
     <div className="flex flex-col gap-4">
       {/* Filters */}
@@ -226,12 +238,13 @@ const ManageJobsPage = () => {
                         {action && (
                           <button
                             disabled={isPending}
-                            onClick={() =>
-                              updateStatus({
+                            onClick={() => {
+                              setPendingStatus({
                                 jobId: job.id,
                                 status: action.next,
-                              })
-                            }
+                              });
+                              setIsOpen(true);
+                            }}
                             aria-label={action.label}
                             title={action.label}
                             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-(--radius-md) border border-(--border) text-(--text-secondary) hover:bg-(--bg) hover:text-(--text-primary) disabled:opacity-50"
@@ -308,9 +321,13 @@ const ManageJobsPage = () => {
                   {action && (
                     <button
                       disabled={isPending}
-                      onClick={() =>
-                        updateStatus({ jobId: job.id, status: action.next })
-                      }
+                      onClick={() => {
+                        setPendingStatus({
+                          jobId: job.id,
+                          status: action.next,
+                        });
+                        setIsOpen(true);
+                      }}
                       aria-label={action.label}
                       title={action.label}
                       className="flex h-9 w-9 shrink-0 items-center justify-center rounded-(--radius-md) border border-(--border) text-(--text-secondary) hover:bg-(--bg) hover:text-(--text-primary) disabled:opacity-50"
@@ -372,6 +389,24 @@ const ManageJobsPage = () => {
           </div>
         </div>
       )}
+
+      <Modal
+        isOpen={isOpen}
+        title="Update job status"
+        description="Are you sure you want to update this job's status?"
+        onClose={() => setIsOpen(false)}
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button onClick={() => setIsOpen(false)} variant="ghost" size="sm">
+              Cancel
+            </Button>
+
+            <Button size="sm" onClick={handleConfirmStatusUpdate}>
+              Update Status
+            </Button>
+          </div>
+        }
+      />
     </div>
   );
 };
