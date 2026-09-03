@@ -29,3 +29,10 @@ export const getJobApplications = async (
     true,
   );
 };
+export const getMyApplications = async (page = 1, limit = 10) => {
+  return await request(
+    `/applications/me?page=${page}&limit=${limit}`,
+    {},
+    true,
+  );
+};

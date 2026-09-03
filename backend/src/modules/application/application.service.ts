@@ -114,7 +114,21 @@ export const getMyApplicationsService = async (
         appliedAt: "desc",
       },
       include: {
-        job: true,
+        job: {
+          include: {
+            recruiter: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                avatar: true,
+                companyName: true,
+                companyLogo: true,
+                companyWebsite: true,
+              },
+            },
+          },
+        },
       },
     }),
 
