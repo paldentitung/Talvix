@@ -11,6 +11,8 @@ import {
 import type { ApplicationStatus } from "../../features/applications/types/application.types";
 import { useCandidateApplication } from "../../features/applications/hooks/useCandidateApplication";
 import Button from "../../components/ui/Button";
+import { useWithdrawApplication } from "../../features/applications/hooks/useWithdrawApplication";
+import Modal from "../../components/ui/Modal";
 type Status = "Applied" | "In Review" | "Interview" | "Offer" | "Rejected";
 
 interface Application {
@@ -143,6 +145,8 @@ export default function CandidateApplicationsPage() {
 
   const [activeFilter, setActiveFilter] = useState("All");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const withdrawMutation = useWithdrawApplication();
+  const [isOpen, setIsOpen] = useState(false);
 
   const visible =
     activeFilter === "All"
@@ -151,6 +155,12 @@ export default function CandidateApplicationsPage() {
 
   const selected =
     visible.find((a) => a.id === selectedId) ?? visible[0] ?? null;
+
+  const handleWithdraw = () => {
+    if (!selected) return;
+    withdrawMutation.mutate(selected.id);
+    setIsOpen(false);
+  };
 
   if (isPending) {
     return (
@@ -345,7 +355,7 @@ export default function CandidateApplicationsPage() {
               {selected.status === "PENDING" ||
               selected.status === "REVIEWED" ? (
                 <Button
-                  // onClick={() => setShowWithdrawConfirm(true)}
+                  onClick={() => setIsOpen(true)}
                   className="bg-red-500 hover:bg-red-600 w-full mt-2"
                 >
                   Withdraw
@@ -355,6 +365,31 @@ export default function CandidateApplicationsPage() {
           )}
         </div>
       </div>
+
+      <Modal
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        title="Confirm Withdrawal"
+        description="Are you sure you want to withdraw your application? This action cannot be undone."
+        maxWidth="max-w-sm"
+      >
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            onClick={() => setIsOpen(false)}
+            variant="ghost"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={handleWithdraw}
+            className="bg-red-500 hover:bg-red-600"
+          >
+            Withdraw
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }

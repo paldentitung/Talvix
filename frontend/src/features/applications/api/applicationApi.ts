@@ -36,3 +36,12 @@ export const getMyApplications = async (page = 1, limit = 10) => {
     true,
   );
 };
+export const withdrawApplication = async (applicationId: string) => {
+  return await request(
+    `/applications/${applicationId}/withdraw`,
+    {
+      method: "DELETE",
+    },
+    true,
+  );
+};
