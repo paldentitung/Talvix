@@ -125,6 +125,7 @@ const RecruiterActions = ({ job }: { job: Job }) => {
         onClose={() => setIsDeleteOpen(false)}
         title="Confirm Delete"
         description="Are you sure you want to delete this job? This action cannot be undone."
+        maxWidth="max-w-sm"
         footer={
           <>
             <Button

@@ -395,13 +395,19 @@ const ManageJobsPage = () => {
         title="Update job status"
         description="Are you sure you want to update this job's status?"
         onClose={() => setIsOpen(false)}
+        maxWidth="max-w-sm"
         footer={
           <div className="flex justify-end gap-2">
             <Button onClick={() => setIsOpen(false)} variant="ghost" size="sm">
               Cancel
             </Button>
 
-            <Button size="sm" onClick={handleConfirmStatusUpdate}>
+            <Button
+              size="sm"
+              onClick={handleConfirmStatusUpdate}
+              variant="accent"
+              disabled={isPending}
+            >
               Update Status
             </Button>
           </div>
