@@ -1,7 +1,7 @@
 // components/JobActionsSidebar.tsx
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Pencil, Trash2 } from "lucide-react";
+import { Bookmark, BookmarkCheck, Loader2, Pencil, Trash2 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import type { Job, JobFormValues } from "../../features/jobs/types/job.types";
 import Button from "../../components/ui/Button";
@@ -11,6 +11,8 @@ import PostJobModal from "../../recruiter/components/JobPostingModal";
 import { useApplyJob } from "../../features/applications/hooks/useApplyJob";
 import ApplyJobModal from "../../features/applications/components/ApplyJobModal";
 import Modal from "../ui/Modal";
+import { useSavedJobs } from "../../features/jobs/hooks/useSavedJobs";
+import { useJobSaveActions } from "../../features/jobs/hooks/useJobSaveActions";
 // TODO: swap these in once you confirm the hook names for candidate actions
 // import { useSaveJob } from "../../features/jobs/hooks/useSaveJob";
 // import { useApplyToJob } from "../../features/jobs/hooks/useApplyToJob";
@@ -123,6 +125,7 @@ const RecruiterActions = ({ job }: { job: Job }) => {
         onClose={() => setIsDeleteOpen(false)}
         title="Confirm Delete"
         description="Are you sure you want to delete this job? This action cannot be undone."
+        maxWidth="max-w-sm"
         footer={
           <>
             <Button
@@ -149,10 +152,9 @@ const RecruiterActions = ({ job }: { job: Job }) => {
 };
 
 const CandidateActions = ({ job }: { job: Job }) => {
-  // TODO: wire real mutations once hook names are confirmed
-  const handleSave = () => toast("Saved to your list");
   const [isApplyOpen, setIsApplyOpen] = useState(false);
   const applyJobMutation = useApplyJob();
+  const { isJobSaved, isSavingJob, toggleSave } = useJobSaveActions();
 
   const handleApply = async ({
     coverLetter,
@@ -176,9 +178,30 @@ const CandidateActions = ({ job }: { job: Job }) => {
       <Button size="sm" onClick={() => setIsApplyOpen(true)}>
         Apply now
       </Button>
-      <Button size="sm" onClick={handleSave} variant="accent">
-        Save job
-      </Button>{" "}
+      <Button
+        size="sm"
+        variant="accent"
+        onClick={() => toggleSave(job.id)}
+        disabled={isSavingJob(job.id)}
+        aria-label={isJobSaved(job.id) ? "Remove from saved jobs" : "Save job"}
+      >
+        {isSavingJob(job.id) ? (
+          <>
+            <Loader2 size={18} className="animate-spin" />
+            Saving...
+          </>
+        ) : isJobSaved(job.id) ? (
+          <>
+            <BookmarkCheck size={18} />
+            Saved
+          </>
+        ) : (
+          <>
+            <Bookmark size={18} />
+            Save Job
+          </>
+        )}
+      </Button>
       <ApplyJobModal
         isOpen={isApplyOpen}
         onClose={() => setIsApplyOpen(false)}
