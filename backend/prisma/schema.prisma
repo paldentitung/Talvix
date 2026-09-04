@@ -123,6 +123,7 @@ model Application {
   status ApplicationStatus @default(PENDING)
 
   recruiterNotes String? @db.Text
+  statusHistory ApplicationStatusHistory[]
 
   appliedAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -131,6 +132,19 @@ model Application {
   @@index([jobId])
   @@index([userId])
   @@index([status])
+}
+
+model ApplicationStatusHistory {
+  id            String            @id @default(cuid())
+  applicationId String
+  status        ApplicationStatus
+  note          String?
+  changedById   String?           
+  createdAt     DateTime          @default(now())
+
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
 }
 
 enum Role {
@@ -171,4 +185,5 @@ enum ApplicationStatus {
   SHORTLISTED
   REJECTED
   ACCEPTED
+  WITHDRAWN
 }

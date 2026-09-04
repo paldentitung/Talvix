@@ -59,7 +59,7 @@ router.delete(
   asyncHandler(withdrawApplicationController),
 );
 router.patch(
-  "/:id",
+  "/:id/status",
   requireAuth,
   requireRole("RECRUITER"),
   asyncHandler(updateApplicationController),

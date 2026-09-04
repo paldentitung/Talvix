@@ -5,161 +5,84 @@ import {
   MessageSquare,
   Calendar,
   Clock,
+  XCircle,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+import type { ApplicationStatus } from "../../features/applications/types/application.types";
+import { useCandidateApplication } from "../../features/applications/hooks/useCandidateApplication";
+import Button from "../../components/ui/Button";
+import { useWithdrawApplication } from "../../features/applications/hooks/useWithdrawApplication";
+import Modal from "../../components/ui/Modal";
+import { Link } from "react-router-dom";
 
-type Status = "Applied" | "In Review" | "Interview" | "Offer" | "Rejected";
+type Status =
+  | "Applied"
+  | "In Review"
+  | "Interview"
+  | "Offer"
+  | "Rejected"
+  | "Withdrawn";
+
+interface StatusHistoryEntry {
+  status: ApplicationStatus;
+  note: string | null;
+  createdAt: string;
+}
 
 interface Application {
   id: string;
-  role: string;
-  company: string;
-  location: string;
-  appliedOn: string;
-  status: Status;
-  timeline: {
-    icon: "check" | "chat" | "calendar" | "clock";
+  status: ApplicationStatus;
+  appliedAt: string;
+  coverLetter: string;
+  resumeUrl: string;
+  statusHistory: StatusHistoryEntry[];
+  job: {
+    id: string;
     title: string;
-    date: string;
-    done: boolean;
-  }[];
+    location: string;
+    recruiter: {
+      id: string;
+      firstName: string;
+      lastName: string;
+      avatar: string | null;
+      companyName: string | null;
+      companyLogo: string | null;
+      companyWebsite: string | null;
+    };
+  };
 }
 
-const applications: Application[] = [
-  {
-    id: "1",
-    role: "Senior Product Designer",
-    company: "Linear",
-    location: "Remote · US",
-    appliedOn: "Oct 12",
-    status: "Interview",
-    timeline: [
-      {
-        icon: "check",
-        title: "Application submitted",
-        date: "Oct 12",
-        done: true,
-      },
-      {
-        icon: "check",
-        title: "Application reviewed",
-        date: "Oct 14",
-        done: true,
-      },
-      {
-        icon: "chat",
-        title: "Screening call scheduled",
-        date: "Oct 18",
-        done: true,
-      },
-      {
-        icon: "calendar",
-        title: "Onsite interview",
-        date: "Oct 25",
-        done: false,
-      },
-      { icon: "clock", title: "Offer decision", date: "Nov 1", done: false },
-    ],
-  },
-  {
-    id: "2",
-    role: "Staff Software Engineer",
-    company: "Vercel",
-    location: "Remote · US",
-    appliedOn: "Oct 10",
-    status: "In Review",
-    timeline: [
-      {
-        icon: "check",
-        title: "Application submitted",
-        date: "Oct 10",
-        done: true,
-      },
-      {
-        icon: "clock",
-        title: "Application reviewed",
-        date: "Pending",
-        done: false,
-      },
-    ],
-  },
-  {
-    id: "3",
-    role: "Product Marketing Manager",
-    company: "Notion",
-    location: "Remote · US",
-    appliedOn: "Oct 7",
-    status: "Applied",
-    timeline: [
-      {
-        icon: "check",
-        title: "Application submitted",
-        date: "Oct 7",
-        done: true,
-      },
-      {
-        icon: "clock",
-        title: "Application reviewed",
-        date: "Pending",
-        done: false,
-      },
-    ],
-  },
-  {
-    id: "4",
-    role: "Frontend Engineer",
-    company: "Stripe",
-    location: "Remote · US",
-    appliedOn: "Oct 3",
-    status: "Offer",
-    timeline: [
-      {
-        icon: "check",
-        title: "Application submitted",
-        date: "Oct 3",
-        done: true,
-      },
-      {
-        icon: "check",
-        title: "Application reviewed",
-        date: "Oct 5",
-        done: true,
-      },
-      { icon: "check", title: "Onsite interview", date: "Oct 14", done: true },
-      { icon: "check", title: "Offer extended", date: "Oct 20", done: true },
-    ],
-  },
-  {
-    id: "5",
-    role: "Design Lead",
-    company: "Figma",
-    location: "Remote · US",
-    appliedOn: "Sep 28",
-    status: "Rejected",
-    timeline: [
-      {
-        icon: "check",
-        title: "Application submitted",
-        date: "Sep 28",
-        done: true,
-      },
-      {
-        icon: "check",
-        title: "Application reviewed",
-        date: "Sep 30",
-        done: true,
-      },
-      { icon: "check", title: "Application closed", date: "Oct 4", done: true },
-    ],
-  },
-];
+// Maps backend enum -> display label used by the UI
+const statusLabelMap: Record<ApplicationStatus, Status> = {
+  PENDING: "Applied",
+  REVIEWING: "In Review",
+  SHORTLISTED: "Interview",
+  REJECTED: "Rejected",
+  ACCEPTED: "Offer",
+  WITHDRAWN: "Withdrawn",
+};
 
-const filters: { label: string; count?: number }[] = [
-  { label: "All", count: 24 },
+const statusIconMap: Record<
+  ApplicationStatus,
+  "check" | "chat" | "calendar" | "clock" | "x"
+> = {
+  PENDING: "check",
+  REVIEWING: "chat",
+  SHORTLISTED: "calendar",
+  ACCEPTED: "clock",
+  REJECTED: "x",
+  WITHDRAWN: "x",
+};
+
+const filters: { label: string }[] = [
+  { label: "All" },
   { label: "Applied" },
   { label: "In Review" },
   { label: "Interview" },
   { label: "Offer" },
   { label: "Rejected" },
+  { label: "Withdrawn" },
 ];
 
 const statusStyles: Record<Status, string> = {
@@ -168,17 +91,15 @@ const statusStyles: Record<Status, string> = {
   Interview: "text-[var(--accent)] bg-[var(--accent-light)]",
   Offer: "text-[var(--success)] bg-[var(--success-bg)]",
   Rejected: "text-[var(--danger)] bg-[var(--danger-bg)]",
+  Withdrawn: "text-[var(--text-muted)] bg-slate-200",
 };
 
 function TimelineIcon({
   icon,
-  done,
 }: {
-  icon: "check" | "chat" | "calendar" | "clock";
-  done: boolean;
+  icon: "check" | "chat" | "calendar" | "clock" | "x";
 }) {
-  const color = done ? "var(--accent)" : "var(--text-muted)";
-  const common = { size: 16, color, strokeWidth: 2.2 };
+  const common = { size: 16, color: "var(--accent)", strokeWidth: 2.2 };
   switch (icon) {
     case "check":
       return <CheckCircle2 {...common} />;
@@ -188,31 +109,99 @@ function TimelineIcon({
       return <Calendar {...common} />;
     case "clock":
       return <Clock {...common} />;
+    case "x":
+      return <XCircle {...common} color="var(--danger)" />;
   }
 }
 
-export default function CandidateApplicationsPage() {
-  const [activeFilter, setActiveFilter] = useState("All");
-  const [selectedId, setSelectedId] = useState(applications[0].id);
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
-  const selected =
-    applications.find((a) => a.id === selectedId) ?? applications[0];
+// Real timeline: derived directly from the backend's statusHistory records.
+// Every entry here is a real, timestamped event — nothing is guessed.
+function renderTimeline(history: StatusHistoryEntry[], appliedAt: string) {
+  if (history.length === 0) {
+    // Fallback only for pre-migration rows with no history rows yet.
+    return [
+      {
+        title: "Applied",
+        date: formatDate(appliedAt),
+        icon: "check" as const,
+      },
+    ];
+  }
+  return history.map((entry) => ({
+    title: statusLabelMap[entry.status],
+    date: formatDate(entry.createdAt),
+    icon: statusIconMap[entry.status],
+  }));
+}
+
+export default function CandidateApplicationsPage() {
+  const [page, setPage] = useState(1);
+  const limit = 10;
+
+  const { data, isError, isPending } = useCandidateApplication(page, limit);
+  const applications: Application[] = data?.data?.applications ?? [];
+  const totalApplications = data?.data?.pagination?.total ?? 0;
+  const totalPages = data?.data?.pagination?.totalPages ?? 1;
+
+  const [activeFilter, setActiveFilter] = useState("All");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const withdrawMutation = useWithdrawApplication();
+  const [isOpen, setIsOpen] = useState(false);
 
   const visible =
     activeFilter === "All"
       ? applications
-      : applications.filter((a) => a.status === activeFilter);
+      : applications.filter((a) => statusLabelMap[a.status] === activeFilter);
+
+  const selected =
+    visible.find((a) => a.id === selectedId) ?? visible[0] ?? null;
+
+  const handleWithdraw = () => {
+    if (!selected) return;
+    withdrawMutation.mutate(selected.id, {
+      onSuccess: () => setIsOpen(false),
+    });
+  };
+
+  if (isPending) {
+    return (
+      <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center">
+        <p className="text-[14px] text-[var(--text-muted)]">
+          Loading applications…
+        </p>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center">
+        <p className="text-[14px] text-[var(--danger)]">
+          Something went wrong loading your applications.
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] ">
+    <div className="min-h-screen bg-[var(--bg)]">
       {/* Filters */}
       <div className="mb-5 flex flex-wrap gap-2">
         {filters.map((f) => {
           const isActive = activeFilter === f.label;
           const count =
             f.label === "All"
-              ? f.count
-              : applications.filter((a) => a.status === f.label).length;
+              ? totalApplications
+              : applications.filter((a) => statusLabelMap[a.status] === f.label)
+                  .length;
           return (
             <button
               key={f.label}
@@ -224,7 +213,7 @@ export default function CandidateApplicationsPage() {
               }`}
             >
               {f.label}
-              {f.label === "All" && count !== undefined ? ` (${count})` : ""}
+              {f.label === "All" ? ` (${count})` : ""}
             </button>
           );
         })}
@@ -235,7 +224,8 @@ export default function CandidateApplicationsPage() {
         {/* List */}
         <div className="flex-1 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-sm)] overflow-hidden">
           {visible.map((app, i) => {
-            const isSelected = app.id === selectedId;
+            const isSelected = selected?.id === app.id;
+            const label = statusLabelMap[app.status];
             return (
               <button
                 key={app.id}
@@ -252,96 +242,159 @@ export default function CandidateApplicationsPage() {
 
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[15px] font-semibold text-[var(--text-primary)]">
-                    {app.role}
+                    {app.job.title}
                   </p>
                   <p className="mt-0.5 text-[13px] text-[var(--text-muted)]">
-                    {app.company} · Applied {app.appliedOn}
+                    {app.job.recruiter.companyName ?? "Unknown company"} ·
+                    Applied {formatDate(app.appliedAt)}
                   </p>
                 </div>
 
                 <span
-                  className={`shrink-0 rounded-full px-3 py-1 text-[12px] font-medium ${statusStyles[app.status]}`}
+                  className={`shrink-0 rounded-full px-3 py-1 text-[12px] font-medium ${statusStyles[label]}`}
                 >
-                  {app.status}
-                </span>
-
-                <span className="shrink-0 text-[14px] font-medium text-[var(--primary)]">
-                  View
+                  {label}
                 </span>
               </button>
             );
           })}
           {visible.length === 0 && (
-            <div className="px-6 py-16 text-center text-[14px] text-[var(--text-muted)]">
+            <div className="px-6 py-16 text-center text-[14px] text-[var(--text-muted)] flex justify-center items-center gap-2 flex-col">
               No applications in this stage yet.
+              <Link
+                to={"/candidate/jobs"}
+                className="ml-1 text-[var(--primary)]"
+              >
+                <Button size="sm">Browse jobs</Button>
+              </Link>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-[var(--border)] px-6 py-4">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="flex items-center gap-1 text-[13px] font-medium text-[var(--text-secondary)] disabled:opacity-40"
+              >
+                <ChevronLeft size={16} />
+                Prev
+              </button>
+              <span className="text-[13px] text-[var(--text-muted)]">
+                Page {page} of {totalPages}
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                className="flex items-center gap-1 text-[13px] font-medium text-[var(--text-secondary)] disabled:opacity-40"
+              >
+                Next
+                <ChevronRight size={16} />
+              </button>
             </div>
           )}
         </div>
 
         {/* Detail panel */}
         <div className="w-[340px] shrink-0 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--card)] p-6 shadow-[var(--shadow-sm)]">
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-slate-100">
-              <Briefcase size={18} color="var(--text-secondary)" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[15px] font-semibold text-[var(--text-primary)]">
-                {selected.role}
-              </p>
-              <p className="mt-0.5 text-[13px] text-[var(--text-muted)]">
-                {selected.company} · {selected.location}
-              </p>
-              <span
-                className={`mt-2 inline-block rounded-full px-3 py-1 text-[12px] font-medium ${statusStyles[selected.status]}`}
-              >
-                {selected.status}
-              </span>
-            </div>
-          </div>
-
-          <div className="my-5 border-t border-[var(--border)]" />
-
-          <p className="mb-4 text-[13px] font-semibold text-[var(--text-primary)]">
-            Application timeline
-          </p>
-
-          <div className="relative">
-            {selected.timeline.map((step, i) => (
-              <div key={i} className="relative flex gap-3 pb-6 last:pb-0">
-                {i !== selected.timeline.length - 1 && (
-                  <span
-                    className="absolute left-[7px] top-5 h-[calc(100%-8px)] w-px"
-                    style={{
-                      background: step.done ? "var(--accent)" : "var(--border)",
-                    }}
-                  />
-                )}
-                <div className="z-10 mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center">
-                  <TimelineIcon icon={step.icon} done={step.done} />
+          {!selected ? (
+            <p className="text-[14px] text-[var(--text-muted)]">
+              Select an application to see details.
+            </p>
+          ) : (
+            <>
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-slate-100">
+                  <Briefcase size={18} color="var(--text-secondary)" />
                 </div>
                 <div className="min-w-0">
-                  <p
-                    className={`text-[14px] font-medium ${
-                      step.done
-                        ? "text-[var(--text-primary)]"
-                        : "text-[var(--text-muted)]"
-                    }`}
+                  <p className="text-[15px] font-semibold text-[var(--text-primary)]">
+                    {selected.job.title}
+                  </p>
+                  <p className="mt-0.5 text-[13px] text-[var(--text-muted)]">
+                    {selected.job.recruiter.companyName ?? "Unknown company"} ·{" "}
+                    {selected.job.location}
+                  </p>
+                  <span
+                    className={`mt-2 inline-block rounded-full px-3 py-1 text-[12px] font-medium ${statusStyles[statusLabelMap[selected.status]]}`}
                   >
-                    {step.title}
-                  </p>
-                  <p className="text-[12px] text-[var(--text-muted)]">
-                    {step.date}
-                  </p>
+                    {statusLabelMap[selected.status]}
+                  </span>
                 </div>
               </div>
-            ))}
-          </div>
-
-          <button className="mt-2 w-full rounded-[var(--radius-md)] bg-[var(--primary)] py-3 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--primary-dark)]">
-            Message recruiter
-          </button>
+              <div className="my-5 border-t border-[var(--border)]" />
+              <p className="mb-4 text-[13px] font-semibold text-[var(--text-primary)]">
+                Application timeline
+              </p>
+              <div className="relative">
+                {renderTimeline(selected.statusHistory, selected.appliedAt).map(
+                  (step, i, arr) => (
+                    <div key={i} className="relative flex gap-3 pb-6 last:pb-0">
+                      {i !== arr.length - 1 && (
+                        <span
+                          className="absolute left-[7px] top-5 h-[calc(100%-8px)] w-px"
+                          style={{ background: "var(--accent)" }}
+                        />
+                      )}
+                      <div className="z-10 mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center">
+                        <TimelineIcon icon={step.icon} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[14px] font-medium text-[var(--text-primary)]">
+                          {step.title}
+                        </p>
+                        <p className="text-[12px] text-[var(--text-muted)]">
+                          {step.date}
+                        </p>
+                      </div>
+                    </div>
+                  ),
+                )}
+              </div>
+              <button className="mt-2 w-full rounded-[var(--radius-md)] bg-[var(--primary)] py-3 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--primary-dark)]">
+                Message recruiter
+              </button>{" "}
+              {selected.status === "PENDING" ||
+              selected.status === "REVIEWING" ? (
+                <Button
+                  onClick={() => setIsOpen(true)}
+                  disabled={withdrawMutation.isPending}
+                  className="bg-red-500 hover:bg-red-600 w-full mt-2"
+                >
+                  Withdraw
+                </Button>
+              ) : null}
+            </>
+          )}
         </div>
       </div>
+
+      <Modal
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        title="Confirm Withdrawal"
+        description="Are you sure you want to withdraw your application? This action cannot be undone."
+        maxWidth="max-w-sm"
+      >
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            onClick={() => setIsOpen(false)}
+            variant="ghost"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={handleWithdraw}
+            disabled={withdrawMutation.isPending}
+            className="bg-red-500 hover:bg-red-600"
+          >
+            {withdrawMutation.isPending ? "Withdrawing..." : "Withdraw"}
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }

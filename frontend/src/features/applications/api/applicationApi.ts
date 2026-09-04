@@ -29,3 +29,41 @@ export const getJobApplications = async (
     true,
   );
 };
+export const getMyApplications = async (page = 1, limit = 10) => {
+  return await request(
+    `/applications/me?page=${page}&limit=${limit}`,
+    {},
+    true,
+  );
+};
+export const withdrawApplication = async (applicationId: string) => {
+  return await request(
+    `/applications/${applicationId}/withdraw`,
+    {
+      method: "DELETE",
+    },
+    true,
+  );
+};
+export const updateApplicationStatus = async (
+  applicationId: string,
+  status:
+    | "PENDING"
+    | "REVIEWING"
+    | "SHORTLISTED"
+    | "REJECTED"
+    | "ACCEPTED"
+    | "WITHDRAWN",
+) => {
+  return await request(
+    `/applications/${applicationId}/status`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status }),
+    },
+    true,
+  );
+};

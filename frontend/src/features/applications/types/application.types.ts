@@ -9,6 +9,7 @@ export type Applicant = {
   name: string;
   jobTitle: string;
   status: ApplicationStatus;
+  statusHistory: StatusHistoryEntry[];
   appliedAt: string;
   about: string;
   currentCompany: string;
@@ -20,10 +21,11 @@ export type Applicant = {
 };
 export type ApplicationStatus =
   | "PENDING"
-  | "REVIEWED"
-  | "ADVANCED"
+  | "REVIEWING"
+  | "SHORTLISTED"
   | "REJECTED"
-  | "HIRED";
+  | "ACCEPTED"
+  | "WITHDRAWN";
 
 export type RawApplication = {
   id: string;
@@ -35,6 +37,7 @@ export type RawApplication = {
   recruiterNotes: string | null;
   appliedAt: string;
   updatedAt: string;
+  statusHistory: StatusHistoryEntry[];
   user: {
     id: string;
     email: string;
@@ -54,3 +57,8 @@ export type RawApplication = {
     skills: string[];
   };
 };
+export interface StatusHistoryEntry {
+  status: ApplicationStatus;
+  note: string | null;
+  createdAt: string;
+}
