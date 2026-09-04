@@ -255,10 +255,6 @@ export default function CandidateApplicationsPage() {
                 >
                   {label}
                 </span>
-
-                <span className="shrink-0 text-[14px] font-medium text-[var(--primary)]">
-                  View
-                </span>
               </button>
             );
           })}
