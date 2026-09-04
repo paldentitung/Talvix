@@ -20,10 +20,10 @@ export type Applicant = {
 };
 export type ApplicationStatus =
   | "PENDING"
-  | "REVIEWED"
-  | "ADVANCED"
+  | "REVIEWING"
+  | "SHORTLISTED"
   | "REJECTED"
-  | "HIRED";
+  | "ACCEPTED";
 
 export type RawApplication = {
   id: string;

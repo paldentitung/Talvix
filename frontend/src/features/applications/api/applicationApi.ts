@@ -45,3 +45,19 @@ export const withdrawApplication = async (applicationId: string) => {
     true,
   );
 };
+export const updateApplicationStatus = async (
+  applicationId: string,
+  status: "PENDING" | "REVIEWING" | "SHORTLISTED" | "REJECTED" | "ACCEPTED",
+) => {
+  return await request(
+    `/applications/${applicationId}/status`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status }),
+    },
+    true,
+  );
+};

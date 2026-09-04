@@ -14,6 +14,7 @@ import type {
   RawApplication,
   ApplicationStatus,
 } from "../../features/applications/types/application.types";
+import { useUpdateApplicationStatus } from "../../features/applications/hooks/useUpdateApplicationStatus";
 
 const API_BASE_URL = import.meta.env.VITE_API_BACKEND_URL;
 
@@ -46,10 +47,10 @@ const toApplicant = (raw: RawApplication): Applicant => {
 
 const statusStyles: Record<ApplicationStatus, string> = {
   PENDING: "bg-(--border) text-(--text-secondary)",
-  REVIEWED: "bg-(--primary-light) text-(--primary)",
-  ADVANCED: "bg-(--success-bg) text-(--success)",
+  REVIEWING: "bg-(--primary-light) text-(--primary)",
+  SHORTLISTED: "bg-(--success-bg) text-(--success)",
   REJECTED: "bg-(--danger-bg) text-(--danger)",
-  HIRED: "bg-(--accent-light) text-(--accent)",
+  ACCEPTED: "bg-(--accent-light) text-(--accent)",
 };
 
 const statusLabel = (status: ApplicationStatus): string => {
@@ -59,9 +60,10 @@ const statusLabel = (status: ApplicationStatus): string => {
 const statusFilters: (ApplicationStatus | "ALL")[] = [
   "ALL",
   "PENDING",
-  "REVIEWED",
-  "ADVANCED",
+  "REVIEWING",
+  "SHORTLISTED",
   "REJECTED",
+  "ACCEPTED",
 ];
 
 const formatAppliedAt = (date: string): string => {
@@ -99,6 +101,8 @@ const ApplicantsPage = () => {
     Record<string, ApplicationStatus>
   >({});
 
+  const updateStatusMutation = useUpdateApplicationStatus();
+
   const filtered: Applicant[] = useMemo(() => {
     return applicants.filter((a: Applicant) => {
       const status: ApplicationStatus = localStatus[a.id] ?? a.status;
@@ -128,7 +132,17 @@ const ApplicantsPage = () => {
     applicantId: string,
     status: ApplicationStatus,
   ): void => {
-    setLocalStatus((prev) => ({ ...prev, [applicantId]: status }));
+    updateStatusMutation.mutate(
+      { applicationId: applicantId, status },
+      {
+        onSuccess: () => {
+          setLocalStatus((prev) => ({ ...prev, [applicantId]: status }));
+        },
+        onError: (error) => {
+          console.error("Failed to update status:", error);
+        },
+      },
+    );
   };
 
   if (isLoading) {
@@ -324,18 +338,47 @@ const ApplicantsPage = () => {
             </div>
 
             <div className="mt-5 flex flex-wrap gap-2">
-              <button
-                onClick={() => setStatusFor(selected.id, "ADVANCED")}
-                className="rounded-md bg-(--primary) px-4 py-2 text-sm font-semibold text-white hover:bg-(--primary-dark)"
-              >
-                Advance
-              </button>
-              <button
-                onClick={() => setStatusFor(selected.id, "REJECTED")}
-                className="rounded-md border border-(--border) bg-(--card) px-4 py-2 text-sm font-semibold text-(--danger) hover:bg-(--danger-bg)"
-              >
-                Reject
-              </button>
+              {selectedStatus === "PENDING" && (
+                <button
+                  onClick={() => setStatusFor(selected.id, "REVIEWING")}
+                  disabled={updateStatusMutation.isPending}
+                  className="rounded-md bg-(--primary) px-4 py-2 text-sm font-semibold text-white hover:bg-(--primary-dark) disabled:opacity-50"
+                >
+                  Start reviewing
+                </button>
+              )}
+
+              {selectedStatus === "REVIEWING" && (
+                <button
+                  onClick={() => setStatusFor(selected.id, "SHORTLISTED")}
+                  disabled={updateStatusMutation.isPending}
+                  className="rounded-md bg-(--primary) px-4 py-2 text-sm font-semibold text-white hover:bg-(--primary-dark) disabled:opacity-50"
+                >
+                  Shortlist
+                </button>
+              )}
+
+              {selectedStatus === "SHORTLISTED" && (
+                <button
+                  onClick={() => setStatusFor(selected.id, "ACCEPTED")}
+                  disabled={updateStatusMutation.isPending}
+                  className="rounded-md bg-(--success) px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
+                >
+                  Accept
+                </button>
+              )}
+
+              {selectedStatus !== "REJECTED" &&
+                selectedStatus !== "ACCEPTED" && (
+                  <button
+                    onClick={() => setStatusFor(selected.id, "REJECTED")}
+                    disabled={updateStatusMutation.isPending}
+                    className="rounded-md border border-(--border) bg-(--card) px-4 py-2 text-sm font-semibold text-(--danger) hover:bg-(--danger-bg) disabled:opacity-50"
+                  >
+                    Reject
+                  </button>
+                )}
+
               <a
                 href={`mailto:${selected.email}`}
                 className="flex items-center gap-2 rounded-md border border-(--border) bg-(--card) px-4 py-2 text-sm font-semibold text-(--text-secondary) hover:bg-(--bg)"
@@ -343,6 +386,7 @@ const ApplicantsPage = () => {
                 <Mail size={16} />
                 Message candidate
               </a>
+
               {selected.resumeUrl && (
                 <a
                   href={selected.resumeUrl}

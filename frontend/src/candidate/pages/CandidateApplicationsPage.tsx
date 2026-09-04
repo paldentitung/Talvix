@@ -13,6 +13,7 @@ import { useCandidateApplication } from "../../features/applications/hooks/useCa
 import Button from "../../components/ui/Button";
 import { useWithdrawApplication } from "../../features/applications/hooks/useWithdrawApplication";
 import Modal from "../../components/ui/Modal";
+import { Link } from "react-router-dom";
 type Status = "Applied" | "In Review" | "Interview" | "Offer" | "Rejected";
 
 interface Application {
@@ -40,10 +41,10 @@ interface Application {
 // Maps backend enum -> display label used by the UI
 const statusLabelMap: Record<ApplicationStatus, Status> = {
   PENDING: "Applied",
-  REVIEWED: "In Review",
-  ADVANCED: "Interview",
+  REVIEWING: "In Review",
+  SHORTLISTED: "Interview",
   REJECTED: "Rejected",
-  HIRED: "Offer",
+  ACCEPTED: "Offer",
 };
 
 const filters: { label: string }[] = [
@@ -254,8 +255,14 @@ export default function CandidateApplicationsPage() {
             );
           })}
           {visible.length === 0 && (
-            <div className="px-6 py-16 text-center text-[14px] text-[var(--text-muted)]">
+            <div className="px-6 py-16 text-center text-[14px] text-[var(--text-muted)] flex justify-center items-center gap-2 flex-col">
               No applications in this stage yet.
+              <Link
+                to={"/candidate/jobs"}
+                className="ml-1 text-[var(--primary)]"
+              >
+                <Button size="sm">Browse jobs</Button>
+              </Link>
             </div>
           )}
 
@@ -353,7 +360,7 @@ export default function CandidateApplicationsPage() {
                 Message recruiter
               </button>{" "}
               {selected.status === "PENDING" ||
-              selected.status === "REVIEWED" ? (
+              selected.status === "REVIEWING" ? (
                 <Button
                   onClick={() => setIsOpen(true)}
                   className="bg-red-500 hover:bg-red-600 w-full mt-2"
