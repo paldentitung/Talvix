@@ -34,6 +34,7 @@ const toApplicant = (raw: RawApplication): Applicant => {
     name: `${raw.user.firstName} ${raw.user.lastName}`.trim(),
     jobTitle: raw.job.title,
     status: raw.status,
+    statusHistory: raw.statusHistory,
     appliedAt: raw.appliedAt,
     about: raw.user.bio ?? "No bio provided.",
     currentCompany: raw.user.title ?? "Not specified",
@@ -51,6 +52,7 @@ const statusStyles: Record<ApplicationStatus, string> = {
   SHORTLISTED: "bg-(--success-bg) text-(--success)",
   REJECTED: "bg-(--danger-bg) text-(--danger)",
   ACCEPTED: "bg-(--accent-light) text-(--accent)",
+  WITHDRAWN: "bg-(--warning-bg) text-(--warning)",
 };
 
 const statusLabel = (status: ApplicationStatus): string => {
@@ -64,6 +66,7 @@ const statusFilters: (ApplicationStatus | "ALL")[] = [
   "SHORTLISTED",
   "REJECTED",
   "ACCEPTED",
+  "WITHDRAWN",
 ];
 
 const formatAppliedAt = (date: string): string => {
@@ -100,7 +103,6 @@ const ApplicantsPage = () => {
   const [localStatus, setLocalStatus] = useState<
     Record<string, ApplicationStatus>
   >({});
-
   const updateStatusMutation = useUpdateApplicationStatus();
 
   const filtered: Applicant[] = useMemo(() => {
@@ -182,6 +184,7 @@ const ApplicantsPage = () => {
     applicants.find((a: Applicant) => a.id === selectedId) ?? applicants[0];
   const selectedStatus: ApplicationStatus =
     localStatus[selected.id] ?? selected.status;
+
   return (
     <div className="space-y-4">
       <button
@@ -369,7 +372,8 @@ const ApplicantsPage = () => {
               )}
 
               {selectedStatus !== "REJECTED" &&
-                selectedStatus !== "ACCEPTED" && (
+                selectedStatus !== "ACCEPTED" &&
+                selectedStatus !== "WITHDRAWN" && (
                   <button
                     onClick={() => setStatusFor(selected.id, "REJECTED")}
                     disabled={updateStatusMutation.isPending}
@@ -399,6 +403,12 @@ const ApplicantsPage = () => {
                 </a>
               )}
             </div>
+
+            {updateStatusMutation.isError && (
+              <p className="mt-2 text-xs text-(--danger)">
+                Couldn't update status. Please try again.
+              </p>
+            )}
 
             <div className="mt-6 border-t border-(--border) pt-5">
               <h3 className="text-sm font-semibold text-(--text-primary)">

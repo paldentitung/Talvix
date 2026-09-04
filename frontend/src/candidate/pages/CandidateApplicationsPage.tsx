@@ -5,6 +5,7 @@ import {
   MessageSquare,
   Calendar,
   Clock,
+  XCircle,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -14,7 +15,20 @@ import Button from "../../components/ui/Button";
 import { useWithdrawApplication } from "../../features/applications/hooks/useWithdrawApplication";
 import Modal from "../../components/ui/Modal";
 import { Link } from "react-router-dom";
-type Status = "Applied" | "In Review" | "Interview" | "Offer" | "Rejected";
+
+type Status =
+  | "Applied"
+  | "In Review"
+  | "Interview"
+  | "Offer"
+  | "Rejected"
+  | "Withdrawn";
+
+interface StatusHistoryEntry {
+  status: ApplicationStatus;
+  note: string | null;
+  createdAt: string;
+}
 
 interface Application {
   id: string;
@@ -22,6 +36,7 @@ interface Application {
   appliedAt: string;
   coverLetter: string;
   resumeUrl: string;
+  statusHistory: StatusHistoryEntry[];
   job: {
     id: string;
     title: string;
@@ -45,6 +60,19 @@ const statusLabelMap: Record<ApplicationStatus, Status> = {
   SHORTLISTED: "Interview",
   REJECTED: "Rejected",
   ACCEPTED: "Offer",
+  WITHDRAWN: "Withdrawn",
+};
+
+const statusIconMap: Record<
+  ApplicationStatus,
+  "check" | "chat" | "calendar" | "clock" | "x"
+> = {
+  PENDING: "check",
+  REVIEWING: "chat",
+  SHORTLISTED: "calendar",
+  ACCEPTED: "clock",
+  REJECTED: "x",
+  WITHDRAWN: "x",
 };
 
 const filters: { label: string }[] = [
@@ -54,6 +82,7 @@ const filters: { label: string }[] = [
   { label: "Interview" },
   { label: "Offer" },
   { label: "Rejected" },
+  { label: "Withdrawn" },
 ];
 
 const statusStyles: Record<Status, string> = {
@@ -62,17 +91,15 @@ const statusStyles: Record<Status, string> = {
   Interview: "text-[var(--accent)] bg-[var(--accent-light)]",
   Offer: "text-[var(--success)] bg-[var(--success-bg)]",
   Rejected: "text-[var(--danger)] bg-[var(--danger-bg)]",
+  Withdrawn: "text-[var(--text-muted)] bg-slate-200",
 };
 
 function TimelineIcon({
   icon,
-  done,
 }: {
-  icon: "check" | "chat" | "calendar" | "clock";
-  done: boolean;
+  icon: "check" | "chat" | "calendar" | "clock" | "x";
 }) {
-  const color = done ? "var(--accent)" : "var(--text-muted)";
-  const common = { size: 16, color, strokeWidth: 2.2 };
+  const common = { size: 16, color: "var(--accent)", strokeWidth: 2.2 };
   switch (icon) {
     case "check":
       return <CheckCircle2 {...common} />;
@@ -82,6 +109,8 @@ function TimelineIcon({
       return <Calendar {...common} />;
     case "clock":
       return <Clock {...common} />;
+    case "x":
+      return <XCircle {...common} color="var(--danger)" />;
   }
 }
 
@@ -93,46 +122,24 @@ function formatDate(iso: string) {
   });
 }
 
-// Backend doesn't return a timeline yet, so derive a reasonable one
-// from appliedAt / current status / updatedAt.
-function buildTimeline(app: Application & { updatedAt?: string }) {
-  const label = statusLabelMap[app.status];
-  const steps = [
-    {
-      title: "Application submitted",
-      date: formatDate(app.appliedAt),
-      icon: "check" as const,
-      done: true,
-    },
-    {
-      title: "Under review",
-      date:
-        label === "Applied"
-          ? "Pending"
-          : formatDate(app.updatedAt ?? app.appliedAt),
-      icon: "chat" as const,
-      done: label !== "Applied",
-    },
-    {
-      title: "Interview",
-      date:
-        label === "Interview" || label === "Offer" || label === "Rejected"
-          ? formatDate(app.updatedAt ?? app.appliedAt)
-          : "Pending",
-      icon: "calendar" as const,
-      done: label === "Interview" || label === "Offer" || label === "Rejected",
-    },
-    {
-      title: label === "Rejected" ? "Rejected" : "Offer",
-      date:
-        label === "Offer" || label === "Rejected"
-          ? formatDate(app.updatedAt ?? app.appliedAt)
-          : "Pending",
-      icon: "clock" as const,
-      done: label === "Offer" || label === "Rejected",
-    },
-  ];
-  return steps;
+// Real timeline: derived directly from the backend's statusHistory records.
+// Every entry here is a real, timestamped event — nothing is guessed.
+function renderTimeline(history: StatusHistoryEntry[], appliedAt: string) {
+  if (history.length === 0) {
+    // Fallback only for pre-migration rows with no history rows yet.
+    return [
+      {
+        title: "Applied",
+        date: formatDate(appliedAt),
+        icon: "check" as const,
+      },
+    ];
+  }
+  return history.map((entry) => ({
+    title: statusLabelMap[entry.status],
+    date: formatDate(entry.createdAt),
+    icon: statusIconMap[entry.status],
+  }));
 }
 
 export default function CandidateApplicationsPage() {
@@ -159,8 +166,9 @@ export default function CandidateApplicationsPage() {
 
   const handleWithdraw = () => {
     if (!selected) return;
-    withdrawMutation.mutate(selected.id);
-    setIsOpen(false);
+    withdrawMutation.mutate(selected.id, {
+      onSuccess: () => setIsOpen(false),
+    });
   };
 
   if (isPending) {
@@ -324,37 +332,29 @@ export default function CandidateApplicationsPage() {
                 Application timeline
               </p>
               <div className="relative">
-                {buildTimeline(selected).map((step, i, arr) => (
-                  <div key={i} className="relative flex gap-3 pb-6 last:pb-0">
-                    {i !== arr.length - 1 && (
-                      <span
-                        className="absolute left-[7px] top-5 h-[calc(100%-8px)] w-px"
-                        style={{
-                          background: step.done
-                            ? "var(--accent)"
-                            : "var(--border)",
-                        }}
-                      />
-                    )}
-                    <div className="z-10 mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center">
-                      <TimelineIcon icon={step.icon} done={step.done} />
+                {renderTimeline(selected.statusHistory, selected.appliedAt).map(
+                  (step, i, arr) => (
+                    <div key={i} className="relative flex gap-3 pb-6 last:pb-0">
+                      {i !== arr.length - 1 && (
+                        <span
+                          className="absolute left-[7px] top-5 h-[calc(100%-8px)] w-px"
+                          style={{ background: "var(--accent)" }}
+                        />
+                      )}
+                      <div className="z-10 mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center">
+                        <TimelineIcon icon={step.icon} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[14px] font-medium text-[var(--text-primary)]">
+                          {step.title}
+                        </p>
+                        <p className="text-[12px] text-[var(--text-muted)]">
+                          {step.date}
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p
-                        className={`text-[14px] font-medium ${
-                          step.done
-                            ? "text-[var(--text-primary)]"
-                            : "text-[var(--text-muted)]"
-                        }`}
-                      >
-                        {step.title}
-                      </p>
-                      <p className="text-[12px] text-[var(--text-muted)]">
-                        {step.date}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                  ),
+                )}
               </div>
               <button className="mt-2 w-full rounded-[var(--radius-md)] bg-[var(--primary)] py-3 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--primary-dark)]">
                 Message recruiter
@@ -363,6 +363,7 @@ export default function CandidateApplicationsPage() {
               selected.status === "REVIEWING" ? (
                 <Button
                   onClick={() => setIsOpen(true)}
+                  disabled={withdrawMutation.isPending}
                   className="bg-red-500 hover:bg-red-600 w-full mt-2"
                 >
                   Withdraw
@@ -391,9 +392,10 @@ export default function CandidateApplicationsPage() {
           <Button
             type="button"
             onClick={handleWithdraw}
+            disabled={withdrawMutation.isPending}
             className="bg-red-500 hover:bg-red-600"
           >
-            Withdraw
+            {withdrawMutation.isPending ? "Withdrawing..." : "Withdraw"}
           </Button>
         </div>
       </Modal>

@@ -47,7 +47,13 @@ export const withdrawApplication = async (applicationId: string) => {
 };
 export const updateApplicationStatus = async (
   applicationId: string,
-  status: "PENDING" | "REVIEWING" | "SHORTLISTED" | "REJECTED" | "ACCEPTED",
+  status:
+    | "PENDING"
+    | "REVIEWING"
+    | "SHORTLISTED"
+    | "REJECTED"
+    | "ACCEPTED"
+    | "WITHDRAWN",
 ) => {
   return await request(
     `/applications/${applicationId}/status`,
