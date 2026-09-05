@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
-import CandidateHeader from "../candidate/components/CandidateHeader";
-import CandidateSidebar from "../candidate/components/CandidateSidebar";
+import AdminHeader from "../admin/components/AdminHeader";
+import AdminSidebar from "../admin/components/AdminSidebar";
 
-const CandidateLayout = () => {
+const AdminLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
@@ -11,28 +11,32 @@ const CandidateLayout = () => {
       {/* Mobile overlay */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+          className="fixed inset-0 z-30 bg-black/40 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar: always fixed to the viewport, slides in on mobile */}
       <div
-        className={`fixed inset-y-0 left-0 z-40 w-64 transform transition-transform duration-200 ease-in-out lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-30 w-64 transform transition-transform duration-200 ease-in-out lg:translate-x-0 ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <CandidateSidebar onNavigate={() => setIsSidebarOpen(false)} />
+        <AdminSidebar
+          onNavigate={() => setIsSidebarOpen(false)}
+          reportsCount={12}
+        />
       </div>
 
       {/* Content offset by the sidebar's width on large screens */}
       <div className="flex h-screen flex-col lg:ml-64">
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <CandidateHeader onMenuClick={() => setIsSidebarOpen(true)} />
+          <AdminHeader onMenuClick={() => setIsSidebarOpen(true)} />
           <Outlet />
         </main>
       </div>
     </div>
   );
 };
-export default CandidateLayout;
+
+export default AdminLayout;

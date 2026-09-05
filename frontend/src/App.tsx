@@ -6,9 +6,8 @@ import ForgotPasswordPage from "./features/auth/pages/ForgotPasswordPage";
 import VerifyEmailPage from "./features/auth/pages/VerifyEmailPage";
 import ResetPasswordPage from "./features/auth/pages/ResetPasswordPage";
 
-import CandidateDashboardPage from "./candidate/pages/DashboardPage.tsx";
+import CandidateDashboardPage from "./candidate/pages/CandidateDashboard.tsx";
 import RecruiterDashboardPage from "./recruiter/pages/DashboardPage.tsx";
-import AdminDashboardPage from "./admin/DashboardPage";
 
 import RecruiterMainLayout from "./recruiter/layouts/RecruiterLayout.tsx";
 import ManageJobsPage from "./recruiter/pages/ManageJobsPage.tsx";
@@ -19,7 +18,7 @@ import AnalyticsPage from "./recruiter/pages/AnalyticsPage.tsx";
 import JobDetailPage from "./pages/JobDetailPage.tsx";
 import JobsPage from "./pages/JobsPage.tsx";
 import PublicLayout from "./layouts/PublicLayout.tsx";
-import SavedJobs from "./candidate/pages/SavedJobs.tsx";
+import CandidateSavedJobs from "./candidate/pages/CandidateSavedJobs.tsx";
 import CandidateLayout from "./layouts/CandidateLayout.tsx";
 import CandidateJobsPage from "./candidate/pages/CandidateJobsPage.tsx";
 import CandidateProfilePage from "./candidate/pages/CandidateProfilePage.tsx";
@@ -28,6 +27,11 @@ import CandidateApplicationsPage from "./candidate/pages/CandidateApplicationsPa
 import ProtectedRoute from "./routes/ProtectedRoute.tsx";
 import RoleRoute from "./routes/RoleRoute.tsx";
 import HomeRedirect from "./routes/HomeRedirect.tsx";
+import AdminDashboard from "./admin/pages/AdminDashboard.tsx";
+import AdminLayout from "./layouts/AdminLayout.tsx";
+import AdminUsersPage from "./admin/pages/AdminUsersPage.tsx";
+import AdminJobsPage from "./admin/pages/AdminJobsPage.tsx";
+import AdminCompaniesPage from "./admin/pages/AdminCompaniesPage.tsx";
 const App = () => {
   return (
     <>
@@ -102,7 +106,7 @@ const App = () => {
             {" "}
             <Route path="/candidate" element={<CandidateLayout />}>
               <Route path="dashboard" element={<CandidateDashboardPage />} />
-              <Route path="saved-jobs" element={<SavedJobs />} />
+              <Route path="saved-jobs" element={<CandidateSavedJobs />} />
               <Route path="jobs" element={<CandidateJobsPage />} />
               <Route
                 path="applications"
@@ -132,8 +136,11 @@ const App = () => {
         <Route element={<ProtectedRoute />}>
           <Route element={<RoleRoute allowedRoles={["ADMIN"]} />}>
             {" "}
-            <Route path="/admin">
-              <Route path="dashboard" element={<AdminDashboardPage />} />
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="users" element={<AdminUsersPage />} />
+              <Route path="jobs" element={<AdminJobsPage />} />
+              <Route path="companies" element={<AdminCompaniesPage />} />
             </Route>
           </Route>
         </Route>

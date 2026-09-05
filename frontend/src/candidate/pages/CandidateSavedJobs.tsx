@@ -37,11 +37,11 @@ const ErrorState = () => (
   </div>
 );
 
-const SavedJobs = () => {
+const CandidateSavedJobs = () => {
   const { data: jobs = [], isLoading, isError } = useSavedJobs();
   const { isSavingJob, toggleSave } = useJobSaveActions();
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-6">
       {isLoading ? (
         <div className="flex items-center justify-center py-16">
           <Loader2 size={28} className="animate-spin text-(--primary)" />
@@ -51,7 +51,7 @@ const SavedJobs = () => {
       ) : jobs.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {jobs.map((job: Job) => (
             <CandidateJobCard
               job={job}
@@ -67,4 +67,4 @@ const SavedJobs = () => {
   );
 };
 
-export default SavedJobs;
+export default CandidateSavedJobs;

@@ -15,7 +15,7 @@ import Button from "../../components/ui/Button";
 import { useWithdrawApplication } from "../../features/applications/hooks/useWithdrawApplication";
 import Modal from "../../components/ui/Modal";
 import { Link } from "react-router-dom";
-
+import type { Application } from "../../features/applications/types/application.types";
 type Status =
   | "Applied"
   | "In Review"
@@ -28,29 +28,6 @@ interface StatusHistoryEntry {
   status: ApplicationStatus;
   note: string | null;
   createdAt: string;
-}
-
-interface Application {
-  id: string;
-  status: ApplicationStatus;
-  appliedAt: string;
-  coverLetter: string;
-  resumeUrl: string;
-  statusHistory: StatusHistoryEntry[];
-  job: {
-    id: string;
-    title: string;
-    location: string;
-    recruiter: {
-      id: string;
-      firstName: string;
-      lastName: string;
-      avatar: string | null;
-      companyName: string | null;
-      companyLogo: string | null;
-      companyWebsite: string | null;
-    };
-  };
 }
 
 // Maps backend enum -> display label used by the UI
@@ -219,10 +196,10 @@ export default function CandidateApplicationsPage() {
         })}
       </div>
 
-      {/* Content */}
-      <div className="flex gap-5 items-start">
+      {/* Content — stacked on mobile/tablet, side-by-side from lg up */}
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
         {/* List */}
-        <div className="flex-1 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-sm)] overflow-hidden">
+        <div className="min-w-0 flex-1 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-sm)] overflow-hidden">
           {visible.map((app, i) => {
             const isSelected = selected?.id === app.id;
             const label = statusLabelMap[app.status];
@@ -230,7 +207,7 @@ export default function CandidateApplicationsPage() {
               <button
                 key={app.id}
                 onClick={() => setSelectedId(app.id)}
-                className={`flex w-full items-center gap-4 px-6 py-5 text-left transition-colors ${
+                className={`flex w-full items-center gap-3 px-4 py-4 text-left transition-colors sm:gap-4 sm:px-6 sm:py-5 ${
                   i !== visible.length - 1
                     ? "border-b border-[var(--border)]"
                     : ""
@@ -244,7 +221,7 @@ export default function CandidateApplicationsPage() {
                   <p className="truncate text-[15px] font-semibold text-[var(--text-primary)]">
                     {app.job.title}
                   </p>
-                  <p className="mt-0.5 text-[13px] text-[var(--text-muted)]">
+                  <p className="mt-0.5 truncate text-[13px] text-[var(--text-muted)]">
                     {app.job.recruiter.companyName ?? "Unknown company"} ·
                     Applied {formatDate(app.appliedAt)}
                   </p>
@@ -272,7 +249,7 @@ export default function CandidateApplicationsPage() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-[var(--border)] px-6 py-4">
+            <div className="flex items-center justify-between border-t border-[var(--border)] px-4 py-4 sm:px-6">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page <= 1}
@@ -296,8 +273,8 @@ export default function CandidateApplicationsPage() {
           )}
         </div>
 
-        {/* Detail panel */}
-        <div className="w-[340px] shrink-0 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--card)] p-6 shadow-[var(--shadow-sm)]">
+        {/* Detail panel — full width when stacked, fixed width from lg up */}
+        <div className="w-full rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--card)] p-6 shadow-[var(--shadow-sm)] lg:w-[340px] lg:shrink-0">
           {!selected ? (
             <p className="text-[14px] text-[var(--text-muted)]">
               Select an application to see details.
