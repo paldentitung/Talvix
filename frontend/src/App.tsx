@@ -29,6 +29,7 @@ import RoleRoute from "./routes/RoleRoute.tsx";
 import HomeRedirect from "./routes/HomeRedirect.tsx";
 import AdminDashboard from "./admin/pages/AdminDashboard.tsx";
 import AdminLayout from "./layouts/AdminLayout.tsx";
+import AdminUsersPage from "./admin/pages/AdminUsersPage.tsx";
 const App = () => {
   return (
     <>
@@ -135,6 +136,7 @@ const App = () => {
             {" "}
             <Route path="/admin" element={<AdminLayout />}>
               <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="users" element={<AdminUsersPage />} />
             </Route>
           </Route>
         </Route>
