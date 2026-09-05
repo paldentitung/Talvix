@@ -20,7 +20,7 @@ type NavLink = {
 };
 
 const adminLinks: NavLink[] = [
-  { label: "Dashboard", href: "/admin/overview", icon: LayoutGrid },
+  { label: "Dashboard", href: "/admin/dashboard", icon: LayoutGrid },
   { label: "Users", href: "/admin/users", icon: Users },
   { label: "Companies", href: "/admin/companies", icon: Building2 },
   { label: "Jobs", href: "/admin/jobs", icon: Briefcase },
