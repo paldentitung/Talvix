@@ -8,7 +8,6 @@ import ResetPasswordPage from "./features/auth/pages/ResetPasswordPage";
 
 import CandidateDashboardPage from "./candidate/pages/CandidateDashboard.tsx";
 import RecruiterDashboardPage from "./recruiter/pages/DashboardPage.tsx";
-import AdminDashboardPage from "./admin/DashboardPage";
 
 import RecruiterMainLayout from "./recruiter/layouts/RecruiterLayout.tsx";
 import ManageJobsPage from "./recruiter/pages/ManageJobsPage.tsx";
@@ -28,6 +27,8 @@ import CandidateApplicationsPage from "./candidate/pages/CandidateApplicationsPa
 import ProtectedRoute from "./routes/ProtectedRoute.tsx";
 import RoleRoute from "./routes/RoleRoute.tsx";
 import HomeRedirect from "./routes/HomeRedirect.tsx";
+import AdminDashboard from "./admin/pages/AdminDashboard.tsx";
+import AdminLayout from "./layouts/AdminLayout.tsx";
 const App = () => {
   return (
     <>
@@ -132,8 +133,8 @@ const App = () => {
         <Route element={<ProtectedRoute />}>
           <Route element={<RoleRoute allowedRoles={["ADMIN"]} />}>
             {" "}
-            <Route path="/admin">
-              <Route path="dashboard" element={<AdminDashboardPage />} />
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route path="dashboard" element={<AdminDashboard />} />
             </Route>
           </Route>
         </Route>
