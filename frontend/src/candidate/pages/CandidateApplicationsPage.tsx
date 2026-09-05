@@ -15,7 +15,7 @@ import Button from "../../components/ui/Button";
 import { useWithdrawApplication } from "../../features/applications/hooks/useWithdrawApplication";
 import Modal from "../../components/ui/Modal";
 import { Link } from "react-router-dom";
-
+import type { Application } from "../../features/applications/types/application.types";
 type Status =
   | "Applied"
   | "In Review"
@@ -28,29 +28,6 @@ interface StatusHistoryEntry {
   status: ApplicationStatus;
   note: string | null;
   createdAt: string;
-}
-
-interface Application {
-  id: string;
-  status: ApplicationStatus;
-  appliedAt: string;
-  coverLetter: string;
-  resumeUrl: string;
-  statusHistory: StatusHistoryEntry[];
-  job: {
-    id: string;
-    title: string;
-    location: string;
-    recruiter: {
-      id: string;
-      firstName: string;
-      lastName: string;
-      avatar: string | null;
-      companyName: string | null;
-      companyLogo: string | null;
-      companyWebsite: string | null;
-    };
-  };
 }
 
 // Maps backend enum -> display label used by the UI

@@ -62,3 +62,25 @@ export interface StatusHistoryEntry {
   note: string | null;
   createdAt: string;
 }
+export interface Application {
+  id: string;
+  status: ApplicationStatus;
+  appliedAt: string;
+  coverLetter: string;
+  resumeUrl: string;
+  statusHistory: StatusHistoryEntry[];
+  job: {
+    id: string;
+    title: string;
+    location: string;
+    recruiter: {
+      id: string;
+      firstName: string;
+      lastName: string;
+      avatar: string | null;
+      companyName: string | null;
+      companyLogo: string | null;
+      companyWebsite: string | null;
+    };
+  };
+}
