@@ -6,7 +6,7 @@ import ForgotPasswordPage from "./features/auth/pages/ForgotPasswordPage";
 import VerifyEmailPage from "./features/auth/pages/VerifyEmailPage";
 import ResetPasswordPage from "./features/auth/pages/ResetPasswordPage";
 
-import CandidateDashboardPage from "./candidate/pages/DashboardPage.tsx";
+import CandidateDashboardPage from "./candidate/pages/CandidateDashboard.tsx";
 import RecruiterDashboardPage from "./recruiter/pages/DashboardPage.tsx";
 import AdminDashboardPage from "./admin/DashboardPage";
 
