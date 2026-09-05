@@ -214,9 +214,9 @@ const CandidateJobsPage = () => {
         )}
       </div>
 
-      <div className="flex gap-6">
+      <div className="flex items-start gap-6">
         {/* Filters */}
-        <aside className="hidden w-[260px] shrink-0 lg:block">
+        <aside className="hidden w-[260px] shrink-0 lg:sticky lg:top-1 lg:block">
           <div className="rounded-(--radius-lg) border border-(--border) bg-(--card) p-4 shadow-(--shadow-sm)">
             <div className="mb-4 flex items-center justify-between">
               <span className="flex items-center gap-2 text-sm font-semibold text-(--text-primary)">

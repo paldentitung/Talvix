@@ -7,7 +7,7 @@ const CandidateLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-(--bg)">
+    <div className="h-screen overflow-hidden bg-(--bg)">
       {/* Mobile overlay */}
       {isSidebarOpen && (
         <div
@@ -26,7 +26,7 @@ const CandidateLayout = () => {
       </div>
 
       {/* Content offset by the sidebar's width on large screens */}
-      <div className="flex min-h-screen flex-col lg:ml-64">
+      <div className="flex h-screen flex-col lg:ml-64">
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <CandidateHeader onMenuClick={() => setIsSidebarOpen(true)} />
           <Outlet />
@@ -35,5 +35,4 @@ const CandidateLayout = () => {
     </div>
   );
 };
-
 export default CandidateLayout;
