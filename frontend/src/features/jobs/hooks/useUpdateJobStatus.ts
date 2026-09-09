@@ -19,6 +19,10 @@ export const useUpdateJobStatus = () => {
       queryClient.invalidateQueries({
         queryKey: ["job", variables.jobId],
       });
+
+      queryClient.invalidateQueries({
+        queryKey: ["adminJobs"],
+      });
     },
   });
 };

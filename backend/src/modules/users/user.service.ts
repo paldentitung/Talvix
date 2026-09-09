@@ -18,6 +18,32 @@ export const getMeService = async (userId: string) => {
 
   return toUserResponse(user);
 };
+
+export const getUsersService = async (page: number, limit: number) => {
+  const [users, totalUsers] = await Promise.all([
+    prisma.user.findMany({
+      select: userResponseSelect,
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+
+    prisma.user.count(),
+  ]);
+
+  const totalPages = Math.ceil(totalUsers / limit);
+
+  return {
+    users: users.map(toUserResponse),
+    pagination: {
+      page,
+      limit,
+      totalUsers,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+    },
+  };
+};
 export const changePasswordService = async (
   userId: string,
   data: ChangePasswordInput,

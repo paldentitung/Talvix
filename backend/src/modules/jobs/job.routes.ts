@@ -4,6 +4,7 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import {
   createJobController,
   deleteJobController,
+  getAdminJobsController,
   getJobController,
   getJobsController,
   getRecruiterJobsController,
@@ -21,6 +22,12 @@ const router = express.Router();
 router.get("/", asyncHandler(getJobsController));
 router.get("/me", requireAuth, asyncHandler(getRecruiterJobsController));
 router.get("/saved", requireAuth, asyncHandler(getSavedJobsController));
+router.get(
+  "/admin",
+  requireAuth,
+  requireRole("ADMIN"),
+  asyncHandler(getAdminJobsController),
+);
 router.patch(
   "/:id/status",
   requireAuth,

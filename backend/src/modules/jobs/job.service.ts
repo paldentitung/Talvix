@@ -331,3 +331,65 @@ export const getSavedJobsService = async (userId: string) => {
     },
   });
 };
+export const getAdminJobsService = async (
+  page = 1,
+  pageSize = 10,
+  search?: string,
+  filters?: JobFilters,
+): Promise<{
+  jobs: JobResponse[];
+  total: number;
+  page: number;
+  totalPages: number;
+}> => {
+  const where: Prisma.JobWhereInput = {
+    ...(filters?.status && { status: filters.status }),
+    ...(search && {
+      OR: [
+        { title: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+        { location: { contains: search, mode: "insensitive" } },
+        { skills: { hasSome: [search] } },
+      ],
+    }),
+    ...(filters?.location && {
+      location: { contains: filters.location, mode: "insensitive" },
+    }),
+    ...(filters?.workMode && { workMode: filters.workMode }),
+    ...(filters?.employmentType && { employmentType: filters.employmentType }),
+    ...(filters?.experienceLevel && {
+      experienceLevel: filters.experienceLevel,
+    }),
+    ...(filters?.skills?.length && { skills: { hasSome: filters.skills } }),
+    ...(filters?.currency && { currency: filters.currency }),
+    ...((filters?.minSalary !== undefined ||
+      filters?.maxSalary !== undefined) && {
+      AND: [
+        ...(filters.minSalary !== undefined
+          ? [{ salaryMax: { gte: filters.minSalary } }]
+          : []),
+        ...(filters.maxSalary !== undefined
+          ? [{ salaryMin: { lte: filters.maxSalary } }]
+          : []),
+      ],
+    }),
+  };
+
+  const [jobs, total] = await Promise.all([
+    prisma.job.findMany({
+      where,
+      select: jobSelect,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.job.count({ where }),
+  ]);
+
+  return {
+    jobs,
+    total,
+    page,
+    totalPages: Math.ceil(total / pageSize),
+  };
+};

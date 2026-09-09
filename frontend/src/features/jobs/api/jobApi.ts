@@ -135,3 +135,47 @@ export const getSavedJobs = async (): Promise<Job[]> => {
   const savedJobs = res.data ?? [];
   return savedJobs.map((saved: { job: Job }) => saved.job);
 };
+
+export const getAdminJobs = async (
+  page = 1,
+  pageSize = 10,
+  search?: string,
+  filters?: JobFilters,
+) => {
+  const params = new URLSearchParams();
+  params.append("page", page.toString());
+  params.append("pageSize", pageSize.toString());
+
+  if (search) {
+    params.append("search", search);
+  }
+  if (filters?.status) {
+    params.append("status", filters.status);
+  }
+  if (filters?.location) {
+    params.append("location", filters.location);
+  }
+  if (filters?.workMode) {
+    params.append("workMode", filters.workMode);
+  }
+  if (filters?.employmentType) {
+    params.append("employmentType", filters.employmentType);
+  }
+  if (filters?.experienceLevel) {
+    params.append("experienceLevel", filters.experienceLevel);
+  }
+  if (filters?.skills?.length) {
+    params.append("skills", filters.skills.join(","));
+  }
+  if (filters?.minSalary !== undefined) {
+    params.append("minSalary", filters.minSalary.toString());
+  }
+  if (filters?.maxSalary !== undefined) {
+    params.append("maxSalary", filters.maxSalary.toString());
+  }
+  if (filters?.currency) {
+    params.append("currency", filters.currency);
+  }
+
+  return await request(`/jobs/admin?${params.toString()}`, {}, true);
+};
