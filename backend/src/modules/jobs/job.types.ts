@@ -32,6 +32,7 @@ export type CreateJobInput = z.infer<typeof createJobSchema>;
 export type UpdateJobInput = z.infer<typeof updateJobSchema>;
 export type JobStatus = "OPEN" | "DRAFT" | "CLOSED";
 export interface JobFilters {
+  status?: JobStatus;
   location?: string;
   workMode?: z.infer<typeof createJobSchema>["workMode"];
   employmentType?: z.infer<typeof createJobSchema>["employmentType"];
@@ -42,6 +43,7 @@ export interface JobFilters {
   currency?: string;
 }
 export const jobFiltersSchema = z.object({
+  status: z.enum(["DRAFT", "OPEN", "CLOSED"]).optional(),
   location: z.string().optional(),
   workMode: z.enum(["ONSITE", "REMOTE", "HYBRID"]).optional(),
   employmentType: z
@@ -56,5 +58,4 @@ export const jobFiltersSchema = z.object({
   maxSalary: z.coerce.number().positive().optional(),
   currency: z.string().optional(),
 });
-
 export type JobFiltersInput = z.infer<typeof jobFiltersSchema>;

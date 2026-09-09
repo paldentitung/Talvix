@@ -70,6 +70,7 @@ export type UpdateJobStatusPayload = {
   status: JobStatus;
 };
 export interface JobFilters {
+  status: JobStatus;
   location?: string;
   workMode?: WorkMode;
   employmentType?: EmploymentType;
