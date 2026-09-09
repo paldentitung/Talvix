@@ -1,13 +1,14 @@
-"use client";
-
 import { useMemo, useState } from "react";
 import { Search, MoreHorizontal, UserPlus, ChevronDown } from "lucide-react";
 import { useUsers } from "../../features/users/hooks/useUsers";
 import Pagination from "../../shared/components/Pagination";
 import type { UserRole, ApiUser } from "../../shared/types/user.types";
-// ---------------------------------------------------------------------------
-// Real API shape
-// ---------------------------------------------------------------------------
+import relativeTime from "../../shared/utils/relativeTime";
+import VerifiedBadge from "../../features/company/components/VerifiedBadge";
+import { tintFor } from "../../shared/utils/avatarTint";
+import initials from "../../shared/utils/getInitials";
+import { fullName } from "../../shared/utils/getFullname";
+import RowMenu from "../../shared/components/RowMenu";
 
 const FILTERS = ["All", "Candidates", "Recruiters", "Admins"] as const;
 type Filter = (typeof FILTERS)[number];
@@ -17,45 +18,6 @@ const ROLE_LABELS: Record<UserRole, string> = {
   RECRUITER: "Recruiter",
   ADMIN: "Admin",
 };
-const AVATAR_TINTS = [
-  { bg: "#EEF2FF", fg: "#4F46E5" },
-  { bg: "#F0FDFA", fg: "#0D9488" },
-  { bg: "#FDF4FF", fg: "#A21CAF" },
-  { bg: "#FFF7ED", fg: "#C2410C" },
-  { bg: "#EFF6FF", fg: "#2563EB" },
-];
-
-function fullName(u: ApiUser) {
-  return `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || u.email;
-}
-
-function tintFor(name: string) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++)
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return AVATAR_TINTS[Math.abs(hash) % AVATAR_TINTS.length];
-}
-
-function initials(name: string) {
-  const parts = name.trim().split(/\s+/);
-  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "?";
-}
-
-function relativeTime(iso: string) {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diffMs / 60000);
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}d ago`;
-  const months = Math.floor(days / 30);
-  return `${months}mo ago`;
-}
-
-// ---------------------------------------------------------------------------
-// Small presentational pieces
-// ---------------------------------------------------------------------------
 
 function RoleBadge({ role }: { role: UserRole }) {
   return (
@@ -67,75 +29,10 @@ function RoleBadge({ role }: { role: UserRole }) {
     </span>
   );
 }
-
+// TODO: add a proper status/suspension field to the User model and show that here instead of isVerified
 // NOTE: your User model has no status/suspension field yet — this just
 // shows Verified/Unverified from `isVerified` as a placeholder. If you want
 // Active/Pending/Suspended, that needs a real `status` column on the backend.
-function VerifiedBadge({ verified }: { verified: boolean }) {
-  return (
-    <span
-      className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
-      style={
-        verified
-          ? { background: "var(--success-bg)", color: "var(--success)" }
-          : { background: "var(--warning-bg)", color: "var(--warning)" }
-      }
-    >
-      {verified ? "Verified" : "Unverified"}
-    </span>
-  );
-}
-
-function RowMenu({
-  userId,
-  open,
-  onToggle,
-}: {
-  userId: string;
-  open: boolean;
-  onToggle: (id: string | null) => void;
-}) {
-  return (
-    <div className="relative">
-      <button
-        onClick={() => onToggle(open ? null : userId)}
-        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
-        aria-label="Row actions"
-        aria-expanded={open}
-      >
-        <MoreHorizontal size={18} />
-      </button>
-      {open && (
-        <div
-          className="absolute right-0 top-9 z-20 w-44 overflow-hidden rounded-xl border py-1"
-          style={{
-            background: "var(--card)",
-            borderColor: "var(--border)",
-            boxShadow: "var(--shadow-lg)",
-          }}
-          onMouseLeave={() => onToggle(null)}
-        >
-          <button className="block w-full px-3.5 py-2 text-left text-sm text-slate-700 hover:bg-slate-50">
-            View profile
-          </button>
-          <button className="block w-full px-3.5 py-2 text-left text-sm text-slate-700 hover:bg-slate-50">
-            Edit role
-          </button>
-          <button
-            className="block w-full px-3.5 py-2 text-left text-sm hover:bg-red-50"
-            style={{ color: "var(--danger)" }}
-          >
-            Suspend user
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Page
-// ---------------------------------------------------------------------------
 
 const AdminUsersPage = () => {
   const [query, setQuery] = useState("");
@@ -327,9 +224,24 @@ const AdminUsersPage = () => {
                       >
                         <div className="flex justify-end">
                           <RowMenu
-                            userId={u.id}
+                            id={u.id}
                             open={openMenuId === u.id}
                             onToggle={setOpenMenuId}
+                            items={[
+                              {
+                                label: "View profile",
+                                onClick: () => console.log("view", u.id),
+                              },
+                              {
+                                label: "Edit role",
+                                onClick: () => console.log("edit role", u.id),
+                              },
+                              {
+                                label: "Suspend user",
+                                onClick: () => console.log("suspend", u.id),
+                                danger: true,
+                              },
+                            ]}
                           />
                         </div>
                       </td>

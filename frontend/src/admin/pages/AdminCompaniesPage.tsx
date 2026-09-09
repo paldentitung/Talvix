@@ -1,203 +1,40 @@
-"use client";
-
 import { useMemo, useState } from "react";
-import { Search, MoreHorizontal, Building2, ChevronDown } from "lucide-react";
-
-// ---------------------------------------------------------------------------
-// Types & mock data
-// ---------------------------------------------------------------------------
-
-type Plan = "Enterprise" | "Business" | "Starter";
-type CompanyStatus = "Active" | "Trial" | "Suspended";
-
-interface Company {
-  id: string;
-  name: string;
-  plan: Plan;
-  activeJobs: number;
-  hiresYtd: number;
-  status: CompanyStatus;
-}
-
-const COMPANIES: Company[] = [
-  {
-    id: "c1",
-    name: "Linear",
-    plan: "Enterprise",
-    activeJobs: 12,
-    hiresYtd: 34,
-    status: "Active",
-  },
-  {
-    id: "c2",
-    name: "Vercel",
-    plan: "Enterprise",
-    activeJobs: 22,
-    hiresYtd: 51,
-    status: "Active",
-  },
-  {
-    id: "c3",
-    name: "Notion",
-    plan: "Business",
-    activeJobs: 8,
-    hiresYtd: 19,
-    status: "Active",
-  },
-  {
-    id: "c4",
-    name: "Stripe",
-    plan: "Enterprise",
-    activeJobs: 41,
-    hiresYtd: 128,
-    status: "Active",
-  },
-  {
-    id: "c5",
-    name: "Ashby",
-    plan: "Business",
-    activeJobs: 6,
-    hiresYtd: 14,
-    status: "Active",
-  },
-  {
-    id: "c6",
-    name: "Loom",
-    plan: "Starter",
-    activeJobs: 3,
-    hiresYtd: 6,
-    status: "Trial",
-  },
-];
-
-const FILTERS = ["All", "Enterprise", "Business", "Starter", "Trial"] as const;
+import { Search, Building2, ChevronDown, ExternalLink } from "lucide-react";
+import { useCompanies } from "../../features/company/hooks/useCompanies";
+import Pagination from "../../shared/components/Pagination";
+import type { CompanyListItem } from "../../features/company/types/company.types";
+import relativeTime from "../../shared/utils/relativeTime";
+import VerifiedBadge from "../../features/company/components/VerifiedBadge";
+import { tintFor } from "../../shared/utils/avatarTint";
+import RowMenu from "../../shared/components/RowMenu";
+const FILTERS = ["All", "Verified", "Unverified"] as const;
 type Filter = (typeof FILTERS)[number];
-
-// A small, stable palette of avatar tints, matching the Users page pattern.
-const AVATAR_TINTS = [
-  { bg: "#EEF2FF", fg: "#4F46E5" },
-  { bg: "#F0FDFA", fg: "#0D9488" },
-  { bg: "#FDF4FF", fg: "#A21CAF" },
-  { bg: "#FFF7ED", fg: "#C2410C" },
-  { bg: "#EFF6FF", fg: "#2563EB" },
-];
-
-function tintFor(name: string) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++)
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return AVATAR_TINTS[Math.abs(hash) % AVATAR_TINTS.length];
-}
-
-// ---------------------------------------------------------------------------
-// Small presentational pieces
-// ---------------------------------------------------------------------------
-
-function PlanBadge({ plan }: { plan: Plan }) {
-  const styles: Record<Plan, { bg: string; fg: string }> = {
-    Enterprise: { bg: "var(--primary-light)", fg: "var(--primary)" },
-    Business: { bg: "var(--accent-light)", fg: "var(--accent)" },
-    Starter: { bg: "#F1F5F9", fg: "var(--text-secondary)" },
-  };
-  const s = styles[plan];
-  return (
-    <span
-      className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
-      style={{ background: s.bg, color: s.fg }}
-    >
-      {plan}
-    </span>
-  );
-}
-
-function StatusBadge({ status }: { status: CompanyStatus }) {
-  const styles: Record<CompanyStatus, { bg: string; fg: string }> = {
-    Active: { bg: "var(--success-bg)", fg: "var(--success)" },
-    Trial: { bg: "var(--warning-bg)", fg: "var(--warning)" },
-    Suspended: { bg: "var(--danger-bg)", fg: "var(--danger)" },
-  };
-  const s = styles[status];
-  return (
-    <span
-      className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
-      style={{ background: s.bg, color: s.fg }}
-    >
-      {status}
-    </span>
-  );
-}
-
-function RowMenu({
-  companyId,
-  open,
-  onToggle,
-}: {
-  companyId: string;
-  open: boolean;
-  onToggle: (id: string | null) => void;
-}) {
-  return (
-    <div className="relative">
-      <button
-        onClick={() => onToggle(open ? null : companyId)}
-        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
-        aria-label="Row actions"
-        aria-expanded={open}
-      >
-        <MoreHorizontal size={18} />
-      </button>
-      {open && (
-        <div
-          className="absolute right-0 top-9 z-20 w-44 overflow-hidden rounded-xl border py-1"
-          style={{
-            background: "var(--card)",
-            borderColor: "var(--border)",
-            boxShadow: "var(--shadow-lg)",
-          }}
-          onMouseLeave={() => onToggle(null)}
-        >
-          <button className="block w-full px-3.5 py-2 text-left text-sm text-slate-700 hover:bg-slate-50">
-            View company
-          </button>
-          <button className="block w-full px-3.5 py-2 text-left text-sm text-slate-700 hover:bg-slate-50">
-            Change plan
-          </button>
-          <button
-            className="block w-full px-3.5 py-2 text-left text-sm hover:bg-red-50"
-            style={{ color: "var(--danger)" }}
-          >
-            Suspend company
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Page
-// ---------------------------------------------------------------------------
 
 const AdminCompaniesPage = () => {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("All");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const limit = 10;
 
+  const { data, isLoading, isError } = useCompanies(page, limit, query);
+  console.log("data", data);
+
+  const companies: CompanyListItem[] = data?.data.companies ?? [];
+  const total = data?.data.total ?? 0;
+  const totalPages = data?.data.totalPages ?? 1;
+
+  // NOTE: search is already applied server-side via useCompanies(page, limit, query).
+  // This only applies the verified/unverified filter, client-side, to the current
+  // page of results — same limitation as the Users page: switching this filter
+  // won't re-scan companies on other pages. Move server-side if that matters.
   const filtered = useMemo(() => {
-    return COMPANIES.filter((c) => {
-      const matchesFilter =
-        filter === "All" ||
-        (filter === "Enterprise" && c.plan === "Enterprise") ||
-        (filter === "Business" && c.plan === "Business") ||
-        (filter === "Starter" && c.plan === "Starter") ||
-        (filter === "Trial" && c.status === "Trial");
-
-      const q = query.trim().toLowerCase();
-      const matchesQuery = q === "" || c.name.toLowerCase().includes(q);
-
-      return matchesFilter && matchesQuery;
+    return companies.filter((c) => {
+      if (filter === "Verified") return c.isVerified;
+      if (filter === "Unverified") return !c.isVerified;
+      return true;
     });
-  }, [query, filter]);
+  }, [companies, filter]);
 
   return (
     <div onClick={() => openMenuId && setOpenMenuId(null)}>
@@ -214,7 +51,7 @@ const AdminCompaniesPage = () => {
             className="mt-1 text-sm"
             style={{ color: "var(--text-secondary)" }}
           >
-            9,238 companies actively hiring
+            {total.toLocaleString()} companies actively hiring
           </p>
         </div>
       </div>
@@ -241,7 +78,10 @@ const AdminCompaniesPage = () => {
             />
             <input
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setPage(1);
+              }}
               placeholder="Search companies..."
               className="w-full rounded-full border py-2.5 pl-10 pr-4 text-sm outline-none transition-shadow focus:ring-2"
               style={{
@@ -285,80 +125,142 @@ const AdminCompaniesPage = () => {
                 style={{ color: "var(--text-muted)" }}
               >
                 <th className="px-6 py-3.5 font-semibold">Company</th>
-                <th className="px-6 py-3.5 font-semibold">Plan</th>
-                <th className="px-6 py-3.5 font-semibold">Active jobs</th>
+                <th className="px-6 py-3.5 font-semibold">Open jobs</th>
+                <th className="px-6 py-3.5 font-semibold">Verified</th>
                 <th className="px-6 py-3.5 font-semibold">
                   <span className="inline-flex items-center gap-1">
-                    Hires (YTD)
+                    Joined
                     <ChevronDown size={12} />
                   </span>
                 </th>
-                <th className="px-6 py-3.5 font-semibold">Status</th>
                 <th className="px-6 py-3.5" />
               </tr>
             </thead>
             <tbody>
-              {filtered.map((c) => {
-                const tint = tintFor(c.name);
-                return (
-                  <tr
-                    key={c.id}
-                    className="border-t transition-colors hover:bg-slate-50/70"
-                    style={{ borderColor: "var(--border)" }}
-                  >
-                    <td className="px-6 py-3.5">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-                          style={{ background: tint.bg, color: tint.fg }}
-                        >
-                          <Building2 size={16} />
-                        </div>
-                        <p
-                          className="text-sm font-semibold"
-                          style={{ color: "var(--text-primary)" }}
-                        >
-                          {c.name}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-3.5">
-                      <PlanBadge plan={c.plan} />
-                    </td>
-                    <td
-                      className="px-6 py-3.5 text-sm"
-                      style={{ color: "var(--text-primary)" }}
-                    >
-                      {c.activeJobs}
-                    </td>
-                    <td
-                      className="px-6 py-3.5 text-sm"
-                      style={{ color: "var(--text-primary)" }}
-                    >
-                      {c.hiresYtd}
-                    </td>
-                    <td className="px-6 py-3.5">
-                      <StatusBadge status={c.status} />
-                    </td>
-                    <td
-                      className="px-6 py-3.5 text-right"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="flex justify-end">
-                        <RowMenu
-                          companyId={c.id}
-                          open={openMenuId === c.id}
-                          onToggle={setOpenMenuId}
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-
-              {filtered.length === 0 && (
+              {isLoading && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-16 text-center">
+                  <td
+                    colSpan={5}
+                    className="px-6 py-16 text-center text-sm"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Loading companies…
+                  </td>
+                </tr>
+              )}
+
+              {isError && (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-6 py-16 text-center text-sm"
+                    style={{ color: "var(--danger)" }}
+                  >
+                    Failed to load companies.
+                  </td>
+                </tr>
+              )}
+
+              {!isLoading &&
+                !isError &&
+                filtered.map((c) => {
+                  const name =
+                    c.companyName ?? `${c.firstName} ${c.lastName}`.trim();
+                  const tint = tintFor(name);
+                  return (
+                    <tr
+                      key={c.id}
+                      className="border-t transition-colors hover:bg-slate-50/70"
+                      style={{ borderColor: "var(--border)" }}
+                    >
+                      <td className="px-6 py-3.5">
+                        <div className="flex items-center gap-3">
+                          {c.companyLogo ? (
+                            <img
+                              src={c.companyLogo}
+                              alt=""
+                              className="h-9 w-9 shrink-0 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div
+                              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+                              style={{ background: tint.bg, color: tint.fg }}
+                            >
+                              <Building2 size={16} />
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p
+                              className="truncate text-sm font-semibold"
+                              style={{ color: "var(--text-primary)" }}
+                            >
+                              {name}
+                            </p>
+                            {c.companyWebsite && (
+                              <a
+                                href={c.companyWebsite}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 truncate text-xs hover:underline"
+                                style={{ color: "var(--text-muted)" }}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {c.companyWebsite.replace(/^https?:\/\//, "")}
+                                <ExternalLink size={10} />
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td
+                        className="px-6 py-3.5 text-sm"
+                        style={{ color: "var(--text-primary)" }}
+                      >
+                        {c._count.jobs}
+                      </td>
+                      <td className="px-6 py-3.5">
+                        <VerifiedBadge verified={c.isVerified} />
+                      </td>
+                      <td
+                        className="px-6 py-3.5 text-sm"
+                        style={{ color: "var(--text-secondary)" }}
+                      >
+                        {relativeTime(c.createdAt)}
+                      </td>
+                      <td
+                        className="px-6 py-3.5 text-right"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="flex justify-end">
+                          <RowMenu
+                            id={c.id}
+                            open={openMenuId === c.id}
+                            onToggle={setOpenMenuId}
+                            items={[
+                              {
+                                label: "View company",
+                                onClick: () => console.log("view", c.id),
+                              },
+                              {
+                                label: "Edit details",
+                                onClick: () => console.log("edit", c.id),
+                              },
+                              {
+                                label: "Suspend recruiter",
+                                onClick: () => console.log("suspend", c.id),
+                                danger: true,
+                              },
+                            ]}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+
+              {!isLoading && !isError && filtered.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-6 py-16 text-center">
                     <p
                       className="text-sm font-medium"
                       style={{ color: "var(--text-primary)" }}
@@ -377,6 +279,15 @@ const AdminCompaniesPage = () => {
             </tbody>
           </table>
         </div>
+
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          total={total}
+          itemLabel="companies"
+          isFetching={isLoading}
+        />
       </div>
     </div>
   );
