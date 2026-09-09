@@ -16,56 +16,17 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-
-type Stat = {
-  label: string;
-  value: string;
-  change: string;
-  changeTone: "up" | "down";
-  icon: typeof Users;
-  iconBg: string;
-  iconColor: string;
-};
-
-const stats: Stat[] = [
-  {
-    label: "Total users",
-    value: "128,412",
-    change: "+2.4%",
-    changeTone: "up",
-    icon: Users,
-    iconBg: "bg-(--primary-light)",
-    iconColor: "text-(--primary)",
-  },
-  {
-    label: "Companies",
-    value: "9,238",
-    change: "+1.1%",
-    changeTone: "up",
-    icon: Building2,
-    iconBg: "bg-(--accent-light)",
-    iconColor: "text-(--accent)",
-  },
-  {
-    label: "Active jobs",
-    value: "48,190",
-    change: "+3.8%",
-    changeTone: "up",
-    icon: Briefcase,
-    iconBg: "bg-(--accent-light)",
-    iconColor: "text-(--accent)",
-  },
-  {
-    label: "Reports open",
-    value: "12",
-    change: "-4",
-    changeTone: "down",
-    icon: ShieldAlert,
-    iconBg: "bg-(--warning-bg)",
-    iconColor: "text-(--warning)",
-  },
-];
-
+import { useUsers } from "../../features/users/hooks/useUsers";
+import { ROLE_LABELS } from "../../shared/constants/roleLabels";
+import { Link } from "react-router-dom";
+import { useAdminJobs } from "../../features/jobs/hooks/useAdminJobs";
+import type { ApiUser } from "../../shared/types/user.types";
+import { tintFor } from "../../shared/utils/avatarTint";
+import { fullName } from "../../shared/utils/getFullname";
+import initials from "../../shared/utils/getInitials";
+import relativeTime from "../../shared/utils/relativeTime";
+import { useCompanies } from "../../features/company/hooks/useCompanies";
+import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 const growthData = [
   { month: "Jan", users: 1200 },
   { month: "Feb", users: 1900 },
@@ -119,78 +80,100 @@ const activity: Activity[] = [
     time: "2h ago",
   },
 ];
-
-type NewUser = {
-  initials: string;
-  name: string;
-  role: string;
-  company: string;
-  joined: string;
-  status: "Active" | "Pending" | "Suspended";
-};
-
-const newUsers: NewUser[] = [
-  {
-    initials: "AM",
-    name: "Alex Morgan",
-    role: "Job Seeker",
-    company: "—",
-    joined: "2h ago",
-    status: "Active",
-  },
-  {
-    initials: "PS",
-    name: "Priya Shah",
-    role: "Employer",
-    company: "Linear",
-    joined: "5h ago",
-    status: "Active",
-  },
-  {
-    initials: "ML",
-    name: "Marcus Lee",
-    role: "Employer",
-    company: "Vercel",
-    joined: "1d ago",
-    status: "Active",
-  },
-];
-
-const statusStyles: Record<NewUser["status"], string> = {
-  Active: "bg-(--success-bg) text-(--success)",
-  Pending: "bg-(--warning-bg) text-(--warning)",
-  Suspended: "bg-(--danger-bg) text-(--danger)",
+type Stat = {
+  label: string;
+  value: string;
+  change: string;
+  changeTone: "up" | "down";
+  icon: typeof Users;
+  iconBg: string;
+  iconColor: string;
 };
 
 const StatCard = ({ stat }: { stat: Stat }) => {
   const Icon = stat.icon;
+  const TrendIcon = stat.changeTone === "up" ? ArrowUpRight : ArrowDownRight;
+
   return (
-    <div className="rounded-(--radius-lg) border border-(--border) bg-(--card) p-5 shadow-(--shadow-sm)">
-      <div className="flex items-start justify-between">
+    <div className="group rounded-(--radius-lg) border border-(--border) bg-(--card) p-5 shadow-(--shadow-sm) transition-all duration-200 hover:-translate-y-0.5 hover:shadow-(--shadow-md)">
+      <div className="flex items-center gap-2.5">
         <span
-          className={`flex h-10 w-10 items-center justify-center rounded-(--radius-md) ${stat.iconBg} ${stat.iconColor}`}
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-(--radius-md) ${stat.iconBg} ${stat.iconColor}`}
         >
-          <Icon size={20} />
+          <Icon size={16} strokeWidth={2.25} />
         </span>
+        <p className="text-sm font-medium text-(--text-secondary)">
+          {stat.label}
+        </p>
+      </div>
+
+      <div className="mt-4 flex items-end justify-between">
+        <p className="font-display text-3xl font-bold tracking-tight text-(--text-primary)">
+          {stat.value}
+        </p>
         <span
-          className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+          className={`mb-0.5 inline-flex items-center gap-0.5 rounded-full px-2 py-1 text-xs font-semibold ${
             stat.changeTone === "up"
               ? "bg-(--success-bg) text-(--success)"
               : "bg-(--danger-bg) text-(--danger)"
           }`}
         >
+          <TrendIcon size={12} strokeWidth={2.5} />
           {stat.change}
         </span>
       </div>
-      <p className="mt-4 font-display text-2xl font-bold text-(--text-primary)">
-        {stat.value}
-      </p>
-      <p className="mt-1 text-sm text-(--text-secondary)">{stat.label}</p>
     </div>
   );
 };
-
 const AdminDashboard = () => {
+  const { data: usersData } = useUsers(1, 5);
+  const { data: companiesData } = useCompanies(1, 1);
+  const { data: jobsData } = useAdminJobs(1, 1, undefined, undefined);
+
+  const users: ApiUser[] = usersData?.data?.users ?? [];
+  const totalUsers = usersData?.data?.pagination?.totalUsers ?? 0;
+  const totalCompanies = companiesData?.data?.total ?? 0;
+  const totalJobs = jobsData?.data?.total ?? 0;
+
+  const stats: Stat[] = [
+    {
+      label: "Total users",
+      value: totalUsers.toLocaleString(),
+      change: "+2.4%",
+      changeTone: "up",
+      icon: Users,
+      iconBg: "bg-(--primary-light)",
+      iconColor: "text-(--primary)",
+    },
+    {
+      label: "Companies",
+      value: totalCompanies.toLocaleString(),
+      change: "+1.1%",
+      changeTone: "up",
+      icon: Building2,
+      iconBg: "bg-(--accent-light)",
+      iconColor: "text-(--accent)",
+    },
+    {
+      label: "Active jobs",
+      value: totalJobs.toLocaleString(),
+      change: "+3.8%",
+      changeTone: "up",
+      icon: Briefcase,
+      iconBg: "bg-(--accent-light)",
+      iconColor: "text-(--accent)",
+    },
+    {
+      label: "Reports open",
+      value: "12", // TODO: no reports/moderation model exists yet
+      change: "-4",
+      changeTone: "down",
+      icon: ShieldAlert,
+      iconBg: "bg-(--warning-bg)",
+      iconColor: "text-(--warning)",
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-6">
       {/* Stat cards */}
@@ -302,9 +285,12 @@ const AdminDashboard = () => {
           <h2 className="font-display text-base font-semibold text-(--text-primary)">
             New users
           </h2>
-          <button className="text-sm font-medium text-(--primary) hover:text-(--primary-dark)">
+          <Link
+            to={"/admin/users"}
+            className="text-sm font-medium text-(--primary) hover:text-(--primary-dark)"
+          >
             View all
-          </button>
+          </Link>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] border-collapse text-left">
@@ -318,39 +304,57 @@ const AdminDashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {newUsers.map((user) => (
-                <tr
-                  key={user.name}
-                  className="border-b border-(--border) last:border-0"
-                >
-                  <td className="py-3 pr-4">
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-(--primary-light) text-xs font-semibold text-(--primary)">
-                        {user.initials}
+              {users.map((user) => {
+                const name = fullName(user);
+                const tint = tintFor(name);
+                return (
+                  <tr
+                    key={user.id}
+                    className="border-b border-(--border) last:border-0"
+                  >
+                    <td className="py-3 pr-4">
+                      <div className="flex items-center gap-3">
+                        <span
+                          className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold"
+                          style={{ background: tint.bg, color: tint.fg }}
+                        >
+                          {initials(name)}
+                        </span>
+                        <span className="text-sm font-medium text-(--text-primary)">
+                          {name}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-3 pr-4 text-sm text-(--text-secondary)">
+                      {ROLE_LABELS[user.role]}
+                    </td>
+                    <td className="py-3 pr-4 text-sm text-(--text-secondary)">
+                      {user.companyName ?? "—"}
+                    </td>
+                    <td className="py-3 pr-4 text-sm text-(--text-secondary)">
+                      {relativeTime(user.createdAt)}
+                    </td>
+                    <td className="py-3">
+                      <span
+                        className="rounded-full px-2.5 py-1 text-xs font-semibold"
+                        style={
+                          user.isVerified
+                            ? {
+                                background: "var(--success-bg)",
+                                color: "var(--success)",
+                              }
+                            : {
+                                background: "var(--warning-bg)",
+                                color: "var(--warning)",
+                              }
+                        }
+                      >
+                        {user.isVerified ? "Verified" : "Unverified"}
                       </span>
-                      <span className="text-sm font-medium text-(--text-primary)">
-                        {user.name}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="py-3 pr-4 text-sm text-(--text-secondary)">
-                    {user.role}
-                  </td>
-                  <td className="py-3 pr-4 text-sm text-(--text-secondary)">
-                    {user.company}
-                  </td>
-                  <td className="py-3 pr-4 text-sm text-(--text-secondary)">
-                    {user.joined}
-                  </td>
-                  <td className="py-3">
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[user.status]}`}
-                    >
-                      {user.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
