@@ -31,6 +31,7 @@ export const userResponseSelect = {
       companyLogo: true,
       companyWebsite: true,
       companyDescription: true,
+      companyLocation: true,
     },
   },
 } satisfies Prisma.UserSelect;

@@ -25,6 +25,7 @@ export const updateRecruiterProfileSchema = z
     companyLogo: z.string().url("Logo must be a valid URL").optional(),
     companyWebsite: z.string().url("Website must be a valid URL").optional(),
     companyDescription: z.string().max(3000).optional(),
+    companyLocation: z.string().max(200).optional(),
   })
   .strict();
 export const changePasswordSchema = z

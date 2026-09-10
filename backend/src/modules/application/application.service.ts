@@ -122,9 +122,13 @@ export const getMyApplicationsService = async (
                 firstName: true,
                 lastName: true,
                 avatar: true,
-                companyName: true,
-                companyLogo: true,
-                companyWebsite: true,
+                recruiterProfile: {
+                  select: {
+                    companyName: true,
+                    companyLogo: true,
+                    companyWebsite: true,
+                  },
+                },
               },
             },
           },

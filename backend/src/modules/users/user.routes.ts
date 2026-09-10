@@ -3,7 +3,6 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import { requireAuth } from "../../middleware/auth.middleware.js";
 import {
   changePasswordController,
-  getMeController,
   getUsersController,
   updateCandidateProfileController,
   updateRecruiterProfileController,
@@ -20,7 +19,6 @@ import {
 
 const router = express.Router();
 
-router.get("/me", requireAuth, asyncHandler(getMeController));
 router.get(
   "/all",
   requireAuth,

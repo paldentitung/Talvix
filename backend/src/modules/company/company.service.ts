@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import prisma from "../../lib/prisma.js";
 import { companySelect } from "./company.select.js";
 import { jobSelect } from "../jobs/job.select.js";
+
 export const getCompaniesService = async (
   page = 1,
   pageSize = 10,
@@ -9,10 +10,12 @@ export const getCompaniesService = async (
 ) => {
   const where: Prisma.UserWhereInput = {
     role: "RECRUITER",
-    companyName: { not: null }, // exclude recruiters who never filled out company info
-    ...(search && {
-      companyName: { contains: search, mode: "insensitive" },
-    }),
+    recruiterProfile: {
+      companyName: { not: null },
+      ...(search && {
+        companyName: { contains: search, mode: "insensitive" },
+      }),
+    },
   };
 
   const [companies, total] = await Promise.all([
@@ -21,7 +24,7 @@ export const getCompaniesService = async (
       select: companySelect,
       skip: (page - 1) * pageSize,
       take: pageSize,
-      orderBy: { companyName: "asc" },
+      orderBy: { recruiterProfile: { companyName: "asc" } },
     }),
     prisma.user.count({ where }),
   ]);
