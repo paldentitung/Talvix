@@ -1,14 +1,14 @@
 import prisma from "../../lib/prisma.js";
 import AppError from "../../utils/AppError.js";
 import bcrypt from "bcrypt";
-import {
-  ChangePasswordInput,
-  UpdateUserBody,
-  UpdateCandidateProfileBody,
-  UpdateRecruiterProfileBody,
-} from "./user.type.js";
 import { toUserResponse } from "./user.mapper.js";
 import { userResponseSelect } from "./user.select.js";
+import {
+  UpdateUserInput,
+  UpdateCandidateProfileInput,
+  UpdateRecruiterProfileInput,
+  ChangePasswordInput,
+} from "./user.validation.js";
 export const getMeService = async (userId: string) => {
   const user = await prisma.user.findUnique({
     where: {
@@ -94,7 +94,7 @@ export const changePasswordService = async (
 
 export const updateUserService = async (
   userId: string,
-  data: UpdateUserBody,
+  data: UpdateUserInput,
 ) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new AppError("user not found", 404);
@@ -102,7 +102,7 @@ export const updateUserService = async (
   const updatedUser = await prisma.user.update({
     where: { id: userId },
     data,
-    include: { candidateProfile: true, recruiterProfile: true },
+    select: userResponseSelect,
   });
 
   return toUserResponse(updatedUser);
@@ -110,7 +110,7 @@ export const updateUserService = async (
 
 export const updateCandidateProfileService = async (
   userId: string,
-  data: UpdateCandidateProfileBody,
+  data: UpdateCandidateProfileInput,
 ) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new AppError("user not found", 404);
@@ -132,7 +132,7 @@ export const updateCandidateProfileService = async (
 
 export const updateRecruiterProfileService = async (
   userId: string,
-  data: UpdateRecruiterProfileBody,
+  data: UpdateRecruiterProfileInput,
 ) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new AppError("user not found", 404);
