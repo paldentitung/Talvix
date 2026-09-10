@@ -62,6 +62,9 @@ model RecruiterProfile {
   companyWebsite     String?
   companyDescription String? @db.Text
   companyLocation    String?
+  companyTagline     String?
+  companyIndustry    String?
+  companySize        String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

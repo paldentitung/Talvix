@@ -23,6 +23,10 @@ export interface UserResponse {
   companyLogo: string | null;
   companyWebsite: string | null;
   companyDescription: string | null;
+  companyLocation: string | null;
+  companyTagline: string | null;
+  companyIndustry: string | null;
+  companySize: string | null;
 
   isVerified: boolean;
 
@@ -51,6 +55,10 @@ export const toUserResponse = (user: UserResponsePayload): UserResponse => ({
   companyLogo: user.recruiterProfile?.companyLogo ?? null,
   companyWebsite: user.recruiterProfile?.companyWebsite ?? null,
   companyDescription: user.recruiterProfile?.companyDescription ?? null,
+  companyLocation: user.recruiterProfile?.companyLocation ?? null,
+  companyTagline: user.recruiterProfile?.companyTagline ?? null,
+  companyIndustry: user.recruiterProfile?.companyIndustry ?? null,
+  companySize: user.recruiterProfile?.companySize ?? null,
 
   isVerified: user.isVerified,
 

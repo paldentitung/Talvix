@@ -47,6 +47,9 @@ export interface UpdateRecruiterProfileRequest {
   companyWebsite?: string;
   companyDescription?: string;
   companyLocation: string | null;
+  companyTagline?: string;
+  companyIndustry?: string;
+  companySize?: string;
 }
 
 // PATCH /change-password
