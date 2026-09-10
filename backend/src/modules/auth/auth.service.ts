@@ -10,6 +10,8 @@ import {
 import AppError from "../../utils/AppError.js";
 import sendEmail from "../../utils/sendEmail.js";
 import crypto from "crypto";
+import { userResponseSelect } from "../users/user.select.js";
+import { toUserResponse } from "../users/user.mapper.js";
 export const registerService = async (data: RegisterInput) => {
   const existingUser = await prisma.user.findUnique({
     where: {
@@ -198,22 +200,13 @@ export const resetPasswordService = async (data: ResetPasswordInput) => {
 
 export const getMeService = async (userId: string) => {
   const user = await prisma.user.findUnique({
-    where: {
-      id: userId,
-    },
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      email: true,
-      role: true,
-      isVerified: true,
-    },
+    where: { id: userId },
+    select: userResponseSelect,
   });
 
   if (!user) {
     throw new AppError("User not found", 404);
   }
 
-  return user;
+  return toUserResponse(user);
 };

@@ -1,5 +1,6 @@
+// routes/RoleRoute.tsx
 import { Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "../features/auth/contexts/AuthContext";
+import { useMe } from "../features/auth/hooks/useMe";
 import type { UserRole } from "../shared/types/user.types";
 
 interface RoleRouteProps {
@@ -7,7 +8,11 @@ interface RoleRouteProps {
 }
 
 const RoleRoute = ({ allowedRoles }: RoleRouteProps) => {
-  const { user } = useAuth();
+  const { data: user, isLoading } = useMe();
+
+  if (isLoading) {
+    return null;
+  }
 
   if (!user) {
     return <Navigate to="/login" replace />;

@@ -1,8 +1,12 @@
-import { useState } from "react";
-import { Globe, MapPin, Users } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Globe, MapPin, Pencil, Users } from "lucide-react";
+import toast from "react-hot-toast";
+import { useUpdateRecruiterProfile } from "../../features/users/hooks/useUpdateRecruiterProfile";
+import { useMe } from "../../features/auth/hooks/useMe";
 
 type CompanyProfile = {
   name: string;
+  logo: string;
   tagline: string;
   website: string;
   industry: string;
@@ -11,28 +15,86 @@ type CompanyProfile = {
   about: string;
 };
 
-const initialProfile: CompanyProfile = {
-  name: "Hirely, Inc.",
-  tagline: "Building the modern hiring platform.",
-  website: "hirely.com",
-  industry: "Software",
-  headquarters: "San Francisco, CA",
-  size: "51–200",
-  about: "Hirely is the modern hiring platform for ambitious teams.",
+const emptyProfile: CompanyProfile = {
+  name: "",
+  logo: "",
+  tagline: "",
+  website: "",
+  industry: "",
+  headquarters: "",
+  size: "",
+  about: "",
 };
 
 const sizeOptions = ["1–10", "11–50", "51–200", "201–500", "500+"];
 
 const CompanyProfilePage = () => {
-  const [saved, setSaved] = useState<CompanyProfile>(initialProfile);
-  const [draft, setDraft] = useState<CompanyProfile>(initialProfile);
+  const { data: user, isLoading: isUserLoading } = useMe();
+  const updateRecruiterProfileMutation = useUpdateRecruiterProfile();
+
+  const [draft, setDraft] = useState<CompanyProfile>(emptyProfile);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync form state from real user data once it loads
+  useEffect(() => {
+    if (!user) return;
+    setDraft({
+      name: user.companyName ?? "",
+      logo: user.companyLogo ?? "",
+      tagline: user.companyTagline ?? "",
+      website: user.companyWebsite ?? "",
+      industry: user.companyIndustry ?? "",
+      headquarters: user.companyLocation ?? "",
+      size: user.companySize ?? "",
+      about: user.companyDescription ?? "",
+    });
+  }, [user]);
 
   const update = (field: keyof CompanyProfile, value: string) => {
     setDraft((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleCancel = () => setDraft(saved);
-  const handleSave = () => setSaved(draft);
+  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // TODO: wire up to the dedicated logo upload endpoint once it's ready.
+    // Left as a no-op for now — logo is not editable from this page yet.
+    e.target.value = "";
+  };
+
+  const handleCancel = () => {
+    if (!user) return;
+    setDraft({
+      name: user.companyName ?? "",
+      logo: user.companyLogo ?? "",
+      tagline: user.companyTagline ?? "",
+      website: user.companyWebsite ?? "",
+      industry: user.companyIndustry ?? "",
+      headquarters: user.companyLocation ?? "",
+      size: user.companySize ?? "",
+      about: user.companyDescription ?? "",
+    });
+  };
+
+  const handleSave = async () => {
+    try {
+      await updateRecruiterProfileMutation.mutateAsync({
+        companyName: draft.name,
+        companyWebsite: draft.website,
+        companyLocation: draft.headquarters,
+        companyDescription: draft.about,
+        companyTagline: draft.tagline,
+        companyIndustry: draft.industry,
+        companySize: draft.size,
+        // companyLogo intentionally omitted — logo is saved via its own upload endpoint
+      });
+      toast.success("Company profile updated");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to update company profile",
+      );
+    }
+  };
+
+  const isSaving = updateRecruiterProfileMutation.isPending;
 
   const initials = draft.name
     .split(" ")
@@ -42,13 +104,49 @@ const CompanyProfilePage = () => {
     .join("")
     .toUpperCase();
 
+  if (isUserLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center text-sm text-(--text-muted)">
+        Loading company profile...
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
         <div className="lg:col-span-1">
           <div className="rounded-(--radius-lg) border border-(--border) bg-(--card) p-5 shadow-(--shadow-sm)">
-            <div className="flex h-12 w-12 items-center justify-center rounded-(--radius-md) bg-(--primary) font-display text-lg font-bold text-white">
-              {initials || "H"}
+            <div className="group relative h-12 w-12 shrink-0">
+              {draft.logo ? (
+                <img
+                  src={draft.logo}
+                  alt={`${draft.name || "Company"} logo`}
+                  className="h-12 w-12 rounded-(--radius-md) object-cover"
+                />
+              ) : (
+                <div className="flex h-12 w-12 items-center justify-center rounded-(--radius-md) bg-(--primary) font-display text-lg font-bold text-white">
+                  {initials || "H"}
+                </div>
+              )}
+              <button
+                type="button"
+                aria-label="Change company logo"
+                disabled
+                title="Coming soon"
+                onClick={() => logoInputRef.current?.click()}
+                className="absolute -bottom-1.5 -right-1.5 flex h-6 w-6 items-center justify-center rounded-full border border-(--border) bg-(--card) text-(--text-muted) shadow-(--shadow-sm) opacity-60"
+              >
+                <Pencil className="h-3 w-3" />
+              </button>
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/*"
+                disabled
+                onChange={handleLogoFileChange}
+                className="hidden"
+              />
             </div>
             <h3 className="mt-3 font-display text-base font-bold text-(--text-primary)">
               {draft.name || "Company name"}
@@ -136,6 +234,7 @@ const CompanyProfilePage = () => {
                   onChange={(e) => update("size", e.target.value)}
                   className="rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none focus:border-(--primary)"
                 >
+                  <option value="">—</option>
                   {sizeOptions.map((opt) => (
                     <option key={opt} value={opt}>
                       {opt}
@@ -169,15 +268,17 @@ const CompanyProfilePage = () => {
             <div className="mt-6 flex flex-col-reverse gap-2 border-t border-(--border) pt-5 sm:flex-row sm:justify-end">
               <button
                 onClick={handleCancel}
-                className="rounded-(--radius-md) border border-(--border) bg-(--card) px-4 py-2 text-sm font-semibold text-(--text-secondary) hover:bg-(--bg)"
+                disabled={isSaving}
+                className="rounded-(--radius-md) border border-(--border) bg-(--card) px-4 py-2 text-sm font-semibold text-(--text-secondary) hover:bg-(--bg) disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
-                className="rounded-(--radius-md) bg-(--primary) px-4 py-2 text-sm font-semibold text-white hover:bg-(--primary-dark)"
+                disabled={isSaving}
+                className="rounded-(--radius-md) bg-(--primary) px-4 py-2 text-sm font-semibold text-white hover:bg-(--primary-dark) disabled:opacity-50"
               >
-                Save changes
+                {isSaving ? "Saving..." : "Save changes"}
               </button>
             </div>
           </div>

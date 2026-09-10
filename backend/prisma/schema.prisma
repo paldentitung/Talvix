@@ -8,49 +8,88 @@ datasource db {
 }
 
 model User {
-  id String @id @default(cuid())
-
-  email    String @unique
-  password String
-
+  id        String  @id @default(cuid())
+  email     String  @unique
+  password  String
   firstName String
   lastName  String
+  role      Role
+  avatar    String?
+  phone     String?
 
-  role Role
+  isVerified           Boolean   @default(false)
+  verificationToken    String?
+  verificationExpires  DateTime?
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
 
-  avatar String?
-  phone  String?
+  candidateProfile CandidateProfile?
+  recruiterProfile RecruiterProfile?
 
-  bio String? @db.Text
+  jobs         Job[]
+  applications Application[]
+  savedJobs    SavedJob[]
 
-  location String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
-  title String?
+model CandidateProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  bio       String?  @db.Text
+  location  String?
+  title     String?
   resumeUrl String?
+  skills    String[]
 
-  // Recruiter fields
+  experiences Experience[]
+  educations  Education[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RecruiterProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   companyName        String?
   companyLogo        String?
   companyWebsite     String?
   companyDescription String? @db.Text
-
-  jobs Job[]
-
-  applications Application[]
-
-  savedJobs SavedJob[]
-
-  isVerified Boolean @default(false)
-
-  verificationToken   String?
-  verificationExpires DateTime?
-
-  resetPasswordToken   String?
-  resetPasswordExpires DateTime?
+  companyLocation    String?
+  companyTagline     String?
+  companyIndustry    String?
+  companySize        String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Experience {
+  id          String           @id @default(cuid())
+  candidateId String
+  candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  title       String
+  company     String
+  startDate   DateTime
+  endDate     DateTime?
+  description String?          @db.Text
+  order       Int              @default(0)
+}
+
+model Education {
+  id          String           @id @default(cuid())
+  candidateId String
+  candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  school      String
+  degree      String
+  startDate   DateTime
+  endDate     DateTime?
 }
 
 model Job {
@@ -122,8 +161,8 @@ model Application {
 
   status ApplicationStatus @default(PENDING)
 
-  recruiterNotes String? @db.Text
-  statusHistory ApplicationStatusHistory[]
+  recruiterNotes String?                    @db.Text
+  statusHistory  ApplicationStatusHistory[]
 
   appliedAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -139,10 +178,10 @@ model ApplicationStatusHistory {
   applicationId String
   status        ApplicationStatus
   note          String?
-  changedById   String?           
+  changedById   String?
   createdAt     DateTime          @default(now())
 
-  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
   @@index([applicationId])
 }

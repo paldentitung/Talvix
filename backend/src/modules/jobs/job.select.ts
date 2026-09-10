@@ -34,8 +34,14 @@ export const jobSelect = Prisma.validator<Prisma.JobSelect>()({
       id: true,
       firstName: true,
       lastName: true,
-      companyName: true,
-      companyLogo: true,
+      avatar: true,
+      recruiterProfile: {
+        select: {
+          companyName: true,
+          companyLogo: true,
+          companyWebsite: true,
+        },
+      },
     },
   },
 

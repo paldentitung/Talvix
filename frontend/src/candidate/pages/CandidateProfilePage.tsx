@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   MapPin,
   Mail,
@@ -12,6 +12,10 @@ import {
   X,
 } from "lucide-react";
 import { FaGithub, FaGlobe, FaLinkedin } from "react-icons/fa";
+import toast from "react-hot-toast";
+import { useUserUpdateProfile } from "../../features/users/hooks/useUpdateUserProfile";
+import { useUpdateCandidateProfile } from "../../features/users/hooks/useUpdateCandidateProfile";
+import { useMe } from "../../features/auth/hooks/useMe";
 
 /**
  * CandidateProfilePage
@@ -34,6 +38,7 @@ type EducationEntry = {
   period: string;
 };
 
+// Experience/Education don't have backend endpoints yet — still static for now.
 const initialExperience: ExperienceEntry[] = [
   {
     id: "exp-1",
@@ -66,53 +71,6 @@ const initialEducation: EducationEntry[] = [
     period: "2013 — 2017",
   },
 ];
-
-const initialSkills = [
-  "Product Design",
-  "Figma",
-  "Design Systems",
-  "Prototyping",
-  "SaaS",
-  "User Research",
-  "Motion",
-  "React",
-];
-
-function ProfileCompletionRing({ percent }: { percent: number }) {
-  const radius = 20;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (percent / 100) * circumference;
-
-  return (
-    <div className="relative h-12 w-12 shrink-0">
-      <svg viewBox="0 0 48 48" className="h-12 w-12 -rotate-90">
-        <circle
-          cx="24"
-          cy="24"
-          r={radius}
-          fill="none"
-          stroke="var(--border)"
-          strokeWidth="4"
-        />
-        <circle
-          cx="24"
-          cy="24"
-          r={radius}
-          fill="none"
-          stroke="var(--accent)"
-          strokeWidth="4"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          style={{ transition: "stroke-dashoffset 400ms ease" }}
-        />
-      </svg>
-      <span className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold text-[var(--text-primary)]">
-        {percent}%
-      </span>
-    </div>
-  );
-}
 
 function Card({
   children,
@@ -151,20 +109,39 @@ const inputClasses =
   "w-full rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--bg)] px-3.5 py-2.5 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--primary)] focus:bg-[var(--card)] focus:ring-2 focus:ring-[var(--primary-light)]";
 
 export default function CandidateProfilePage() {
-  const [firstName, setFirstName] = useState("Alex");
-  const [lastName, setLastName] = useState("Morgan");
-  const [title, setTitle] = useState("Senior Product Designer");
-  const [location, setLocation] = useState("San Francisco, CA");
-  const [bio, setBio] = useState(
-    "Product designer focused on beautiful, useful software for teams.",
-  );
-  const [email] = useState("alex@hirely.com");
-  const [phone] = useState("+1 (415) 555 0122");
-  const [skills, setSkills] = useState(initialSkills);
+  const { data: user, isLoading: isUserLoading } = useMe();
+
+  const updateUserProfileMutation = useUserUpdateProfile();
+  const updateCandidateProfileMutation = useUpdateCandidateProfile();
+
+  // Local form state — seeded from `user` once it loads
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [title, setTitle] = useState("");
+  const [location, setLocation] = useState("");
+  const [bio, setBio] = useState("");
+  const [skills, setSkills] = useState<string[]>([]);
+  const [newSkill, setNewSkill] = useState("");
+
   const [experience] = useState<ExperienceEntry[]>(initialExperience);
   const [education] = useState<EducationEntry[]>(initialEducation);
   const [resumeName] = useState("alex-morgan-resume.pdf");
   const [dragOver, setDragOver] = useState(false);
+
+  // Sync form state whenever the real user data arrives (or changes elsewhere)
+  useEffect(() => {
+    if (!user) return;
+    setFirstName(user.firstName ?? "");
+    setLastName(user.lastName ?? "");
+    setPhone(user.phone ?? "");
+    setTitle(user.title ?? "");
+    setLocation(user.location ?? "");
+    setBio(user.bio ?? "");
+    setSkills(user.skills ?? []);
+  }, [user]);
+
+  const email = user?.email ?? "";
 
   const completion = useMemo(() => {
     const fields = [firstName, lastName, title, location, bio, email, phone];
@@ -176,7 +153,60 @@ export default function CandidateProfilePage() {
   const removeSkill = (skill: string) =>
     setSkills((prev) => prev.filter((s) => s !== skill));
 
+  const addSkill = () => {
+    const trimmed = newSkill.trim();
+    if (!trimmed || skills.includes(trimmed)) return;
+    setSkills((prev) => [...prev, trimmed]);
+    setNewSkill("");
+  };
+
   const initials = `${firstName[0] ?? ""}${lastName[0] ?? ""}`.toUpperCase();
+
+  const isSaving =
+    updateUserProfileMutation.isPending ||
+    updateCandidateProfileMutation.isPending;
+
+  const handleSave = async () => {
+    try {
+      await Promise.all([
+        updateUserProfileMutation.mutateAsync({
+          firstName,
+          lastName,
+          phone,
+        }),
+        updateCandidateProfileMutation.mutateAsync({
+          title,
+          location,
+          bio,
+          skills,
+        }),
+      ]);
+      toast.success("Profile updated successfully");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to update profile",
+      );
+    }
+  };
+
+  const handleCancel = () => {
+    if (!user) return;
+    setFirstName(user.firstName ?? "");
+    setLastName(user.lastName ?? "");
+    setPhone(user.phone ?? "");
+    setTitle(user.title ?? "");
+    setLocation(user.location ?? "");
+    setBio(user.bio ?? "");
+    setSkills(user.skills ?? []);
+  };
+
+  if (isUserLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center text-sm text-[var(--text-muted)]">
+        Loading profile...
+      </div>
+    );
+  }
 
   return (
     <div className=" space-y-6 pb-28">
@@ -213,7 +243,7 @@ export default function CandidateProfilePage() {
               <div className="mt-4 space-y-2 text-sm text-[var(--text-secondary)]">
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-[var(--text-muted)]" />
-                  {location}
+                  {location || "No location set"}
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-[var(--text-muted)]" />
@@ -221,7 +251,7 @@ export default function CandidateProfilePage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-[var(--text-muted)]" />
-                  {phone}
+                  {phone || "No phone set"}
                 </div>
               </div>
 
@@ -299,7 +329,24 @@ export default function CandidateProfilePage() {
               <h3 className="font-display text-base font-semibold text-[var(--text-primary)]">
                 Skills
               </h3>
-              <button className="flex items-center gap-1 text-sm font-medium text-[var(--primary)] hover:text-[var(--primary-dark)]">
+            </div>
+            <div className="mb-3 flex gap-2">
+              <input
+                className={inputClasses}
+                placeholder="Add a skill..."
+                value={newSkill}
+                onChange={(e) => setNewSkill(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addSkill();
+                  }
+                }}
+              />
+              <button
+                onClick={addSkill}
+                className="flex items-center gap-1 whitespace-nowrap rounded-[var(--radius-sm)] border border-[var(--border)] px-3 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:border-[var(--primary)] hover:text-[var(--primary)]"
+              >
                 <Plus className="h-3.5 w-3.5" />
                 Add
               </button>
@@ -320,6 +367,11 @@ export default function CandidateProfilePage() {
                   </button>
                 </span>
               ))}
+              {skills.length === 0 && (
+                <p className="text-sm text-[var(--text-muted)]">
+                  No skills added yet.
+                </p>
+              )}
             </div>
           </Card>
         </div>
@@ -344,6 +396,13 @@ export default function CandidateProfilePage() {
                   className={inputClasses}
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
+                />
+              </Field>
+              <Field label="Phone">
+                <input
+                  className={inputClasses}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                 />
               </Field>
               <Field label="Headline">
@@ -450,11 +509,19 @@ export default function CandidateProfilePage() {
 
       {/* Floating save bar */}
       <div className="fixed bottom-6 right-6 z-10 flex items-center gap-3 rounded-full border border-[var(--border)] bg-[var(--card)] px-3 py-2 shadow-[var(--shadow-lg)]">
-        <button className="rounded-full px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:bg-[var(--bg)]">
+        <button
+          onClick={handleCancel}
+          disabled={isSaving}
+          className="rounded-full px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:bg-[var(--bg)] disabled:opacity-50"
+        >
           Cancel
         </button>
-        <button className="rounded-full bg-[var(--primary)] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[var(--primary-dark)]">
-          Save changes
+        <button
+          onClick={handleSave}
+          disabled={isSaving}
+          className="rounded-full bg-[var(--primary)] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[var(--primary-dark)] disabled:opacity-50"
+        >
+          {isSaving ? "Saving..." : "Save changes"}
         </button>
       </div>
     </div>

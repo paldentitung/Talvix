@@ -1,20 +1,21 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { login } from "../api/authApi";
 import toast from "react-hot-toast";
-import { useAuth } from "../contexts/AuthContext";
 
 export function useLogin() {
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: login,
 
     onSuccess: (data) => {
+      console.log("login response:", data); // add this temporarily
       const user = data.data;
+      console.log("user:", user, "role:", user?.role);
 
-      setUser(user);
+      queryClient.setQueryData(["me"], data);
 
       toast.success("Login successful!");
 
