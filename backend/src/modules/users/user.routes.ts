@@ -6,7 +6,9 @@ import {
   changePasswordController,
   getMeController,
   getUsersController,
-  updateProfileController,
+  updateCandidateProfileController,
+  updateRecruiterProfileController,
+  updateUserController,
 } from "./user.controller.js";
 import { requireRole } from "../../middleware/role.middleware.js";
 
@@ -19,7 +21,19 @@ router.get(
   requireRole("ADMIN"),
   asyncHandler(getUsersController),
 );
-router.patch("/me", requireAuth, asyncHandler(updateProfileController));
+router.patch("/profile", requireAuth, updateUserController);
+router.patch(
+  "/profile/candidate",
+  requireAuth,
+  requireRole("CANDIDATE"),
+  updateCandidateProfileController,
+);
+router.patch(
+  "/profile/recruiter",
+  requireAuth,
+  requireRole("RECRUITER"),
+  updateRecruiterProfileController,
+);
 router.patch(
   "/change-password",
   requireAuth,

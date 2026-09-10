@@ -9,20 +9,30 @@ export const userResponseSelect = {
 
   avatar: true,
   phone: true,
-  bio: true,
-  location: true,
-  title: true,
-  resumeUrl: true,
-
-  companyName: true,
-  companyLogo: true,
-  companyWebsite: true,
-  companyDescription: true,
 
   isVerified: true,
 
   createdAt: true,
   updatedAt: true,
+
+  candidateProfile: {
+    select: {
+      bio: true,
+      location: true,
+      title: true,
+      resumeUrl: true,
+      skills: true,
+    },
+  },
+
+  recruiterProfile: {
+    select: {
+      companyName: true,
+      companyLogo: true,
+      companyWebsite: true,
+      companyDescription: true,
+    },
+  },
 } satisfies Prisma.UserSelect;
 
 export type UserResponsePayload = Prisma.UserGetPayload<{

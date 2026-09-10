@@ -1,7 +1,12 @@
 import prisma from "../../lib/prisma.js";
 import AppError from "../../utils/AppError.js";
 import bcrypt from "bcrypt";
-import { ChangePasswordInput, UpdateProfileBody } from "./user.type.js";
+import {
+  ChangePasswordInput,
+  UpdateUserBody,
+  UpdateCandidateProfileBody,
+  UpdateRecruiterProfileBody,
+} from "./user.type.js";
 import { toUserResponse } from "./user.mapper.js";
 import { userResponseSelect } from "./user.select.js";
 export const getMeService = async (userId: string) => {
@@ -87,23 +92,61 @@ export const changePasswordService = async (
   };
 };
 
-export const updateProfileService = async (
+export const updateUserService = async (
   userId: string,
-  data: UpdateProfileBody,
+  data: UpdateUserBody,
 ) => {
-  const user = await prisma.user.findUnique({
-    where: {
-      id: userId,
-    },
-  });
-
-  if (!user) {
-    throw new AppError("user not found", 404);
-  }
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new AppError("user not found", 404);
 
   const updatedUser = await prisma.user.update({
     where: { id: userId },
     data,
+    include: { candidateProfile: true, recruiterProfile: true },
+  });
+
+  return toUserResponse(updatedUser);
+};
+
+export const updateCandidateProfileService = async (
+  userId: string,
+  data: UpdateCandidateProfileBody,
+) => {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new AppError("user not found", 404);
+  if (user.role !== "CANDIDATE") throw new AppError("Forbidden", 403);
+
+  await prisma.candidateProfile.upsert({
+    where: { userId },
+    create: { userId, ...data },
+    update: data,
+  });
+
+  const updatedUser = await prisma.user.findUniqueOrThrow({
+    where: { id: userId },
+    select: userResponseSelect,
+  });
+
+  return toUserResponse(updatedUser);
+};
+
+export const updateRecruiterProfileService = async (
+  userId: string,
+  data: UpdateRecruiterProfileBody,
+) => {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new AppError("user not found", 404);
+  if (user.role !== "RECRUITER") throw new AppError("Forbidden", 403);
+
+  await prisma.recruiterProfile.upsert({
+    where: { userId },
+    create: { userId, ...data },
+    update: data,
+  });
+
+  const updatedUser = await prisma.user.findUniqueOrThrow({
+    where: { id: userId },
+    select: userResponseSelect,
   });
 
   return toUserResponse(updatedUser);
