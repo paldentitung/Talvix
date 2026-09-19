@@ -60,7 +60,7 @@ export const getJobsService = async (
       select: jobSelect,
       skip: (page - 1) * pageSize,
       take: pageSize,
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     }),
     prisma.job.count({ where }),
   ]);
