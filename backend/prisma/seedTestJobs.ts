@@ -3,18 +3,6 @@ import type { WorkMode, EmploymentType, ExperienceLevel } from "@prisma/client";
 
 const TEST_JOB_PREFIX = "Test Job";
 
-/**
- * Seeds a set of OPEN jobs for the test recruiter.
- * Idempotent: clears out any previously seeded test jobs first,
- * so re-running this (or re-running the suite) never accumulates junk data.
- *
- * Usage as a standalone script:
- *   tsx scripts/seedTestJobs.ts
- *
- * Usage inside a test file / beforeAll:
- *   import { seedTestJobs } from "../../../scripts/seedTestJobs.js";
- *   const jobs = await seedTestJobs();
- */
 export const seedTestJobs = async (count = 6) => {
   const recruiter = await prisma.user.findUnique({
     where: { email: process.env.TEST_RECRUITER_EMAIL },
@@ -26,8 +14,6 @@ export const seedTestJobs = async (count = 6) => {
     );
   }
 
-  // Clean slate: remove any jobs left over from previous seed/test runs
-  // so counts stay predictable and pagination tests don't accumulate stale rows.
   await prisma.job.deleteMany({
     where: {
       recruiterId: recruiter.id,
@@ -65,11 +51,6 @@ export const seedTestJobs = async (count = 6) => {
   return jobsData;
 };
 
-/**
- * Removes all seeded test jobs. Handy for afterAll cleanup if you want
- * a fully clean slate between test files rather than relying on the
- * dedupe-on-seed behavior above.
- */
 export const clearTestJobs = async () => {
   const recruiter = await prisma.user.findUnique({
     where: { email: process.env.TEST_RECRUITER_EMAIL },
@@ -85,7 +66,6 @@ export const clearTestJobs = async () => {
   });
 };
 
-// Allow running directly: `tsx scripts/seedTestJobs.ts`
 const isMain = process.argv[1] && process.argv[1].endsWith("seedTestJobs.ts");
 
 if (isMain) {

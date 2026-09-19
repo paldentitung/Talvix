@@ -8,7 +8,9 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "test": "dotenv -e .env.test -- vitest run",
-    "test:watch": "dotenv -e .env.test -- vitest"
+    "test:watch": "dotenv -e .env.test -- vitest",
+    "typecheck:prisma": "tsc -p tsconfig.prisma.json --noEmit",
+    "seed:test": "dotenv -e .env.test -- tsx prisma/test-seed.ts"
   },
   "keywords": [],
   "author": "",
