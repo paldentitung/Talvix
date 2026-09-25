@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import app from "../../app.js";
 import request from "supertest";
 import prisma from "../../lib/prisma.js";
+
 describe("GET /api/applications", () => {
   it("should return 401 for unauthenticated user", async () => {
     const response = await request(app).get("/api/applications");
@@ -184,7 +185,7 @@ describe("GET /api/applications/me", () => {
     expect(Array.isArray(response.body.data.applications)).toBe(true);
   });
 });
-describe("POST /api/application", () => {
+describe("POST /api/applications", () => {
   it("should return unauthenticated user", async () => {
     const response = await request(app).post("/api/applications").send({});
     expect(response.status).toBe(401);
@@ -247,7 +248,7 @@ describe("POST /api/application", () => {
       .field("jobId", job.id)
       .field("coverLetter", "I am interested in this position.")
       .attach("resume", Buffer.from("Test from content"), "resume.pdf");
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(201);
     expect(response.body.success).toBe(true);
     expect(response.body.message).toBe("Application submitted successfully");
     expect(response.body.data).toHaveProperty("id");
@@ -298,7 +299,7 @@ describe("POST /api/application", () => {
       .field("coverLetter", "First application")
       .attach("resume", Buffer.from("Test resume"), "resume.pdf");
 
-    expect(firstResponse.status).toBe(200);
+    expect(firstResponse.status).toBe(201);
 
     // Second application should be rejected
     const secondResponse = await request(app)
@@ -455,5 +456,193 @@ describe("POST /api/application", () => {
 
     expect(response.status).toBe(400);
     expect(response.body.message).toBe("The application deadline has passed");
+  });
+});
+
+describe("DELETE /api/applications/:id/withdraw", () => {
+  it("should give 403 for admin to withdraw", async () => {
+    const loginResponse = await request(app).post("/api/auth/login").send({
+      email: process.env.TEST_ADMIN_EMAIL,
+      password: process.env.TEST_ADMIN_PASSWORD,
+    });
+
+    expect(loginResponse.status).toBe(200);
+
+    const cookies = loginResponse.headers["set-cookie"];
+
+    const application = await prisma.application.findFirst();
+
+    const response = await request(app)
+      .delete(`/api/applications/${application!.id}/withdraw`)
+      .set("Cookie", cookies);
+
+    expect(response.status).toBe(403);
+  });
+  it("should give 403 for recruiter to withdraw", async () => {
+    const loginResponse = await request(app).post("/api/auth/login").send({
+      email: process.env.TEST_RECRUITER_EMAIL,
+      password: process.env.TEST_RECRUITER_PASSWORD,
+    });
+
+    expect(loginResponse.status).toBe(200);
+
+    const cookies = loginResponse.headers["set-cookie"];
+
+    const application = await prisma.application.findFirst();
+
+    const response = await request(app)
+      .delete(`/api/applications/${application!.id}/withdraw`)
+      .set("Cookie", cookies);
+
+    expect(response.status).toBe(403);
+  });
+  it("should allow candidate  to withdraw the application", async () => {
+    const loginResponse = await request(app).post("/api/auth/login").send({
+      email: process.env.TEST_CANDIDATE_EMAIL,
+      password: process.env.TEST_CANDIDATE_PASSWORD,
+    });
+
+    expect(loginResponse.status).toBe(200);
+
+    const cookies = loginResponse.headers["set-cookie"];
+
+    const candidate = await prisma.user.findUnique({
+      where: {
+        email: process.env.TEST_CANDIDATE_EMAIL,
+      },
+    });
+    const application = await prisma.application.findFirst({
+      where: {
+        userId: candidate!.id,
+        status: "PENDING",
+      },
+    });
+    expect(application).not.toBeNull();
+
+    const response = await request(app)
+      .delete(`/api/applications/${application!.id}/withdraw`)
+      .set("Cookie", cookies);
+
+    expect(response.status).toBe(200);
+  });
+});
+
+describe("PATCH /api/applications/:id/status", () => {
+  it("should give 403 for admin to change status", async () => {
+    const loginResponse = await request(app).post("/api/auth/login").send({
+      email: process.env.TEST_ADMIN_EMAIL,
+      password: process.env.TEST_ADMIN_PASSWORD,
+    });
+
+    expect(loginResponse.status).toBe(200);
+
+    const cookies = loginResponse.headers["set-cookie"];
+
+    const application = await prisma.application.findFirst();
+
+    const response = await request(app)
+      .patch(`/api/applications/${application!.id}/status`)
+      .set("Cookie", cookies);
+
+    expect(response.status).toBe(403);
+  });
+  it("should give 403 for candidate to change status", async () => {
+    const loginResponse = await request(app).post("/api/auth/login").send({
+      email: process.env.TEST_CANDIDATE_EMAIL,
+      password: process.env.TEST_CANDIDATE_PASSWORD,
+    });
+
+    expect(loginResponse.status).toBe(200);
+
+    const cookies = loginResponse.headers["set-cookie"];
+
+    const application = await prisma.application.findFirst();
+
+    const response = await request(app)
+      .patch(`/api/applications/${application!.id}/status`)
+      .set("Cookie", cookies);
+
+    expect(response.status).toBe(403);
+  });
+  it("should allow recruiter to change status", async () => {
+    // Login as recruiter
+    const loginResponse = await request(app).post("/api/auth/login").send({
+      email: process.env.TEST_RECRUITER_EMAIL,
+      password: process.env.TEST_RECRUITER_PASSWORD,
+    });
+
+    expect(loginResponse.status).toBe(200);
+
+    const recruiterCookies = loginResponse.headers["set-cookie"];
+
+    // Find recruiter
+    const recruiter = await prisma.user.findUnique({
+      where: {
+        email: process.env.TEST_RECRUITER_EMAIL,
+      },
+    });
+
+    expect(recruiter).not.toBeNull();
+
+    // Find candidate
+    const candidate = await prisma.user.findUnique({
+      where: {
+        email: process.env.TEST_CANDIDATE_EMAIL,
+      },
+    });
+
+    expect(candidate).not.toBeNull();
+
+    // Find an OPEN test job that the candidate has NOT already applied to
+    const job = await prisma.job.findFirst({
+      where: {
+        recruiterId: recruiter!.id,
+        status: "OPEN",
+        title: {
+          startsWith: "Test Job",
+        },
+        applications: {
+          none: {
+            userId: candidate!.id,
+          },
+        },
+      },
+    });
+
+    expect(job).not.toBeNull();
+
+    // Login as candidate
+    const candidateLogin = await request(app).post("/api/auth/login").send({
+      email: process.env.TEST_CANDIDATE_EMAIL,
+      password: process.env.TEST_CANDIDATE_PASSWORD,
+    });
+
+    expect(candidateLogin.status).toBe(200);
+
+    const candidateCookies = candidateLogin.headers["set-cookie"];
+
+    // Candidate applies
+    const applicationResponse = await request(app)
+      .post("/api/applications")
+      .set("Cookie", candidateCookies)
+      .field("jobId", job!.id)
+      .field("coverLetter", "Test application")
+      .attach("resume", Buffer.from("test resume"), "test-resume.pdf");
+
+    expect(applicationResponse.status).toBe(201);
+
+    const application = applicationResponse.body.data;
+
+    expect(application).toBeDefined();
+
+    // Recruiter changes status
+    const response = await request(app)
+      .patch(`/api/applications/${application.id}/status`)
+      .set("Cookie", recruiterCookies)
+      .send({
+        status: "REVIEWING",
+      });
+
+    expect(response.status).toBe(200);
   });
 });
