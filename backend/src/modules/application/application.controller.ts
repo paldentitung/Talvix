@@ -111,7 +111,7 @@ export const createApplicationController = async (
     resumeUrl: `/uploads/resumes/${req.file.filename}`,
   });
 
-  res.status(200).json({
+  res.status(201).json({
     success: true,
     message: "Application submitted successfully",
     data: result,
