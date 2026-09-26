@@ -20,7 +20,7 @@ export default function CTASection() {
             <Button href="/register" variant="accent">
               Create free account
             </Button>
-            <Button href="/employers" variant="white">
+            <Button href="/recruiter/jobs" variant="white">
               Post a job
             </Button>
           </div>

@@ -1,165 +1,347 @@
-import { useEffect, useState } from "react";
-import { Search, MapPin, TrendingUp, CheckCircle2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, MapPin, Bookmark, ArrowRight } from "lucide-react";
+import type { Job, WorkMode } from "../../features/jobs/types/job.types";
+import { useJobs } from "../../features/jobs/hooks/useJobs";
 import Button from "../ui/Button";
-import Badge from "../ui/Badge";
+import { Link, useNavigate } from "react-router-dom";
 
-const ROTATING_WORDS = [
-  "talk about",
-  "excited to start",
-  "proud of",
-  "worth the leap",
-];
+const ACCENT_COLORS = ["#4f46e5", "#0f172a", "#14b8a6", "#c026d3", "#0369a1"];
 
-// Longest phrase — used only to reserve space so the layout doesn't shift
-const LONGEST_WORD = ROTATING_WORDS.reduce((a, b) =>
-  b.length > a.length ? b : a,
-);
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+  INR: "₹",
+};
 
-export default function Hero() {
-  const [wordIndex, setWordIndex] = useState(0);
-  const [visible, setVisible] = useState(true);
+const EMPLOYMENT_LABELS: Record<Job["employmentType"], string> = {
+  FULL_TIME: "Full-time",
+  PART_TIME: "Part-time",
+  CONTRACT: "Contract",
+  INTERNSHIP: "Internship",
+};
+
+const WORK_MODE_LABELS: Record<Job["workMode"], string> = {
+  REMOTE: "Remote",
+  ONSITE: "On-site",
+  HYBRID: "Hybrid",
+};
+const WORK_MODE_ALIASES: Record<string, WorkMode> = {
+  remote: "REMOTE",
+  "on-site": "ONSITE",
+  onsite: "ONSITE",
+  hybrid: "HYBRID",
+};
+
+function companyName(job: Job) {
+  return (
+    job.recruiter.companyName ??
+    `${job.recruiter.firstName} ${job.recruiter.lastName}`
+  );
+}
+
+function accentFor(name: string) {
+  const sum = name.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  return ACCENT_COLORS[sum % ACCENT_COLORS.length];
+}
+
+function formatSalary(job: Job) {
+  if (job.salaryMin && job.salaryMax) {
+    const symbol = CURRENCY_SYMBOLS[job.currency] ?? `${job.currency} `;
+    const fmt = (n: number) => `${symbol}${Math.round(n / 1000)}k`;
+    return `${fmt(job.salaryMin)}–${fmt(job.salaryMax)}`;
+  }
+  return null;
+}
+
+function JobCard({ job, index }: { job: Job; index: number }) {
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setVisible(false);
-      setTimeout(() => {
-        setWordIndex((i) => (i + 1) % ROTATING_WORDS.length);
-        setVisible(true);
-      }, 220);
-    }, 2600);
-    return () => clearInterval(interval);
-  }, []);
+    const t = setTimeout(() => setVisible(true), index * 120);
+    return () => clearTimeout(t);
+  }, [index]);
+
+  const salary = formatSalary(job);
+  const company = companyName(job);
+  const tags = [
+    EMPLOYMENT_LABELS[job.employmentType],
+    WORK_MODE_LABELS[job.workMode],
+  ].filter(Boolean) as string[];
+  const active = index === 0;
 
   return (
-    <header className="relative overflow-hidden pt-[88px] pb-16">
-      <div className="absolute -top-[180px] -right-[160px] w-[620px] h-[620px] rounded-full bg-[radial-gradient(circle_at_30%_30%,rgba(79,70,229,0.16),rgba(20,184,166,0.10)_55%,transparent_72%)] pointer-events-none" />
+    <div
+      className={`flex items-start gap-2.5 rounded-xl border px-3.5 py-3 transition-all duration-300 ease-out cursor-pointer
+        ${active ? "border-indigo-200 bg-indigo-50" : "border-slate-200 bg-white"}
+        ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}
+    >
+      {job.recruiter.companyLogo ? (
+        <img
+          src={job.recruiter.companyLogo}
+          alt={company}
+          className="h-9 w-9 shrink-0 rounded-[9px] object-cover"
+        />
+      ) : (
+        <div
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] font-sora text-sm font-bold text-white"
+          style={{ background: accentFor(company) }}
+        >
+          {company.charAt(0).toUpperCase()}
+        </div>
+      )}
 
-      <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center relative z-10">
-        <div>
-          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--primary-light)] text-[var(--primary-dark)] text-[13px] font-semibold border border-[#e0e7ff] mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]" />
-            3,200+ companies hiring now
-          </span>
-
-          <h1 className="font-display text-[52px] font-extrabold leading-[1.08] text-[var(--text-primary)] mb-6 tracking-tight">
-            Find work you&apos;re
-            <br />
-            proud to{" "}
-            <span className="relative inline-grid text-left align-bottom">
-              {/* Sizer: invisible, reserves width/height for the longest word */}
+      <div className="min-w-0 flex-1 font-inter">
+        <div className="truncate text-[13px] font-semibold text-slate-900">
+          {job.title}
+        </div>
+        <div className="mb-1.5 truncate text-[11.5px] text-slate-500">
+          {company} · {job.location}
+        </div>
+        {tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {tags.map((tag) => (
               <span
-                aria-hidden="true"
-                className="invisible col-start-1 row-start-1 text-[var(--primary)]"
+                key={tag}
+                className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10.5px] font-medium text-slate-600"
               >
-                {LONGEST_WORD}
+                {tag}
               </span>
-              {/* Visible rotating word, overlaid on top of the sizer */}
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="flex shrink-0 flex-col items-end gap-2">
+        {salary && (
+          <span className="font-inter text-[11.5px] font-semibold text-indigo-600">
+            {salary}
+          </span>
+        )}
+        <Bookmark
+          size={13}
+          className={active ? "text-indigo-600" : "text-slate-300"}
+          fill={active ? "#4f46e5" : "none"}
+        />
+      </div>
+    </div>
+  );
+}
+
+function AppScreenshot({
+  jobs,
+  isLoading,
+}: {
+  jobs: Job[];
+  isLoading: boolean;
+}) {
+  return (
+    <div className="relative z-[1] overflow-hidden rounded-[18px] bg-white shadow-[0_0_0_1px_rgba(15,23,42,0.06),0_8px_16px_rgba(15,23,42,0.06),0_32px_80px_rgba(79,70,229,0.12)]">
+      {/* Browser chrome */}
+      <div className="flex items-center gap-2.5 border-b border-slate-200 bg-slate-100 px-3.5 py-2.5">
+        <div className="flex gap-[5px]">
+          {["#f87171", "#fbbf24", "#34d399"].map((c) => (
+            <div
+              key={c}
+              className="h-[9px] w-[9px] rounded-full"
+              style={{ background: c }}
+            />
+          ))}
+        </div>
+        <div className="flex-1 rounded-md border border-slate-200 bg-white px-2.5 py-[3px] font-inter text-[10.5px] text-slate-400">
+          app.talvix.com/jobs
+        </div>
+      </div>
+
+      {/* App body */}
+      <div className="bg-slate-50 px-[18px] pb-[22px] pt-[18px]">
+        <div className="mb-4 flex items-center justify-between">
+          <span className="font-sora text-sm font-bold text-slate-900">
+            talvix
+          </span>
+          <div className="flex gap-3">
+            {["Jobs", "Saved", "Applied"].map((label, i) => (
               <span
-                className={`col-start-1 row-start-1 text-[var(--primary)] transition-opacity duration-200 ${
-                  visible ? "opacity-100" : "opacity-0"
+                key={label}
+                className={`font-inter text-[11px] cursor-pointer pb-px ${
+                  i === 0
+                    ? "border-b-[1.5px] border-indigo-600 font-semibold text-indigo-600"
+                    : "font-normal text-slate-400"
                 }`}
               >
-                {ROTATING_WORDS[wordIndex]}
+                {label}
               </span>
-            </span>
-          </h1>
-
-          <p className="text-[17.5px] text-[var(--text-secondary)] max-w-[480px] mb-8">
-            Talvix connects ambitious people with fast-growing teams. No noise,
-            no spam applications — just roles worth applying to.
-          </p>
-
-          <div className="bg-[var(--card)] border border-[var(--border)] rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] p-2.5 flex flex-col sm:flex-row gap-2 max-w-[640px] mb-8">
-            <div className="flex-1 flex items-center gap-2.5 px-3.5 py-2.5 rounded-[var(--radius-md)]">
-              <Search className="w-5 h-5 text-[var(--text-muted)] flex-shrink-0" />
-              <input
-                type="text"
-                placeholder="Job title or keyword"
-                className="border-none outline-none text-[14.5px] w-full bg-transparent text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
-              />
-            </div>
-            <div className="flex-1 flex items-center gap-2.5 px-3.5 py-2.5 rounded-[var(--radius-md)] sm:border-l border-t sm:border-t-0 border-[var(--border)]">
-              <MapPin className="w-5 h-5 text-[var(--text-muted)] flex-shrink-0" />
-              <input
-                type="text"
-                placeholder="Remote or city"
-                className="border-none outline-none text-[14.5px] w-full bg-transparent text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
-              />
-            </div>
-            <Button variant="primary" icon={<Search className="w-4 h-4" />}>
-              Search
-            </Button>
-          </div>
-
-          <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex">
-              {[
-                { i: "JK", c: "#4f46e5" },
-                { i: "MR", c: "#14b8a6" },
-                { i: "SL", c: "#d97706" },
-                { i: "+", c: "#0f172a" },
-              ].map((a, idx) => (
-                <span
-                  key={idx}
-                  style={{
-                    backgroundColor: a.c,
-                    marginLeft: idx === 0 ? 0 : -10,
-                  }}
-                  className="w-8 h-8 rounded-full border-[2.5px] border-[var(--bg)] flex items-center justify-center text-[11px] font-bold text-white"
-                >
-                  {a.i}
-                </span>
-              ))}
-            </div>
-            <small className="text-[13.5px] text-[var(--text-secondary)] font-medium">
-              Joined by 48,000+ job seekers this month
-            </small>
+            ))}
           </div>
         </div>
 
-        <div className="relative h-[460px] hidden md:block">
-          <div className="absolute top-0 right-10 w-[220px] bg-[var(--card)] border border-[var(--border)] rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] p-6 animate-[float_6s_ease-in-out_infinite]">
-            <div className="font-display text-[30px] font-extrabold text-[var(--primary)]">
-              92%
+        <div className="mb-3 flex flex-wrap gap-[5px]">
+          {["All roles", "Remote", "Design", "Engineering", "Marketing"].map(
+            (f, i) => (
+              <span
+                key={f}
+                className={`cursor-pointer rounded-full px-2.5 py-[3px] font-inter text-[10.5px] font-medium ${
+                  i === 0
+                    ? "bg-indigo-600 text-white"
+                    : "border border-slate-200 bg-white text-slate-500"
+                }`}
+              >
+                {f}
+              </span>
+            ),
+          )}
+        </div>
+
+        <div className="mb-2.5 font-inter text-[10.5px] text-slate-400">
+          Open roles
+        </div>
+
+        <div className="flex flex-col gap-[7px]">
+          {isLoading &&
+            [0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="h-[76px] animate-pulse rounded-xl bg-slate-100"
+              />
+            ))}
+          {!isLoading &&
+            jobs
+              .slice(0, 3)
+              .map((job, i) => <JobCard key={job.id} job={job} index={i} />)}
+          {!isLoading && jobs.length === 0 && (
+            <div className="rounded-xl border border-dashed border-slate-200 py-6 text-center font-inter text-[11.5px] text-slate-400">
+              No open roles right now
             </div>
-            <div className="text-xs text-[var(--text-secondary)] mt-0.5">
-              Interview response rate on Talvix
-            </div>
-            <div className="flex items-center gap-1 mt-2 text-[var(--success)] text-xs font-semibold">
-              <TrendingUp className="w-3.5 h-3.5" /> +18% vs. last quarter
-            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function Hero() {
+  const [query, setQuery] = useState("");
+  const [location, setLocation] = useState("");
+  const [mounted, setMounted] = useState(false);
+  const navigate = useNavigate();
+
+  const { data, isLoading } = useJobs(1, 3);
+  const jobs = data?.jobs ?? [];
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const params = new URLSearchParams();
+
+    if (query.trim()) {
+      params.set("search", query.trim());
+    }
+
+    const locationInput = location.trim();
+    const matchedWorkMode = WORK_MODE_ALIASES[locationInput.toLowerCase()];
+
+    if (matchedWorkMode) {
+      params.set("workMode", matchedWorkMode);
+    } else if (locationInput) {
+      params.set("location", locationInput);
+    }
+
+    navigate(`/jobs?${params.toString()}`);
+  };
+
+  return (
+    <header className="relative overflow-hidden bg-slate-50 py-[88px] font-inter">
+      {/* Dotted background */}
+      <div
+        className="pointer-events-none absolute inset-0 z-0 opacity-45"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle, #cbd5e1 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
+        }}
+      />
+      <div className="pointer-events-none absolute -left-[120px] -top-20 z-0 h-[560px] w-[560px] bg-[radial-gradient(circle_at_40%_40%,rgba(79,70,229,0.13)_0%,rgba(79,70,229,0.04)_50%,transparent_70%)]" />
+      <div className="pointer-events-none absolute -bottom-[100px] -right-20 z-0 h-[480px] w-[480px] bg-[radial-gradient(circle_at_60%_60%,rgba(20,184,166,0.09)_0%,transparent_65%)]" />
+
+      <div className="relative z-[1] mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-10 px-6 md:grid-cols-[1fr_1.35fr] md:gap-16">
+        {/* LEFT */}
+        <div
+          className={`transition-all duration-500 ease-out motion-reduce:transition-none ${
+            mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"
+          }`}
+        >
+          <div className="mb-[22px] inline-flex items-center gap-[7px] rounded-full border border-indigo-600/15 bg-indigo-600/[0.07] px-[13px] py-[5px] text-xs font-semibold text-indigo-600">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-indigo-600" />
+            3,200+ companies actively hiring
           </div>
 
-          <div className="absolute bottom-10 left-0 w-[280px] bg-[var(--card)] border border-[var(--border)] rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] p-6 animate-[float_7s_ease-in-out_infinite_0.4s]">
-            <div className="flex items-center gap-2.5 mb-3">
-              <div className="w-10 h-10 rounded-[10px] bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)] font-bold text-[15px]">
-                N
-              </div>
-              <div>
-                <div className="text-sm font-bold text-[var(--text-primary)]">
-                  Senior Product Designer
-                </div>
-                <div className="text-xs text-[var(--text-muted)]">
-                  Nimbus · Remote
-                </div>
-              </div>
-            </div>
-            <div className="flex gap-1.5 flex-wrap">
-              <Badge>Full-time</Badge>
-              <Badge>Design</Badge>
-              <Badge variant="success">Actively hiring</Badge>
-            </div>
-          </div>
+          <h1 className="mb-5 font-sora text-[clamp(40px,4.8vw,58px)] font-extrabold leading-[1.08] tracking-[-0.028em] text-slate-900">
+            Work <span className="text-indigo-600">worth</span>
+            <br />
+            showing up for.
+          </h1>
 
-          <div className="absolute top-[190px] left-8 w-[168px] bg-[var(--card)] border border-[var(--border)] rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] p-6 flex flex-col items-center text-center gap-1.5 animate-[float_5.5s_ease-in-out_infinite_0.8s]">
-            <div className="w-[34px] h-[34px] rounded-full bg-[var(--primary-light)] flex items-center justify-center text-[var(--primary)]">
-              <CheckCircle2 className="w-[18px] h-[18px]" />
+          <p className="mb-9 max-w-[400px] text-base leading-[1.7] text-slate-600">
+            Talvix connects you with roles from teams that actually respond. No
+            black holes, no ghost listings — just real opportunities.
+          </p>
+
+          {/* Search bar — wrapped in a form so Enter submits it too */}
+          <form
+            onSubmit={handleSearch}
+            className="mb-5 flex max-w-[480px] flex-wrap overflow-hidden rounded-2xl border-[1.5px] border-white/95 bg-white/80 shadow-[0_4px_6px_rgba(15,23,42,0.04),0_12px_32px_rgba(79,70,229,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-md"
+          >
+            <div className="flex min-w-[140px] flex-1 items-center gap-[9px] border-slate-100 px-4 py-3.5 sm:border-r sm:border-t-0">
+              <Search size={15} className="shrink-0 text-slate-400" />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Job title or skill"
+                className="w-full border-none bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
+              />
             </div>
-            <div className="text-[13px] font-bold">Verified employers</div>
-            <div className="text-[11.5px] text-[var(--text-muted)]">
-              Every listing reviewed
+            <div className="flex min-w-[140px] flex-1 items-center gap-[9px] border-t border-slate-100 px-4 py-3.5 sm:border-t-0">
+              <MapPin size={15} className="shrink-0 text-slate-400" />
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="City or Remote"
+                className="w-full border-none bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
+              />
             </div>
+            <button
+              type="submit"
+              className="m-1.5 flex w-full items-center justify-center gap-1.5 rounded-[11px] bg-indigo-600 px-[18px] py-2.5 text-[13.5px] font-semibold text-white shadow-[0_2px_8px_rgba(79,70,229,0.3)] transition-all hover:-translate-y-px hover:bg-indigo-700 hover:shadow-[0_4px_16px_rgba(79,70,229,0.4)] active:translate-y-0 sm:w-auto"
+            >
+              <Search size={13} />
+              Search
+            </button>
+          </form>
+
+          {/* CTA row */}
+          <div className="flex flex-wrap items-center gap-3.5">
+            <Button>
+              <Link to="/jobs">Browse jobs</Link>
+            </Button>
+            <Button variant="ghost" className="border">
+              <Link to="/recruiter/jobs">For employers</Link>
+            </Button>
           </div>
+        </div>
+
+        {/* RIGHT */}
+        <div
+          className={`relative hidden [perspective:1200px] md:block transition-all duration-700 ease-out delay-100 motion-reduce:transition-none motion-reduce:[transform:none] ${
+            mounted ? "opacity-100" : "opacity-0"
+          } hover:[transform:rotateY(-1deg)_rotateX(0.5deg)] [transform:rotateY(-4deg)_rotateX(2deg)]`}
+        >
+          <div className="pointer-events-none absolute inset-5 -z-10 translate-y-3 rounded-[18px] bg-indigo-600/[0.18] blur-[40px]" />
+          <AppScreenshot jobs={jobs} isLoading={isLoading} />
         </div>
       </div>
     </header>

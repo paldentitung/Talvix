@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useJobs } from "../features/jobs/hooks/useJobs";
 import JobCard from "../components/jobs/JobCard";
 import type {
@@ -8,6 +8,7 @@ import type {
   WorkMode,
   EmploymentType,
 } from "../features/jobs/types/job.types";
+import { useSearchParams } from "react-router-dom";
 
 const WORK_MODES: WorkMode[] = ["ONSITE", "REMOTE", "HYBRID"];
 const EMPLOYMENT_TYPES: EmploymentType[] = [
@@ -18,7 +19,12 @@ const EMPLOYMENT_TYPES: EmploymentType[] = [
 ];
 const EXPERIENCE_LEVELS: ExperienceLevel[] = ["ENTRY", "MID", "SENIOR", "LEAD"];
 
-const FILTER_LABELS: Record<keyof JobFilters, string> = {
+// `status` is deliberately excluded from the user-editable filter state:
+// this page always searches OPEN jobs, and that shouldn't be a filter a
+// job seeker can remove via a chip or "Clear all". See queryFilters below.
+type EditableFilters = Omit<JobFilters, "status">;
+
+const FILTER_LABELS: Record<keyof EditableFilters, string> = {
   location: "Location",
   workMode: "Work mode",
   employmentType: "Employment type",
@@ -28,6 +34,11 @@ const FILTER_LABELS: Record<keyof JobFilters, string> = {
   maxSalary: "Max salary",
   currency: "Currency",
 };
+
+// Single source of truth for which filter keys are synced to/from the URL,
+// so search typing, dropdown changes, chip removal, and "Clear all" all
+// stay consistent instead of each writing to the URL differently.
+const FILTER_KEYS = Object.keys(FILTER_LABELS) as (keyof EditableFilters)[];
 
 const formatEnumLabel = (value: string) =>
   value
@@ -63,7 +74,7 @@ const JobCardSkeleton = () => (
 const selectClass =
   "border border-[var(--border)] bg-[var(--card)] text-sm px-3 py-2 pr-8 outline-none transition appearance-none cursor-pointer text-[var(--text-primary)] focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-light)] hover:border-[var(--primary)]";
 
-const SelectWrapper = ({ children }: { children: React.ReactNode }) => (
+const SelectWrapper = ({ children }: { children: ReactNode }) => (
   <div className="relative">
     {children}
     <svg
@@ -85,10 +96,26 @@ const SelectWrapper = ({ children }: { children: React.ReactNode }) => (
 const JobsPage = () => {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
-  const [filters, setFilters] = useState<JobFilters>({});
+  const [searchParams, setSearchParams] = useSearchParams();
 
+  const initialSearch = searchParams.get("search") ?? "";
+  const initialLocation = searchParams.get("location");
+  const rawInitialWorkMode = searchParams.get("workMode");
+  // Validate against the known enum values — a hand-edited or stale URL
+  // (?workMode=SOMETHING_INVALID) shouldn't get forwarded to the API.
+  const initialWorkMode = WORK_MODES.includes(rawInitialWorkMode as WorkMode)
+    ? (rawInitialWorkMode as WorkMode)
+    : null;
+
+  const [searchInput, setSearchInput] = useState(initialSearch);
+  const [search, setSearch] = useState(initialSearch);
+
+  const [filters, setFilters] = useState<EditableFilters>(() => ({
+    ...(initialLocation ? { location: initialLocation } : {}),
+    ...(initialWorkMode ? { workMode: initialWorkMode } : {}),
+  }));
+
+  // Debounce the free-text search input into `search`.
   useEffect(() => {
     const timer = setTimeout(() => {
       setSearch(searchInput);
@@ -97,13 +124,43 @@ const JobsPage = () => {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  const updateFilter = <K extends keyof JobFilters>(
+  // Single place that keeps the URL in sync with `search` + `filters`,
+  // no matter how they changed (typing, a dropdown, removing a chip, or
+  // "Clear all"). Uses `replace` so filtering doesn't spam browser history.
+  useEffect(() => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+
+        if (search) {
+          next.set("search", search);
+        } else {
+          next.delete("search");
+        }
+
+        FILTER_KEYS.forEach((key) => {
+          const value = filters[key];
+          if (value === undefined || value === "") {
+            next.delete(key);
+          } else {
+            next.set(key, String(value));
+          }
+        });
+
+        return next;
+      },
+      { replace: true },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, filters]);
+
+  const updateFilter = <K extends keyof EditableFilters>(
     key: K,
-    value: JobFilters[K] | "",
+    value: EditableFilters[K] | undefined,
   ) => {
     setFilters((prev) => {
       const next = { ...prev };
-      if (value === "" || value === undefined) {
+      if (value === undefined) {
         delete next[key];
       } else {
         next[key] = value;
@@ -113,7 +170,7 @@ const JobsPage = () => {
     setPage(1);
   };
 
-  const removeFilter = (key: keyof JobFilters) => {
+  const removeFilter = (key: keyof EditableFilters) => {
     setFilters((prev) => {
       const next = { ...prev };
       delete next[key];
@@ -131,13 +188,22 @@ const JobsPage = () => {
 
   const activeFilterEntries = Object.entries(filters).filter(
     ([, v]) => v !== undefined && v !== "",
-  ) as [keyof JobFilters, JobFilters[keyof JobFilters]][];
+  ) as [keyof EditableFilters, EditableFilters[keyof EditableFilters]][];
 
-  const { data, isLoading, isError } = useJobs(page, pageSize, search, filters);
+  // Job seekers only ever browse OPEN roles; status is fixed here rather
+  // than living in editable filter state (see EditableFilters above).
+  const queryFilters: JobFilters = { status: "OPEN", ...filters };
+
+  const { data, isLoading, isError } = useJobs(
+    page,
+    pageSize,
+    search,
+    queryFilters,
+  );
 
   const jobs = data?.jobs ?? [];
   const totalPages = data?.totalPages ?? 1;
-  const totalCount = data?.totalCount;
+  const totalCount = data?.total;
 
   return (
     <section className="min-h-screen bg-[var(--bg)]">
@@ -205,7 +271,7 @@ const JobsPage = () => {
               onChange={(e) =>
                 updateFilter(
                   "workMode",
-                  (e.target.value || undefined) as WorkMode,
+                  (e.target.value || undefined) as WorkMode | undefined,
                 )
               }
             >
@@ -226,7 +292,7 @@ const JobsPage = () => {
               onChange={(e) =>
                 updateFilter(
                   "employmentType",
-                  (e.target.value || undefined) as EmploymentType,
+                  (e.target.value || undefined) as EmploymentType | undefined,
                 )
               }
             >
@@ -247,7 +313,7 @@ const JobsPage = () => {
               onChange={(e) =>
                 updateFilter(
                   "experienceLevel",
-                  (e.target.value || undefined) as ExperienceLevel,
+                  (e.target.value || undefined) as ExperienceLevel | undefined,
                 )
               }
             >
