@@ -8,6 +8,7 @@ import type {
   WorkMode,
   EmploymentType,
 } from "../features/jobs/types/job.types";
+import { useSearchParams } from "react-router-dom";
 
 const WORK_MODES: WorkMode[] = ["ONSITE", "REMOTE", "HYBRID"];
 const EMPLOYMENT_TYPES: EmploymentType[] = [
@@ -33,6 +34,11 @@ const FILTER_LABELS: Record<keyof EditableFilters, string> = {
   maxSalary: "Max salary",
   currency: "Currency",
 };
+
+// Single source of truth for which filter keys are synced to/from the URL,
+// so search typing, dropdown changes, chip removal, and "Clear all" all
+// stay consistent instead of each writing to the URL differently.
+const FILTER_KEYS = Object.keys(FILTER_LABELS) as (keyof EditableFilters)[];
 
 const formatEnumLabel = (value: string) =>
   value
@@ -90,10 +96,26 @@ const SelectWrapper = ({ children }: { children: ReactNode }) => (
 const JobsPage = () => {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
-  const [filters, setFilters] = useState<EditableFilters>({});
+  const [searchParams, setSearchParams] = useSearchParams();
 
+  const initialSearch = searchParams.get("search") ?? "";
+  const initialLocation = searchParams.get("location");
+  const rawInitialWorkMode = searchParams.get("workMode");
+  // Validate against the known enum values — a hand-edited or stale URL
+  // (?workMode=SOMETHING_INVALID) shouldn't get forwarded to the API.
+  const initialWorkMode = WORK_MODES.includes(rawInitialWorkMode as WorkMode)
+    ? (rawInitialWorkMode as WorkMode)
+    : null;
+
+  const [searchInput, setSearchInput] = useState(initialSearch);
+  const [search, setSearch] = useState(initialSearch);
+
+  const [filters, setFilters] = useState<EditableFilters>(() => ({
+    ...(initialLocation ? { location: initialLocation } : {}),
+    ...(initialWorkMode ? { workMode: initialWorkMode } : {}),
+  }));
+
+  // Debounce the free-text search input into `search`.
   useEffect(() => {
     const timer = setTimeout(() => {
       setSearch(searchInput);
@@ -101,6 +123,36 @@ const JobsPage = () => {
     }, 400);
     return () => clearTimeout(timer);
   }, [searchInput]);
+
+  // Single place that keeps the URL in sync with `search` + `filters`,
+  // no matter how they changed (typing, a dropdown, removing a chip, or
+  // "Clear all"). Uses `replace` so filtering doesn't spam browser history.
+  useEffect(() => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+
+        if (search) {
+          next.set("search", search);
+        } else {
+          next.delete("search");
+        }
+
+        FILTER_KEYS.forEach((key) => {
+          const value = filters[key];
+          if (value === undefined || value === "") {
+            next.delete(key);
+          } else {
+            next.set(key, String(value));
+          }
+        });
+
+        return next;
+      },
+      { replace: true },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, filters]);
 
   const updateFilter = <K extends keyof EditableFilters>(
     key: K,

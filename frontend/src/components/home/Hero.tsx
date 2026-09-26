@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { Search, MapPin, Bookmark, ArrowRight } from "lucide-react";
-import type { Job } from "../../features/jobs/types/job.types";
+import type { Job, WorkMode } from "../../features/jobs/types/job.types";
 import { useJobs } from "../../features/jobs/hooks/useJobs";
 import Button from "../ui/Button";
+import { Link, useNavigate } from "react-router-dom";
 
-import { Link } from "react-router-dom";
-// Rotating accent palette for company initials when a job has no logo.
 const ACCENT_COLORS = ["#4f46e5", "#0f172a", "#14b8a6", "#c026d3", "#0369a1"];
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
@@ -26,6 +25,12 @@ const WORK_MODE_LABELS: Record<Job["workMode"], string> = {
   REMOTE: "Remote",
   ONSITE: "On-site",
   HYBRID: "Hybrid",
+};
+const WORK_MODE_ALIASES: Record<string, WorkMode> = {
+  remote: "REMOTE",
+  "on-site": "ONSITE",
+  onsite: "ONSITE",
+  hybrid: "HYBRID",
 };
 
 function companyName(job: Job) {
@@ -218,6 +223,7 @@ export default function Hero() {
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("");
   const [mounted, setMounted] = useState(false);
+  const navigate = useNavigate();
 
   const { data, isLoading } = useJobs(1, 3);
   const jobs = data?.jobs ?? [];
@@ -225,6 +231,26 @@ export default function Hero() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const params = new URLSearchParams();
+
+    if (query.trim()) {
+      params.set("search", query.trim());
+    }
+
+    const locationInput = location.trim();
+    const matchedWorkMode = WORK_MODE_ALIASES[locationInput.toLowerCase()];
+
+    if (matchedWorkMode) {
+      params.set("workMode", matchedWorkMode);
+    } else if (locationInput) {
+      params.set("location", locationInput);
+    }
+
+    navigate(`/jobs?${params.toString()}`);
+  };
 
   return (
     <header className="relative overflow-hidden bg-slate-50 py-[88px] font-inter">
@@ -263,8 +289,11 @@ export default function Hero() {
             black holes, no ghost listings — just real opportunities.
           </p>
 
-          {/* Search bar */}
-          <div className="mb-5 flex max-w-[480px] flex-wrap overflow-hidden rounded-2xl border-[1.5px] border-white/95 bg-white/80 shadow-[0_4px_6px_rgba(15,23,42,0.04),0_12px_32px_rgba(79,70,229,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-md">
+          {/* Search bar — wrapped in a form so Enter submits it too */}
+          <form
+            onSubmit={handleSearch}
+            className="mb-5 flex max-w-[480px] flex-wrap overflow-hidden rounded-2xl border-[1.5px] border-white/95 bg-white/80 shadow-[0_4px_6px_rgba(15,23,42,0.04),0_12px_32px_rgba(79,70,229,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-md"
+          >
             <div className="flex min-w-[140px] flex-1 items-center gap-[9px] border-slate-100 px-4 py-3.5 sm:border-r sm:border-t-0">
               <Search size={15} className="shrink-0 text-slate-400" />
               <input
@@ -285,11 +314,14 @@ export default function Hero() {
                 className="w-full border-none bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
               />
             </div>
-            <button className="m-1.5 flex w-full items-center justify-center gap-1.5 rounded-[11px] bg-indigo-600 px-[18px] py-2.5 text-[13.5px] font-semibold text-white shadow-[0_2px_8px_rgba(79,70,229,0.3)] transition-all hover:-translate-y-px hover:bg-indigo-700 hover:shadow-[0_4px_16px_rgba(79,70,229,0.4)] active:translate-y-0 sm:w-auto">
+            <button
+              type="submit"
+              className="m-1.5 flex w-full items-center justify-center gap-1.5 rounded-[11px] bg-indigo-600 px-[18px] py-2.5 text-[13.5px] font-semibold text-white shadow-[0_2px_8px_rgba(79,70,229,0.3)] transition-all hover:-translate-y-px hover:bg-indigo-700 hover:shadow-[0_4px_16px_rgba(79,70,229,0.4)] active:translate-y-0 sm:w-auto"
+            >
               <Search size={13} />
               Search
             </button>
-          </div>
+          </form>
 
           {/* CTA row */}
           <div className="flex flex-wrap items-center gap-3.5">
