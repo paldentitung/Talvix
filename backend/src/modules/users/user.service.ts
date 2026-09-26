@@ -137,3 +137,22 @@ export const updateRecruiterProfileService = async (
 
   return toUserResponse(updatedUser);
 };
+export const updateRecruiterLogoService = async (
+  userId: string,
+  logoUrl: string,
+) => {
+  return prisma.recruiterProfile.upsert({
+    where: { userId },
+    update: {
+      companyLogo: logoUrl,
+    },
+    create: {
+      userId,
+      companyLogo: logoUrl,
+    },
+    select: {
+      id: true,
+      companyLogo: true,
+    },
+  });
+};

@@ -4,8 +4,10 @@ import {
   updateUserService,
   updateRecruiterProfileService,
   getUsersService,
+  updateRecruiterLogoService,
 } from "./user.service.js";
 import { Request, Response } from "express";
+import AppError from "../../utils/AppError.js";
 
 export const changePasswordController = async (req: Request, res: Response) => {
   const result = await changePasswordService(req.user!.id, req.body);
@@ -52,5 +54,25 @@ export const updateRecruiterProfileController = async (
     success: true,
     message: "Recruiter profile updated successfully",
     data: result,
+  });
+};
+
+export const updateRecruiterLogoController = async (
+  req: Request,
+  res: Response,
+) => {
+  if (!req.file) {
+    throw new AppError("Company logo is required", 400);
+  }
+
+  const userId = req.user!.id;
+
+  const logoUrl = `/uploads/company-logos/${req.file.filename}`;
+
+  const user = await updateRecruiterLogoService(userId, logoUrl);
+
+  res.status(200).json({
+    message: "Company logo updated successfully",
+    data: user,
   });
 };
