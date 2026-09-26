@@ -66,7 +66,7 @@ export const createJob = async (
 };
 
 export const getJobById = async (jobId: string): Promise<Job> => {
-  const res = await request(`/jobs/${jobId}`, {}, true);
+  const res = await request(`/jobs/${jobId}`, {}, false);
   return res.data as Job;
 };
 

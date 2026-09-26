@@ -33,7 +33,7 @@ router.patch(
   requireAuth,
   asyncHandler(updateJobStatusController),
 );
-router.get("/:id", requireAuth, asyncHandler(getJobController));
+router.get("/:id", asyncHandler(getJobController));
 router.post(
   "/",
   requireAuth,

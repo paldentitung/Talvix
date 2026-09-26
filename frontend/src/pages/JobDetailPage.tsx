@@ -124,113 +124,115 @@ const JobDetailPage = () => {
     `${job.recruiter.firstName} ${job.recruiter.lastName}`;
 
   return (
-    <div className="flex flex-col gap-4">
-      <button
-        onClick={() => navigate(-1)}
-        className="flex w-fit items-center gap-1.5 text-sm font-medium text-(--text-secondary) hover:text-(--text-primary)"
-      >
-        <ArrowLeft size={16} />
-        Back to jobs
-      </button>
-
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold text-(--text-primary) sm:text-2xl">
-              {job.title}
-            </h1>
-            {job.featured && (
-              <Star
-                size={17}
-                className="shrink-0 fill-(--warning) text-(--warning)"
-              />
-            )}
-          </div>
-          <p className="mt-1.5 flex items-center gap-1.5 text-sm text-(--text-secondary)">
-            <Building2 size={14} />
-            {companyName}
-          </p>
-        </div>
-
-        <span
-          className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[job.status]}`}
+    <div className="mx-auto max-w-6xl px-4 py-2">
+      <div className="flex flex-col gap-4">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex w-fit items-center gap-1.5 text-sm font-medium text-(--text-secondary) hover:text-(--text-primary)"
         >
-          {job.status.charAt(0) + job.status.slice(1).toLowerCase()}
-        </span>
-      </div>
+          <ArrowLeft size={16} />
+          Back to jobs
+        </button>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_300px]">
-        <div className="flex flex-col gap-4">
-          <div className="rounded-(--radius-lg) border border-(--border) bg-(--card) p-5 shadow-(--shadow-sm) sm:p-6">
-            <h2 className="text-sm font-semibold text-(--text-primary)">
-              Job description
-            </h2>
-            <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-(--text-secondary)">
-              {job.description}
-            </p>
-          </div>
-
-          {job.skills.length > 0 && (
-            <div className="rounded-(--radius-lg) border border-(--border) bg-(--card) p-5 shadow-(--shadow-sm) sm:p-6">
-              <h2 className="text-sm font-semibold text-(--text-primary)">
-                Skills
-              </h2>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {job.skills.map((skill) => (
-                  <span
-                    key={skill}
-                    className="rounded-full bg-(--bg) px-3 py-1 text-xs font-medium text-(--text-secondary)"
-                  >
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-4 lg:sticky lg:top-4 lg:self-start">
-          <div className="rounded-(--radius-lg) border border-(--border) bg-(--card) p-5 shadow-(--shadow-sm)">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-(--text-muted)">
-              At a glance
-            </h2>
-            <div className="mt-1 divide-y divide-(--border)">
-              <FactRow
-                icon={MapPin}
-                label="Location"
-                value={`${job.location} · ${workModeLabels[job.workMode]}`}
-              />
-              <FactRow
-                icon={Briefcase}
-                label="Type"
-                value={employmentLabels[job.employmentType]}
-              />
-              <FactRow
-                icon={Users}
-                label="Level"
-                value={experienceLabels[job.experienceLevel]}
-              />
-              <FactRow
-                icon={DollarSign}
-                label="Salary"
-                value={formatSalary(job)}
-              />
-              <FactRow
-                icon={Calendar}
-                label="Deadline"
-                value={formatDate(job.deadline)}
-              />
-              {job.openings !== null && (
-                <FactRow
-                  icon={Users}
-                  label="Openings"
-                  value={String(job.openings)}
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-semibold text-(--text-primary) sm:text-2xl">
+                {job.title}
+              </h1>
+              {job.featured && (
+                <Star
+                  size={17}
+                  className="shrink-0 fill-(--warning) text-(--warning)"
                 />
               )}
             </div>
+            <p className="mt-1.5 flex items-center gap-1.5 text-sm text-(--text-secondary)">
+              <Building2 size={14} />
+              {companyName}
+            </p>
           </div>
 
-          <JobActionsSidebar variant={variant} job={job} />
+          <span
+            className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[job.status]}`}
+          >
+            {job.status.charAt(0) + job.status.slice(1).toLowerCase()}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_300px]">
+          <div className="flex flex-col gap-4">
+            <div className="rounded-(--radius-lg) border border-(--border) bg-(--card) p-5 shadow-(--shadow-sm) sm:p-6">
+              <h2 className="text-sm font-semibold text-(--text-primary)">
+                Job description
+              </h2>
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-(--text-secondary)">
+                {job.description}
+              </p>
+            </div>
+
+            {job.skills.length > 0 && (
+              <div className="rounded-(--radius-lg) border border-(--border) bg-(--card) p-5 shadow-(--shadow-sm) sm:p-6">
+                <h2 className="text-sm font-semibold text-(--text-primary)">
+                  Skills
+                </h2>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {job.skills.map((skill) => (
+                    <span
+                      key={skill}
+                      className="rounded-full bg-(--bg) px-3 py-1 text-xs font-medium text-(--text-secondary)"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-4 lg:sticky lg:top-4 lg:self-start">
+            <div className="rounded-(--radius-lg) border border-(--border) bg-(--card) p-5 shadow-(--shadow-sm)">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-(--text-muted)">
+                At a glance
+              </h2>
+              <div className="mt-1 divide-y divide-(--border)">
+                <FactRow
+                  icon={MapPin}
+                  label="Location"
+                  value={`${job.location} · ${workModeLabels[job.workMode]}`}
+                />
+                <FactRow
+                  icon={Briefcase}
+                  label="Type"
+                  value={employmentLabels[job.employmentType]}
+                />
+                <FactRow
+                  icon={Users}
+                  label="Level"
+                  value={experienceLabels[job.experienceLevel]}
+                />
+                <FactRow
+                  icon={DollarSign}
+                  label="Salary"
+                  value={formatSalary(job)}
+                />
+                <FactRow
+                  icon={Calendar}
+                  label="Deadline"
+                  value={formatDate(job.deadline)}
+                />
+                {job.openings !== null && (
+                  <FactRow
+                    icon={Users}
+                    label="Openings"
+                    value={String(job.openings)}
+                  />
+                )}
+              </div>
+            </div>
+
+            <JobActionsSidebar variant={variant} job={job} />
+          </div>
         </div>
       </div>
     </div>

@@ -1,8 +1,9 @@
 import { useState } from "react";
-import type { Job } from "../../types/job.type";
 import Badge from "../ui/Badge";
 import { Bookmark, Building2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import type { Job } from "../../features/jobs/types/job.types";
+import JobCardSkeleton from "../../shared/components/JobCardSkeleton";
 interface JobCardProps {
   job: Job;
   initiallySaved?: boolean;
