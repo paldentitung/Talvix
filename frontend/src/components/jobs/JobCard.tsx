@@ -1,9 +1,10 @@
 import { useState } from "react";
 import Badge from "../ui/Badge";
 import { Bookmark, Building2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import type { Job } from "../../features/jobs/types/job.types";
 import JobCardSkeleton from "../../shared/components/JobCardSkeleton";
+import { useAuth } from "../../features/auth/contexts/AuthContext";
 interface JobCardProps {
   job: Job;
   initiallySaved?: boolean;
@@ -77,8 +78,28 @@ export default function JobCard({
   onToggleSave,
 }: JobCardProps) {
   const [saved, setSaved] = useState(initiallySaved);
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const canSave = user?.role === "CANDIDATE";
+  const navigate = useNavigate();
+  const routerLocation = useLocation();
 
-  const handleToggleSave = () => {
+  const handleToggleSave = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isAuthLoading) return;
+
+    if (!isAuthenticated) {
+      const returnTo = `${routerLocation.pathname}${routerLocation.search}`;
+
+      navigate(`/login?redirect=${encodeURIComponent(returnTo)}`);
+      return;
+    }
+
+    if (user?.role !== "CANDIDATE") {
+      return;
+    }
+
     const next = !saved;
     setSaved(next);
     onToggleSave?.(job.id, next);
@@ -114,21 +135,30 @@ export default function JobCard({
             {companyInitial}
           </div>
         )}
-        <button
-          onClick={handleToggleSave}
-          aria-label={saved ? "Remove from saved jobs" : "Save job"}
-          aria-pressed={saved}
-          className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-            saved
-              ? "text-[var(--danger)] bg-[var(--danger-bg)]"
-              : "text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-[var(--danger-bg)]"
-          }`}
-        >
-          <Bookmark
-            className="w-[17px] h-[17px]"
-            fill={saved ? "currentColor" : "none"}
-          />
-        </button>
+
+        {(!isAuthenticated || user?.role === "CANDIDATE") && (
+          <button
+            onClick={handleToggleSave}
+            aria-label={
+              !isAuthenticated
+                ? "Sign in to save this job"
+                : saved
+                  ? "Remove from saved jobs"
+                  : "Save job"
+            }
+            aria-pressed={isAuthenticated ? saved : undefined}
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+              saved
+                ? "text-[var(--danger)] bg-[var(--danger-bg)]"
+                : "text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-[var(--danger-bg)]"
+            }`}
+          >
+            <Bookmark
+              className="w-[17px] h-[17px]"
+              fill={saved ? "currentColor" : "none"}
+            />
+          </button>
+        )}
       </div>
 
       <div>

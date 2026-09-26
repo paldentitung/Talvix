@@ -1,7 +1,8 @@
 import { createContext, useContext } from "react";
 import { useMe } from "../hooks/useMe";
-
+import type { User } from "../types/auth.type";
 interface AuthContextType {
+  user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
 }
@@ -14,7 +15,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { data: user, isLoading } = useMe();
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated: !!user, isLoading }}>
+    <AuthContext.Provider
+      value={{
+        user: user ?? null,
+        isAuthenticated: !!user,
+        isLoading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
