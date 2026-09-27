@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import AuthLayout from "../../../components/layout/AuthLayout";
 import { useRegister } from "../hooks/useRegister";
-
+import { loginWithGoogle } from "../api/authApi";
 type Role = "seeker" | "employer";
 const ROLE_MAP = {
   seeker: "CANDIDATE",
@@ -114,6 +114,39 @@ export default function RegisterPage() {
           selected={role === "employer"}
           onClick={() => setRole("employer")}
         />
+      </div>
+      <button
+        type="button"
+        onClick={() => loginWithGoogle(ROLE_MAP[role])}
+        className="w-full flex items-center justify-center gap-2.5 py-2.5 mb-6 rounded-[8px] border border-[var(--border)] text-sm font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--text-muted)]"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24">
+          <path
+            fill="#4285F4"
+            d="M23.5 12.3c0-.85-.08-1.66-.22-2.45H12v4.63h6.47c-.28 1.5-1.13 2.77-2.4 3.62v3h3.87c2.27-2.09 3.56-5.17 3.56-8.8z"
+          />
+          <path
+            fill="#34A853"
+            d="M12 24c3.24 0 5.96-1.07 7.94-2.9l-3.87-3c-1.08.72-2.45 1.15-4.07 1.15-3.13 0-5.78-2.11-6.73-4.96H1.27v3.1C3.24 21.3 7.28 24 12 24z"
+          />
+          <path
+            fill="#FBBC05"
+            d="M5.27 14.29c-.25-.72-.39-1.49-.39-2.29s.14-1.57.39-2.29V6.61H1.27C.46 8.24 0 10.06 0 12s.46 3.76 1.27 5.39l4-3.1z"
+          />
+          <path
+            fill="#EA4335"
+            d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.28 0 3.24 2.7 1.27 6.61l4 3.1C6.22 6.86 8.87 4.75 12 4.75z"
+          />
+        </svg>
+        Continue with Google
+      </button>
+
+      <div className="flex items-center gap-3 mb-6">
+        <div className="h-px flex-1 bg-[var(--border)]" />
+        <span className="text-[12px] text-[var(--text-muted)]">
+          or sign up with email
+        </span>
+        <div className="h-px flex-1 bg-[var(--border)]" />
       </div>
 
       {/* Server-side error banner */}

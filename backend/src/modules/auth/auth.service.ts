@@ -6,6 +6,7 @@ import {
   RegisterInput,
   ResetPasswordInput,
   VerifyEmailInput,
+  GoogleUser,
 } from "./auth.types.js";
 import AppError from "../../utils/AppError.js";
 import sendEmail from "../../utils/sendEmail.js";
@@ -99,6 +100,10 @@ export const loginService = async (data: LoginInput) => {
   });
 
   if (!existingUser) {
+    throw new AppError("Invalid email or password", 401);
+  }
+
+  if (!existingUser.password) {
     throw new AppError("Invalid email or password", 401);
   }
 
@@ -209,4 +214,53 @@ export const getMeService = async (userId: string) => {
   }
 
   return toUserResponse(user);
+};
+// auth.service.ts
+export const googleLoginService = async (
+  googleUser: GoogleUser,
+  role?: "CANDIDATE" | "RECRUITER",
+) => {
+  if (!googleUser.email) {
+    throw new AppError("Google account email is required", 400);
+  }
+
+  const existingGoogleUser = await prisma.user.findUnique({
+    where: { googleId: googleUser.id },
+  });
+  if (existingGoogleUser) {
+    return existingGoogleUser; // role ignored — login case
+  }
+
+  const existingEmailUser = await prisma.user.findUnique({
+    where: { email: googleUser.email },
+  });
+  if (existingEmailUser) {
+    throw new AppError(
+      "An account with this email already exists. Please log in with your password first.",
+      409,
+    );
+  }
+
+  // No existing user at all — this is a signup, role is required
+  if (!role) {
+    throw new AppError(
+      "No account found for this Google account. Please sign up first.",
+      404,
+    );
+  }
+
+  const user = await prisma.user.create({
+    data: {
+      email: googleUser.email,
+      googleId: googleUser.id,
+      firstName: googleUser.given_name ?? "",
+      lastName: googleUser.family_name ?? "",
+      avatar: googleUser.picture ?? null,
+      role,
+      password: null,
+      isVerified: true,
+    },
+  });
+
+  return user;
 };
