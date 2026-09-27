@@ -33,6 +33,7 @@ import AdminUsersPage from "./admin/pages/AdminUsersPage.tsx";
 import AdminJobsPage from "./admin/pages/AdminJobsPage.tsx";
 import AdminCompaniesPage from "./admin/pages/AdminCompaniesPage.tsx";
 import AboutPage from "./pages/AboutPage.tsx";
+import ContactPage from "./pages/ContactPage.tsx";
 const App = () => {
   return (
     <>
@@ -84,6 +85,14 @@ const App = () => {
           element={
             <PublicLayout>
               <AboutPage />
+            </PublicLayout>
+          }
+        />{" "}
+        <Route
+          path="/contact"
+          element={
+            <PublicLayout>
+              <ContactPage />
             </PublicLayout>
           }
         />
