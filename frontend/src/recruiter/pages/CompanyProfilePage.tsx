@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { Globe, MapPin, Pencil, Users } from "lucide-react";
+import { Globe, Loader2, MapPin, Pencil, Upload, Users } from "lucide-react";
 import toast from "react-hot-toast";
+import { useQueryClient } from "@tanstack/react-query";
 import { useUpdateRecruiterProfile } from "../../features/users/hooks/useUpdateRecruiterProfile";
 import { useMe } from "../../features/auth/hooks/useMe";
+import { useRecruiterLogo } from "../../features/users/hooks/useRecruiterLogo";
+import Modal from "../../components/ui/Modal";
 
 type CompanyProfile = {
   name: string;
@@ -27,15 +30,19 @@ const emptyProfile: CompanyProfile = {
 };
 
 const sizeOptions = ["1–10", "11–50", "51–200", "201–500", "500+"];
+const MAX_LOGO_SIZE_MB = 5;
 
 const CompanyProfilePage = () => {
   const { data: user, isLoading: isUserLoading } = useMe();
+  const queryClient = useQueryClient();
   const updateRecruiterProfileMutation = useUpdateRecruiterProfile();
+  const updateLogoMutation = useRecruiterLogo();
 
   const [draft, setDraft] = useState<CompanyProfile>(emptyProfile);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync form state from real user data once it loads
   useEffect(() => {
     if (!user) return;
     setDraft({
@@ -50,14 +57,47 @@ const CompanyProfilePage = () => {
     });
   }, [user]);
 
+  useEffect(() => {
+    return () => {
+      if (logoPreview) URL.revokeObjectURL(logoPreview);
+    };
+  }, [logoPreview]);
+
   const update = (field: keyof CompanyProfile, value: string) => {
     setDraft((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // TODO: wire up to the dedicated logo upload endpoint once it's ready.
-    // Left as a no-op for now — logo is not editable from this page yet.
-    e.target.value = "";
+  const handleLogoFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Logo must be an image file");
+      e.target.value = "";
+      return;
+    }
+    if (file.size > MAX_LOGO_SIZE_MB * 1024 * 1024) {
+      toast.error(`Logo must be under ${MAX_LOGO_SIZE_MB}MB`);
+      e.target.value = "";
+      return;
+    }
+
+    setLogoPreview(URL.createObjectURL(file));
+
+    try {
+      await updateLogoMutation.mutateAsync(file);
+      await queryClient.invalidateQueries({ queryKey: ["me"] });
+      toast.success("Logo updated");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update logo",
+      );
+      setLogoPreview(null);
+    } finally {
+      e.target.value = "";
+    }
   };
 
   const handleCancel = () => {
@@ -84,8 +124,8 @@ const CompanyProfilePage = () => {
         companyTagline: draft.tagline,
         companyIndustry: draft.industry,
         companySize: draft.size,
-        // companyLogo intentionally omitted — logo is saved via its own upload endpoint
       });
+      await queryClient.invalidateQueries({ queryKey: ["me"] });
       toast.success("Company profile updated");
     } catch (err) {
       toast.error(
@@ -95,6 +135,7 @@ const CompanyProfilePage = () => {
   };
 
   const isSaving = updateRecruiterProfileMutation.isPending;
+  const isUploadingLogo = updateLogoMutation.isPending;
 
   const initials = draft.name
     .split(" ")
@@ -103,6 +144,12 @@ const CompanyProfilePage = () => {
     .map((w) => w[0])
     .join("")
     .toUpperCase();
+
+  const logoSrc = logoPreview
+    ? logoPreview
+    : draft.logo
+      ? `${import.meta.env.VITE_API_BACKEND_URL}${draft.logo}`
+      : null;
 
   if (isUserLoading) {
     return (
@@ -115,65 +162,85 @@ const CompanyProfilePage = () => {
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
+        {/* Profile summary card */}
         <div className="lg:col-span-1">
-          <div className="rounded-(--radius-lg) border border-(--border) bg-(--card) p-5 shadow-(--shadow-sm)">
-            <div className="group relative h-12 w-12 shrink-0">
-              {draft.logo ? (
-                <img
-                  src={draft.logo}
-                  alt={`${draft.name || "Company"} logo`}
-                  className="h-12 w-12 rounded-(--radius-md) object-cover"
-                />
-              ) : (
-                <div className="flex h-12 w-12 items-center justify-center rounded-(--radius-md) bg-(--primary) font-display text-lg font-bold text-white">
-                  {initials || "H"}
-                </div>
-              )}
-              <button
-                type="button"
-                aria-label="Change company logo"
-                disabled
-                title="Coming soon"
-                onClick={() => logoInputRef.current?.click()}
-                className="absolute -bottom-1.5 -right-1.5 flex h-6 w-6 items-center justify-center rounded-full border border-(--border) bg-(--card) text-(--text-muted) shadow-(--shadow-sm) opacity-60"
-              >
-                <Pencil className="h-3 w-3" />
-              </button>
-              <input
-                ref={logoInputRef}
-                type="file"
-                accept="image/*"
-                disabled
-                onChange={handleLogoFileChange}
-                className="hidden"
-              />
-            </div>
-            <h3 className="mt-3 font-display text-base font-bold text-(--text-primary)">
-              {draft.name || "Company name"}
-            </h3>
-            <p className="mt-1 text-sm text-(--text-secondary)">
-              {draft.tagline || "Company tagline"}
-            </p>
+          <div className="overflow-hidden rounded-(--radius-lg) border border-(--border) bg-(--card) shadow-(--shadow-sm)">
+            <div className="h-14 bg-(--bg)" />
 
-            <div className="mt-5 flex flex-col gap-2.5 border-t border-(--border) pt-4 text-sm text-(--text-secondary)">
-              <span className="flex items-center gap-2">
-                <Globe size={15} className="shrink-0 text-(--text-muted)" />
-                <span className="truncate">{draft.website || "—"}</span>
-              </span>
-              <span className="flex items-center gap-2">
-                <MapPin size={15} className="shrink-0 text-(--text-muted)" />
-                <span className="truncate">{draft.headquarters || "—"}</span>
-              </span>
-              <span className="flex items-center gap-2">
-                <Users size={15} className="shrink-0 text-(--text-muted)" />
-                <span className="truncate">
-                  {draft.size ? `${draft.size} employees` : "—"}
+            <div className="px-5 pb-5">
+              <div className="group relative -mt-8 h-16 w-16 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => logoSrc && setIsLogoModalOpen(true)}
+                  disabled={!logoSrc}
+                  className="block h-16 w-16 overflow-hidden rounded-(--radius-md) ring-4 ring-(--card) disabled:cursor-default"
+                >
+                  {logoSrc ? (
+                    <img
+                      src={logoSrc}
+                      alt={`${draft.name || "Company"} logo`}
+                      className={`h-16 w-16 object-cover transition-opacity group-hover:opacity-80 ${isUploadingLogo ? "opacity-50" : ""}`}
+                    />
+                  ) : (
+                    <div className="flex h-16 w-16 items-center justify-center bg-(--primary) font-display text-xl font-bold text-white">
+                      {initials || "H"}
+                    </div>
+                  )}
+                </button>
+
+                {isUploadingLogo && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Loader2 className="h-4 w-4 animate-spin text-white" />
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  aria-label="Change company logo"
+                  onClick={() => logoInputRef.current?.click()}
+                  disabled={isUploadingLogo}
+                  className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border border-(--border) bg-(--card) text-(--text-muted) shadow-(--shadow-sm) transition-colors hover:text-(--primary) disabled:opacity-60"
+                >
+                  <Pencil className="h-3 w-3" />
+                </button>
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoFileChange}
+                  disabled={isUploadingLogo}
+                  className="hidden"
+                />
+              </div>
+
+              <h3 className="mt-3 font-display text-base font-bold text-(--text-primary)">
+                {draft.name || "Company name"}
+              </h3>
+              <p className="mt-0.5 text-sm text-(--text-secondary)">
+                {draft.tagline || "Company tagline"}
+              </p>
+
+              <div className="mt-4 flex flex-col gap-2.5 border-t border-(--border) pt-4 text-sm text-(--text-secondary)">
+                <span className="flex items-center gap-2">
+                  <Globe size={15} className="shrink-0 text-(--text-muted)" />
+                  <span className="truncate">{draft.website || "—"}</span>
                 </span>
-              </span>
+                <span className="flex items-center gap-2">
+                  <MapPin size={15} className="shrink-0 text-(--text-muted)" />
+                  <span className="truncate">{draft.headquarters || "—"}</span>
+                </span>
+                <span className="flex items-center gap-2">
+                  <Users size={15} className="shrink-0 text-(--text-muted)" />
+                  <span className="truncate">
+                    {draft.size ? `${draft.size} employees` : "—"}
+                  </span>
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
+        {/* Editable details */}
         <div className="lg:col-span-3">
           <div className="rounded-(--radius-lg) border border-(--border) bg-(--card) p-5 shadow-(--shadow-sm) sm:p-6">
             <h3 className="font-display text-base font-bold text-(--text-primary)">
@@ -188,7 +255,7 @@ const CompanyProfilePage = () => {
                 <input
                   value={draft.name}
                   onChange={(e) => update("name", e.target.value)}
-                  className="rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none focus:border-(--primary)"
+                  className="rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none transition-colors focus:border-(--primary)"
                 />
               </label>
 
@@ -199,7 +266,7 @@ const CompanyProfilePage = () => {
                 <input
                   value={draft.website}
                   onChange={(e) => update("website", e.target.value)}
-                  className="rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none focus:border-(--primary)"
+                  className="rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none transition-colors focus:border-(--primary)"
                 />
               </label>
 
@@ -210,7 +277,7 @@ const CompanyProfilePage = () => {
                 <input
                   value={draft.industry}
                   onChange={(e) => update("industry", e.target.value)}
-                  className="rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none focus:border-(--primary)"
+                  className="rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none transition-colors focus:border-(--primary)"
                 />
               </label>
 
@@ -221,7 +288,7 @@ const CompanyProfilePage = () => {
                 <input
                   value={draft.headquarters}
                   onChange={(e) => update("headquarters", e.target.value)}
-                  className="rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none focus:border-(--primary)"
+                  className="rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none transition-colors focus:border-(--primary)"
                 />
               </label>
 
@@ -232,7 +299,7 @@ const CompanyProfilePage = () => {
                 <select
                   value={draft.size}
                   onChange={(e) => update("size", e.target.value)}
-                  className="rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none focus:border-(--primary)"
+                  className="rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none transition-colors focus:border-(--primary)"
                 >
                   <option value="">—</option>
                   {sizeOptions.map((opt) => (
@@ -250,7 +317,7 @@ const CompanyProfilePage = () => {
                 <input
                   value={draft.tagline}
                   onChange={(e) => update("tagline", e.target.value)}
-                  className="rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none focus:border-(--primary)"
+                  className="rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none transition-colors focus:border-(--primary)"
                 />
               </label>
 
@@ -260,7 +327,7 @@ const CompanyProfilePage = () => {
                   value={draft.about}
                   onChange={(e) => update("about", e.target.value)}
                   rows={4}
-                  className="resize-none rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none focus:border-(--primary)"
+                  className="resize-none rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none transition-colors focus:border-(--primary)"
                 />
               </label>
             </div>
@@ -284,6 +351,44 @@ const CompanyProfilePage = () => {
           </div>
         </div>
       </div>
+
+      {/* Logo preview modal */}
+      <Modal
+        isOpen={isLogoModalOpen}
+        onClose={() => setIsLogoModalOpen(false)}
+        title="Company logo"
+        maxWidth="max-w-sm"
+        footer={
+          <>
+            <button
+              onClick={() => setIsLogoModalOpen(false)}
+              className="rounded-(--radius-md) border border-(--border) bg-(--card) px-4 py-2 text-sm font-semibold text-(--text-secondary) hover:bg-(--bg)"
+            >
+              Close
+            </button>
+            <button
+              onClick={() => {
+                setIsLogoModalOpen(false);
+                logoInputRef.current?.click();
+              }}
+              className="flex items-center justify-center gap-2 rounded-(--radius-md) bg-(--primary) px-4 py-2 text-sm font-semibold text-white hover:bg-(--primary-dark)"
+            >
+              <Upload size={14} />
+              Replace logo
+            </button>
+          </>
+        }
+      >
+        {logoSrc && (
+          <div className="flex items-center justify-center rounded-(--radius-md) bg-(--bg) p-6">
+            <img
+              src={logoSrc}
+              alt={`${draft.name || "Company"} logo`}
+              className="max-h-48 max-w-full rounded-(--radius-md) object-contain"
+            />
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

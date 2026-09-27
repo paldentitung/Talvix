@@ -7,8 +7,9 @@ import AppError from "../utils/AppError.js";
 
 const AVATAR_DIR = path.join(process.cwd(), "uploads", "avatars");
 const RESUME_DIR = path.join(process.cwd(), "uploads", "resumes");
+const COMPANY_LOGO_DIR = path.join(process.cwd(), "uploads", "company-logos");
 
-[AVATAR_DIR, RESUME_DIR].forEach((dir) => {
+[AVATAR_DIR, RESUME_DIR, COMPANY_LOGO_DIR].forEach((dir) => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
 
@@ -27,6 +28,15 @@ const resumeStorage = multer.diskStorage({
     const userId = (req as any).user?.id ?? "unknown";
     const ext = path.extname(file.originalname).toLowerCase();
     cb(null, `resume-${userId}-${Date.now()}${ext}`);
+  },
+});
+const companyLogoStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, COMPANY_LOGO_DIR),
+  filename: (req, file, cb) => {
+    const userId = (req as any).user?.id ?? "unknown";
+    const ext = path.extname(file.originalname).toLowerCase();
+
+    cb(null, `company-logo-${userId}-${Date.now()}${ext}`);
   },
 });
 
@@ -70,3 +80,9 @@ export const uploadResume = multer({
   fileFilter: pdfFileFilter,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
 }).single("resume");
+
+export const uploadCompanyLogo = multer({
+  storage: companyLogoStorage,
+  fileFilter: imageFileFilter,
+  limits: { fileSize: 2 * 1024 * 1024 },
+}).single("logo");

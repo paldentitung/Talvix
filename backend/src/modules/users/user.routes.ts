@@ -7,6 +7,7 @@ import {
   updateCandidateProfileController,
   updateRecruiterProfileController,
   updateUserController,
+  updateRecruiterLogoController,
 } from "./user.controller.js";
 import { requireRole } from "../../middleware/role.middleware.js";
 import { validate } from "../../middleware/validate.middleware.js";
@@ -16,6 +17,7 @@ import {
   updateRecruiterProfileSchema,
   updateUserSchema,
 } from "./user.validation.js";
+import { uploadCompanyLogo } from "../../middleware/upload.middleware.js";
 
 const router = express.Router();
 
@@ -50,5 +52,12 @@ router.patch(
   requireAuth,
   validate(changePasswordSchema),
   asyncHandler(changePasswordController),
+);
+router.patch(
+  "/profile/recruiter/logo",
+  requireAuth,
+  requireRole("RECRUITER"),
+  uploadCompanyLogo,
+  asyncHandler(updateRecruiterLogoController),
 );
 export default router;

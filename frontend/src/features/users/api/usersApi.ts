@@ -49,3 +49,14 @@ export const changePassword = (data: ChangePasswordRequest) => {
     body: JSON.stringify(data),
   });
 };
+
+export const updateRecruiterLogo = (file: File) => {
+  const formData = new FormData();
+
+  formData.append("logo", file);
+
+  return request("/users/profile/recruiter/logo", {
+    method: "PATCH",
+    body: formData,
+  });
+};
