@@ -10,12 +10,14 @@ datasource db {
 model User {
   id        String  @id @default(cuid())
   email     String  @unique
-  password  String
-  firstName String
-  lastName  String
+  password  String?
+  firstName String  @default("")
+  lastName  String  @default("")
   role      Role
   avatar    String?
   phone     String?
+
+  googleId String? @unique
 
   isVerified           Boolean   @default(false)
   verificationToken    String?

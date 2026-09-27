@@ -70,6 +70,13 @@ export const resetPassword = async (data: ResetPasswordRequest) => {
 export const getMe = async () => {
   return request("/auth/me", {}, true);
 };
+
 export const logout = async () => {
   return request("/auth/logout", { method: "POST" }, true);
+};
+
+export const loginWithGoogle = (role?: "CANDIDATE" | "RECRUITER") => {
+  const base = `${import.meta.env.VITE_API_BACKEND_URL}/api/auth/google`;
+  const url = role ? `${base}?role=${role}` : base;
+  window.location.href = url;
 };

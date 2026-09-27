@@ -3,15 +3,16 @@ import { Link } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from "lucide-react";
 import AuthLayout from "../../../components/layout/AuthLayout";
 import { useLogin } from "../hooks/useLogin";
+import { loginWithGoogle } from "../api/authApi";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [role, setRole] = useState<"CANDIDATE" | "RECRUITER">("CANDIDATE");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
-
   const [errors, setErrors] = useState<{
     email?: string;
     password?: string;
@@ -64,6 +65,7 @@ export default function LoginPage() {
       {/* Social sign-in — quieter than a filled button so it doesn't compete with the primary CTA */}
       <button
         type="button"
+        onClick={() => loginWithGoogle()}
         className="w-full flex items-center justify-center gap-2.5 py-2.5 mb-6 rounded-[8px] border border-[var(--border)] text-sm font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--text-muted)]"
       >
         <svg width="16" height="16" viewBox="0 0 24 24">

@@ -6,9 +6,11 @@ import {
   registerService,
   resetPasswordService,
   verifyEmailService,
+  googleLoginService,
 } from "./auth.service.js";
 import { signToken } from "../../utils/jwt.js";
 import { clearAuthCookie, setAuthCookie } from "../../utils/cookies.js";
+import { getGoogleAuthUrl, getGoogleUser } from "./googleOAuth.js";
 
 export const registerController = async (req: Request, res: Response) => {
   const result = await registerService(req.body);
@@ -76,4 +78,44 @@ export const getMeController = async (req: Request, res: Response) => {
     message: "User fetched successfully",
     data: result,
   });
+};
+
+export const googleAuthController = (req: Request, res: Response) => {
+  const role = req.query.role;
+  const validRole =
+    role === "CANDIDATE" || role === "RECRUITER" ? role : undefined;
+
+  const url = getGoogleAuthUrl(validRole);
+  res.redirect(url);
+};
+
+export const googleCallbackController = async (req: Request, res: Response) => {
+  const { code, state } = req.query;
+
+  if (typeof code !== "string") {
+    return res.status(400).json({
+      success: false,
+      message: "Google authorization code is missing",
+    });
+  }
+
+  const roleFromState =
+    state === "CANDIDATE" || state === "RECRUITER" ? state : undefined;
+
+  const googleUser = await getGoogleUser(code);
+  const user = await googleLoginService(googleUser, roleFromState);
+
+  const token = signToken({ id: user.id, role: user.role });
+  setAuthCookie(res, token);
+
+  switch (user.role) {
+    case "ADMIN":
+      return res.redirect(`${process.env.CLIENT_URL}/admin/dashboard`);
+    case "RECRUITER":
+      return res.redirect(`${process.env.CLIENT_URL}/recruiter/dashboard`);
+    case "CANDIDATE":
+      return res.redirect(`${process.env.CLIENT_URL}/candidate/dashboard`);
+    default:
+      return res.redirect(`${process.env.CLIENT_URL}/`);
+  }
 };
