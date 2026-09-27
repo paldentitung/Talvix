@@ -106,7 +106,7 @@ export default function JobCard({
   };
 
   const companyName =
-    job.recruiter?.companyName ??
+    job.recruiter?.recruiterProfile?.companyName ??
     (job.recruiter
       ? `${job.recruiter.firstName} ${job.recruiter.lastName}`
       : "Company");
@@ -120,9 +120,9 @@ export default function JobCard({
       className="bg-[var(--card)] border border-[var(--border)] rounded-[var(--radius-lg)] p-6 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] hover:-translate-y-1 hover:border-[#d8dcf0] transition-all flex flex-col gap-4"
     >
       <div className="flex items-start justify-between">
-        {job.recruiter?.companyLogo ? (
+        {job.recruiter?.recruiterProfile?.companyLogo ? (
           <img
-            src={job?.recruiter?.companyLogo}
+            src={`${import.meta.env.VITE_API_BACKEND_URL}${job?.recruiter?.recruiterProfile.companyLogo}`}
             alt={companyName}
             loading="lazy"
             className="w-[46px] h-[46px] rounded-xl object-cover"

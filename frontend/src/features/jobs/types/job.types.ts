@@ -28,13 +28,16 @@ export interface Job {
 
   recruiterId: string;
 
-  recruiter: {
+  recruiter?: {
     id: string;
     firstName: string;
     lastName: string;
-
-    companyName: string | null;
-    companyLogo: string | null;
+    avatar?: string | null;
+    recruiterProfile?: {
+      companyName?: string | null;
+      companyLogo?: string | null;
+      companyWebsite?: string | null;
+    } | null;
   };
   applicationsCount?: number;
   createdAt: string;

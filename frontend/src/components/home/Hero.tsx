@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, MapPin, Bookmark, ArrowRight } from "lucide-react";
+import { Search, MapPin, Bookmark } from "lucide-react";
 import type { Job, WorkMode } from "../../features/jobs/types/job.types";
 import { useJobs } from "../../features/jobs/hooks/useJobs";
 import Button from "../ui/Button";
@@ -35,8 +35,8 @@ const WORK_MODE_ALIASES: Record<string, WorkMode> = {
 
 function companyName(job: Job) {
   return (
-    job.recruiter.companyName ??
-    `${job.recruiter.firstName} ${job.recruiter.lastName}`
+    job.recruiter?.recruiterProfile?.companyName ??
+    `${job.recruiter?.firstName} ${job.recruiter?.lastName}`
   );
 }
 
@@ -71,14 +71,15 @@ function JobCard({ job, index }: { job: Job; index: number }) {
   const active = index === 0;
 
   return (
-    <div
+    <Link
+      to={`/jobs/${job.id}`}
       className={`flex items-start gap-2.5 rounded-xl border px-3.5 py-3 transition-all duration-300 ease-out cursor-pointer
         ${active ? "border-indigo-200 bg-indigo-50" : "border-slate-200 bg-white"}
         ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}
     >
-      {job.recruiter.companyLogo ? (
+      {job.recruiter?.recruiterProfile?.companyLogo ? (
         <img
-          src={job.recruiter.companyLogo}
+          src={`${import.meta.env.VITE_API_BACKEND_URL}${job?.recruiter?.recruiterProfile.companyLogo}`}
           alt={company}
           className="h-9 w-9 shrink-0 rounded-[9px] object-cover"
         />
@@ -124,7 +125,7 @@ function JobCard({ job, index }: { job: Job; index: number }) {
           fill={active ? "#4f46e5" : "none"}
         />
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -159,20 +160,6 @@ function AppScreenshot({
           <span className="font-sora text-sm font-bold text-slate-900">
             talvix
           </span>
-          <div className="flex gap-3">
-            {["Jobs", "Saved", "Applied"].map((label, i) => (
-              <span
-                key={label}
-                className={`font-inter text-[11px] cursor-pointer pb-px ${
-                  i === 0
-                    ? "border-b-[1.5px] border-indigo-600 font-semibold text-indigo-600"
-                    : "font-normal text-slate-400"
-                }`}
-              >
-                {label}
-              </span>
-            ))}
-          </div>
         </div>
 
         <div className="mb-3 flex flex-wrap gap-[5px]">
