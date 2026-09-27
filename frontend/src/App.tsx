@@ -32,6 +32,7 @@ import AdminLayout from "./layouts/AdminLayout.tsx";
 import AdminUsersPage from "./admin/pages/AdminUsersPage.tsx";
 import AdminJobsPage from "./admin/pages/AdminJobsPage.tsx";
 import AdminCompaniesPage from "./admin/pages/AdminCompaniesPage.tsx";
+import AboutPage from "./pages/AboutPage.tsx";
 const App = () => {
   return (
     <>
@@ -77,7 +78,15 @@ const App = () => {
 
       <Routes>
         {/* Public */}
-        <Route path="/" element={<HomeRedirect />} />
+        <Route path="/" element={<HomeRedirect />} />{" "}
+        <Route
+          path="/about"
+          element={
+            <PublicLayout>
+              <AboutPage />
+            </PublicLayout>
+          }
+        />
         <Route
           path="/jobs"
           element={
