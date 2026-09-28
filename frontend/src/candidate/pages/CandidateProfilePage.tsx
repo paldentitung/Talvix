@@ -10,6 +10,7 @@ import {
   Trash2,
   Upload,
   X,
+  Eye,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useMe } from "../../features/auth/hooks/useMe";
@@ -17,6 +18,8 @@ import { useUserUpdateProfile } from "../../features/users/hooks/useUpdateUserPr
 import { useUpdateCandidateProfile } from "../../features/users/hooks/useUpdateCandidateProfile";
 import { useRemoveAvatar } from "../../features/users/hooks/useRemoveAvatar";
 import { useUpdateAvatar } from "../../features/users/hooks/useUpdateAvatar";
+import { useUploadResume } from "../../features/users/hooks/useUploadResume";
+import { useRemoveResume } from "../../features/users/hooks/useRemoveResume";
 
 /* ---------- types & helpers ---------- */
 
@@ -141,9 +144,6 @@ export default function CandidateProfilePage() {
       end: "2017-05",
     },
   ]);
-  const [resume, setResume] = useState<{ name: string; size: number } | null>(
-    null,
-  );
 
   // avatar
   const updateAvatar = useUpdateAvatar();
@@ -254,7 +254,6 @@ export default function CandidateProfilePage() {
           user={user}
           experience={experience}
           education={education}
-          resume={resume}
           go={setTab}
         />
       )}
@@ -280,7 +279,7 @@ export default function CandidateProfilePage() {
           setEntries={setEducation}
         />
       )}
-      {tab === "resume" && <Resume resume={resume} setResume={setResume} />}
+      {tab === "resume" && <Resume resumeUrl={user.resumeUrl ?? null} />}
     </div>
   );
 }
@@ -291,15 +290,17 @@ function Overview({
   user,
   experience,
   education,
-  resume,
   go,
 }: {
   user: any;
   experience: Entry[];
   education: Entry[];
-  resume: { name: string; size: number } | null;
   go: (t: Tab) => void;
 }) {
+  const resumeUrl = user.resumeUrl ?? null;
+  const resumeFullUrl = resumeUrl
+    ? `${import.meta.env.VITE_API_BACKEND_URL}${resumeUrl}`
+    : null;
   const skills: string[] = user.skills ?? [];
   const checks = [
     user.firstName,
@@ -311,7 +312,7 @@ function Overview({
     skills.length,
     experience.length,
     education.length,
-    resume,
+    resumeUrl,
   ];
   const pct = Math.round((checks.filter(Boolean).length / checks.length) * 100);
 
@@ -365,11 +366,31 @@ function Overview({
 
       <div className={cardCls}>
         <Title onEdit={() => go("resume")}>Resume</Title>
-        <p className="text-sm text-[var(--text-secondary)]">
-          {resume ? resume.name : "No resume uploaded yet."}
-        </p>
-      </div>
 
+        {resumeUrl ? (
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm text-[var(--text-secondary)]">
+                {resumeUrl.split("/").pop()}
+              </p>
+              <p className="text-xs text-[var(--text-muted)]">PDF</p>
+            </div>
+
+            <a
+              href={resumeFullUrl!}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-[var(--primary)] hover:underline"
+            >
+              View
+            </a>
+          </div>
+        ) : (
+          <p className="text-sm text-[var(--text-muted)]">
+            No resume uploaded yet.
+          </p>
+        )}
+      </div>
       {[
         { name: "Experience", list: experience, tab: "experience" as Tab },
         { name: "Education", list: education, tab: "education" as Tab },
@@ -765,52 +786,87 @@ function EntryList({
 
 /* ---------- Resume ---------- */
 
-function Resume({
-  resume,
-  setResume,
-}: {
-  resume: { name: string; size: number } | null;
-  setResume: (r: { name: string; size: number } | null) => void;
-}) {
+function Resume({ resumeUrl }: { resumeUrl: string | null }) {
   const [dragOver, setDragOver] = useState(false);
+
+  const uploadResumeMutation = useUploadResume();
+  const removeResumeMutation = useRemoveResume();
 
   const pick = (file?: File) => {
     if (!file) return;
-    if (!/\.(pdf|docx)$/i.test(file.name))
-      return void toast.error("Upload a PDF or DOCX file");
-    if (file.size > 5 * 1024 * 1024)
+
+    if (file.type !== "application/pdf") {
+      return void toast.error("Upload a PDF file");
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
       return void toast.error("File must be under 5 MB");
-    setResume({ name: file.name, size: file.size });
-    toast.success("Resume uploaded");
+    }
+
+    uploadResumeMutation.mutate(file, {
+      onSuccess: () => {
+        toast.success("Resume uploaded successfully");
+      },
+      onError: () => {
+        toast.error("Failed to upload resume");
+      },
+    });
+  };
+
+  const handleRemove = () => {
+    removeResumeMutation.mutate(undefined, {
+      onSuccess: () => {
+        toast.success("Resume removed successfully");
+      },
+      onError: () => {
+        toast.error("Failed to remove resume");
+      },
+    });
   };
 
   return (
     <div className={cardCls}>
       <Title>Resume</Title>
-      {resume && (
+
+      {resumeUrl && (
         <div className="mb-4 flex items-center justify-between rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg)] px-3.5 py-3">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--primary-light)] text-[var(--primary)]">
               <FileText className="h-4 w-4" />
             </div>
+
             <div>
               <p className="text-sm font-medium text-[var(--text-primary)]">
-                {resume.name}
+                {resumeUrl.split("/").pop()}
               </p>
-              <p className="text-xs text-[var(--text-muted)]">
-                {Math.round(resume.size / 1024)} KB
-              </p>
+
+              <p className="text-xs text-[var(--text-muted)]">PDF</p>
             </div>
           </div>
-          <button
-            aria-label="Remove resume"
-            onClick={() => setResume(null)}
-            className={`${iconBtn} hover:!bg-[var(--danger-bg)] hover:!text-[var(--danger)]`}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <a
+              href={`${import.meta.env.VITE_API_BACKEND_URL}${resumeUrl}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-xs font-medium text-[var(--text-secondary)] transition hover:border-[var(--primary)] hover:text-[var(--primary)]"
+            >
+              <Eye className="h-3.5 w-3.5" />
+              View
+            </a>
+
+            <button
+              type="button"
+              aria-label="Remove resume"
+              onClick={handleRemove}
+              disabled={removeResumeMutation.isPending}
+              className={`${iconBtn} transition hover:!bg-[var(--danger-bg)] hover:!text-[var(--danger)] disabled:cursor-not-allowed disabled:opacity-50`}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
       )}
+
       <label
         onDragOver={(e) => {
           e.preventDefault();
@@ -830,23 +886,25 @@ function Resume({
       >
         <input
           type="file"
-          accept=".pdf,.docx"
+          accept=".pdf"
           className="hidden"
+          disabled={uploadResumeMutation.isPending}
           onChange={(e) => {
             pick(e.target.files?.[0]);
             e.target.value = "";
           }}
         />
+
         <Upload className="h-5 w-5 text-[var(--text-muted)]" />
+
         <p className="text-sm text-[var(--text-secondary)]">
-          {resume
+          {resumeUrl
             ? "Drop a new resume to replace it, or "
             : "Drop your resume here or "}
           <span className="font-medium text-[var(--primary)]">browse</span>
         </p>
-        <p className="text-xs text-[var(--text-muted)]">
-          PDF or DOCX, up to 5 MB
-        </p>
+
+        <p className="text-xs text-[var(--text-muted)]">PDF, up to 5 MB</p>
       </label>
     </div>
   );

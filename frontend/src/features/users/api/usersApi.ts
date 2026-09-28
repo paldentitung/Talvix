@@ -77,5 +77,30 @@ export const updateAvatar = (file: File) => {
 };
 
 export const removeAvatar = async () => {
-  request("/users/profile/avatar", { method: "DELETE" }, true);
+  return request("/users/profile/avatar", { method: "DELETE" }, true);
+};
+
+export const uploadResume = async (file: File) => {
+  const formData = new FormData();
+
+  formData.append("resume", file);
+
+  return request(
+    "/users/resume",
+    {
+      method: "PATCH",
+      body: formData,
+    },
+    true,
+  );
+};
+
+export const removeResume = async () => {
+  return request(
+    "/users/resume",
+    {
+      method: "DELETE",
+    },
+    true,
+  );
 };
