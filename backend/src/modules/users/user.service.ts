@@ -9,6 +9,8 @@ import {
   UpdateRecruiterProfileInput,
   ChangePasswordInput,
 } from "./user.validation.js";
+import fs from "fs/promises";
+import path from "path";
 
 export const getUsersService = async (page: number, limit: number) => {
   const [users, totalUsers] = await Promise.all([
@@ -162,4 +164,60 @@ export const updateRecruiterLogoService = async (
       companyLogo: true,
     },
   });
+};
+export const updateUserAvatarService = async (
+  userId: string,
+  avatarUrl: string,
+) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      avatar: avatarUrl,
+    },
+    select: userResponseSelect,
+  });
+
+  return toUserResponse(updatedUser);
+};
+export const removeUserAvatarService = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  if (!user.avatar) {
+    throw new AppError("Avatar not found", 404);
+  }
+
+  const avatarPath = path.join(process.cwd(), user.avatar);
+
+  try {
+    await fs.unlink(avatarPath);
+  } catch (error: any) {
+    // File may already be missing; don't block database cleanup
+    if (error.code !== "ENOENT") {
+      throw error;
+    }
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      avatar: null,
+    },
+    select: userResponseSelect,
+  });
+
+  return toUserResponse(updatedUser);
 };

@@ -60,3 +60,22 @@ export const updateRecruiterLogo = (file: File) => {
     body: formData,
   });
 };
+
+export const updateAvatar = (file: File) => {
+  const formData = new FormData();
+
+  formData.append("avatar", file);
+
+  return request(
+    "/users/profile/avatar",
+    {
+      method: "PATCH",
+      body: formData,
+    },
+    true,
+  );
+};
+
+export const removeAvatar = async () => {
+  request("/users/profile/avatar", { method: "DELETE" }, true);
+};

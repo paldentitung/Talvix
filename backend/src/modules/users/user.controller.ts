@@ -5,6 +5,8 @@ import {
   updateRecruiterProfileService,
   getUsersService,
   updateRecruiterLogoService,
+  updateUserAvatarService,
+  removeUserAvatarService,
 } from "./user.service.js";
 import { Request, Response } from "express";
 import AppError from "../../utils/AppError.js";
@@ -73,6 +75,39 @@ export const updateRecruiterLogoController = async (
 
   res.status(200).json({
     message: "Company logo updated successfully",
+    data: user,
+  });
+};
+
+export const updateUserAvatarController = async (
+  req: Request,
+  res: Response,
+) => {
+  if (!req.file) {
+    throw new AppError("Avatar is required", 400);
+  }
+
+  const userId = req.user!.id;
+
+  const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+
+  const user = await updateUserAvatarService(userId, avatarUrl);
+
+  res.status(200).json({
+    success: true,
+    message: "Avatar updated successfully",
+    data: user,
+  });
+};
+export const removeUserAvatarController = async (
+  req: Request,
+  res: Response,
+) => {
+  const user = await removeUserAvatarService(req.user!.id);
+
+  res.status(200).json({
+    success: true,
+    message: "Avatar removed successfully",
     data: user,
   });
 };

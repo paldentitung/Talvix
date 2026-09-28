@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import {
   MapPin,
   Mail,
@@ -10,13 +10,15 @@ import {
   GraduationCap,
   Briefcase,
   X,
+  Trash2,
 } from "lucide-react";
 import { FaGithub, FaGlobe, FaLinkedin } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { useUserUpdateProfile } from "../../features/users/hooks/useUpdateUserProfile";
 import { useUpdateCandidateProfile } from "../../features/users/hooks/useUpdateCandidateProfile";
 import { useMe } from "../../features/auth/hooks/useMe";
-
+import { useRemoveAvatar } from "../../features/users/hooks/useRemoveAvatar";
+import { useUpdateAvatar } from "../../features/users/hooks/useUpdateAvatar";
 /**
  * CandidateProfilePage
  * "My profile" screen for the Job Seeker workspace.
@@ -110,6 +112,7 @@ const inputClasses =
 
 export default function CandidateProfilePage() {
   const { data: user, isLoading: isUserLoading } = useMe();
+  console.log("user data", user);
 
   const updateUserProfileMutation = useUserUpdateProfile();
   const updateCandidateProfileMutation = useUpdateCandidateProfile();
@@ -199,7 +202,37 @@ export default function CandidateProfilePage() {
     setBio(user.bio ?? "");
     setSkills(user.skills ?? []);
   };
+  const updateAvatarMutation = useUpdateAvatar();
+  const removeAvatarMutation = useRemoveAvatar();
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const isAvatarBusy =
+    updateAvatarMutation.isPending || removeAvatarMutation.isPending;
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allows re-selecting the same file later
+    if (!file) return;
 
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Image must be under 2 MB");
+      return;
+    }
+
+    updateAvatarMutation.mutate(file);
+  };
+
+  const handleRemoveAvatar = async () => {
+    try {
+      await removeAvatarMutation.mutateAsync();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to remove avatar",
+      );
+    }
+  };
   if (isUserLoading) {
     return (
       <div className="flex h-64 items-center justify-center text-sm text-[var(--text-muted)]">
@@ -224,15 +257,44 @@ export default function CandidateProfilePage() {
             />
             <div className="px-5 pb-5">
               <div className="-mt-10 flex items-end justify-between">
-                <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-[var(--card)] bg-[var(--primary-light)] font-display text-xl font-bold text-[var(--primary)]">
-                  {initials}
+                {user?.avatar ? (
+                  <img
+                    src={`${import.meta.env.VITE_API_BACKEND_URL}${user.avatar}`}
+                    alt={`${firstName} ${lastName}`}
+                    className="h-20 w-20 rounded-full border-4 border-[var(--card)] object-cover"
+                  />
+                ) : (
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-[var(--card)] bg-[var(--primary-light)] font-display text-xl font-bold text-[var(--primary)]">
+                    {initials}
+                  </div>
+                )}
+                <div className="mb-1 flex gap-2">
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarChange}
+                  />
+                  {user?.avatar && (
+                    <button
+                      aria-label="Remove avatar"
+                      onClick={handleRemoveAvatar}
+                      disabled={isAvatarBusy}
+                      className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)] text-[var(--text-secondary)] shadow-[var(--shadow-sm)] transition hover:text-red-500 disabled:opacity-50"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                  <button
+                    aria-label="Change avatar"
+                    onClick={() => avatarInputRef.current?.click()}
+                    disabled={isAvatarBusy}
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)] text-[var(--text-secondary)] shadow-[var(--shadow-sm)] transition hover:text-[var(--primary)] disabled:opacity-50"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
                 </div>
-                <button
-                  aria-label="Edit profile"
-                  className="mb-1 flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)] text-[var(--text-secondary)] shadow-[var(--shadow-sm)] transition hover:text-[var(--primary)]"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </button>
               </div>
 
               <h2 className="mt-3 font-display text-lg font-bold text-[var(--text-primary)]">
