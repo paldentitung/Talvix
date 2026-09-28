@@ -60,3 +60,47 @@ export const updateRecruiterLogo = (file: File) => {
     body: formData,
   });
 };
+
+export const updateAvatar = (file: File) => {
+  const formData = new FormData();
+
+  formData.append("avatar", file);
+
+  return request(
+    "/users/profile/avatar",
+    {
+      method: "PATCH",
+      body: formData,
+    },
+    true,
+  );
+};
+
+export const removeAvatar = async () => {
+  return request("/users/profile/avatar", { method: "DELETE" }, true);
+};
+
+export const uploadResume = async (file: File) => {
+  const formData = new FormData();
+
+  formData.append("resume", file);
+
+  return request(
+    "/users/resume",
+    {
+      method: "PATCH",
+      body: formData,
+    },
+    true,
+  );
+};
+
+export const removeResume = async () => {
+  return request(
+    "/users/resume",
+    {
+      method: "DELETE",
+    },
+    true,
+  );
+};

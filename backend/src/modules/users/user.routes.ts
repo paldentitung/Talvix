@@ -8,6 +8,10 @@ import {
   updateRecruiterProfileController,
   updateUserController,
   updateRecruiterLogoController,
+  updateUserAvatarController,
+  removeUserAvatarController,
+  uploadCandidateResumeController,
+  removeCandidateResumeController,
 } from "./user.controller.js";
 import { requireRole } from "../../middleware/role.middleware.js";
 import { validate } from "../../middleware/validate.middleware.js";
@@ -17,7 +21,11 @@ import {
   updateRecruiterProfileSchema,
   updateUserSchema,
 } from "./user.validation.js";
-import { uploadCompanyLogo } from "../../middleware/upload.middleware.js";
+import {
+  uploadAvatar,
+  uploadCompanyLogo,
+} from "../../middleware/upload.middleware.js";
+import { uploadResume } from "../../middleware/upload.middleware.js";
 
 const router = express.Router();
 
@@ -59,5 +67,33 @@ router.patch(
   requireRole("RECRUITER"),
   uploadCompanyLogo,
   asyncHandler(updateRecruiterLogoController),
+);
+
+router.patch(
+  "/profile/avatar",
+  requireAuth,
+  requireRole("CANDIDATE"),
+  uploadAvatar,
+  asyncHandler(updateUserAvatarController),
+);
+
+router.delete(
+  "/profile/avatar",
+  requireAuth,
+  requireRole("CANDIDATE"),
+  asyncHandler(removeUserAvatarController),
+);
+router.patch(
+  "/resume",
+  requireAuth,
+  requireRole("CANDIDATE"),
+  uploadResume,
+  asyncHandler(uploadCandidateResumeController),
+);
+router.delete(
+  "/resume",
+  requireAuth,
+  requireRole("CANDIDATE"),
+  asyncHandler(removeCandidateResumeController),
 );
 export default router;

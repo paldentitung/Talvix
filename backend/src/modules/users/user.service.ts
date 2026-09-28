@@ -9,6 +9,8 @@ import {
   UpdateRecruiterProfileInput,
   ChangePasswordInput,
 } from "./user.validation.js";
+import fs from "fs/promises";
+import path from "path";
 
 export const getUsersService = async (page: number, limit: number) => {
   const [users, totalUsers] = await Promise.all([
@@ -45,6 +47,13 @@ export const changePasswordService = async (
 
   if (!user) {
     throw new AppError("User not found", 404);
+  }
+
+  if (!user.password) {
+    throw new AppError(
+      "This account does not have a password. Please set a password first.",
+      400,
+    );
   }
 
   const isValidPassword = await bcrypt.compare(
@@ -155,4 +164,134 @@ export const updateRecruiterLogoService = async (
       companyLogo: true,
     },
   });
+};
+export const updateUserAvatarService = async (
+  userId: string,
+  avatarUrl: string,
+) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      avatar: avatarUrl,
+    },
+    select: userResponseSelect,
+  });
+
+  return toUserResponse(updatedUser);
+};
+export const removeUserAvatarService = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  if (!user.avatar) {
+    throw new AppError("Avatar not found", 404);
+  }
+
+  const avatarPath = path.join(process.cwd(), user.avatar);
+
+  try {
+    await fs.unlink(avatarPath);
+  } catch (error: any) {
+    // File may already be missing; don't block database cleanup
+    if (error.code !== "ENOENT") {
+      throw error;
+    }
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      avatar: null,
+    },
+    select: userResponseSelect,
+  });
+
+  return toUserResponse(updatedUser);
+};
+
+export const uploadCandidateResumeService = async (
+  userId: string,
+  resumeUrl: string,
+) => {
+  const profile = await prisma.candidateProfile.findUnique({
+    where: {
+      userId,
+    },
+  });
+
+  if (!profile) {
+    throw new AppError("Candidate profile not found", 404);
+  }
+
+  if (profile.resumeUrl) {
+    const oldResumePath = path.join(process.cwd(), profile.resumeUrl);
+
+    try {
+      await fs.unlink(oldResumePath);
+    } catch (error: any) {
+      if (error.code !== "ENOENT") {
+        throw error;
+      }
+    }
+  }
+
+  const updatedProfile = await prisma.candidateProfile.update({
+    where: {
+      userId,
+    },
+    data: {
+      resumeUrl,
+    },
+  });
+
+  return updatedProfile;
+};
+export const removeCandidateResumeService = async (userId: string) => {
+  const profile = await prisma.candidateProfile.findUnique({
+    where: {
+      userId,
+    },
+  });
+
+  if (!profile) {
+    throw new AppError("Candidate profile not found", 404);
+  }
+
+  if (!profile.resumeUrl) {
+    throw new AppError("Resume not found", 404);
+  }
+
+  const resumePath = path.join(process.cwd(), profile.resumeUrl);
+
+  try {
+    await fs.unlink(resumePath);
+  } catch (error: any) {
+    if (error.code !== "ENOENT") {
+      throw error;
+    }
+  }
+
+  const updatedProfile = await prisma.candidateProfile.update({
+    where: {
+      userId,
+    },
+    data: {
+      resumeUrl: null,
+    },
+  });
+
+  return updatedProfile;
 };
