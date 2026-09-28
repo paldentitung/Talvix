@@ -47,6 +47,13 @@ export const changePasswordService = async (
     throw new AppError("User not found", 404);
   }
 
+  if (!user.password) {
+    throw new AppError(
+      "This account does not have a password. Please set a password first.",
+      400,
+    );
+  }
+
   const isValidPassword = await bcrypt.compare(
     data.currentPassword,
     user.password,
