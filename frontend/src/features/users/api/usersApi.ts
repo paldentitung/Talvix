@@ -4,6 +4,8 @@ import type {
   UpdateCandidateProfileRequest,
   UpdateRecruiterProfileRequest,
   ChangePasswordRequest,
+  AddCandidateEducationInput,
+  AddCandidateExperienceInput,
 } from "../types/user.type";
 
 export const getUsers = (page: number, limit: number) => {
@@ -98,6 +100,84 @@ export const uploadResume = async (file: File) => {
 export const removeResume = async () => {
   return request(
     "/users/resume",
+    {
+      method: "DELETE",
+    },
+    true,
+  );
+};
+export const addCandidateEducation = async (
+  data: AddCandidateEducationInput,
+) => {
+  return request(
+    "/users/candidate/education",
+    {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    },
+    true,
+  );
+};
+
+export const updateCandidateEducation = async (
+  educationId: string,
+  data: AddCandidateEducationInput,
+) => {
+  return request(
+    `/users/candidate/education/${educationId}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(data),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    },
+    true,
+  );
+};
+
+export const deleteCandidateEducation = async (educationId: string) => {
+  return request(
+    `/users/candidate/education/${educationId}`,
+    {
+      method: "DELETE",
+    },
+    true,
+  );
+};
+export const addCandidateExperience = async (
+  data: AddCandidateExperienceInput,
+) => {
+  return request(
+    "/users/candidate/experience",
+    {
+      method: "POST",
+      body: JSON.stringify(data),
+    },
+    true,
+  );
+};
+
+export const updateCandidateExperience = async (
+  experienceId: string,
+  data: AddCandidateExperienceInput,
+) => {
+  return request(
+    `/users/candidate/experience/${experienceId}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(data),
+    },
+    true,
+  );
+};
+
+export const deleteCandidateExperience = async (experienceId: string) => {
+  return request(
+    `/users/candidate/experience/${experienceId}`,
     {
       method: "DELETE",
     },

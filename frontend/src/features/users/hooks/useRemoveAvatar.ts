@@ -9,9 +9,9 @@ export const useRemoveAvatar = () => {
     mutationFn: removeAvatar,
     onSuccess: () => {
       toast.success("Avatar removed");
-      queryClient.setQueryData(["me"], (old: any) =>
-        old ? { ...old, data: { ...old.data, avatar: null } } : old,
-      );
+      queryClient.invalidateQueries({
+        queryKey: ["me"],
+      });
     },
   });
 };

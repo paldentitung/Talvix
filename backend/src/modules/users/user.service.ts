@@ -8,6 +8,8 @@ import {
   UpdateCandidateProfileInput,
   UpdateRecruiterProfileInput,
   ChangePasswordInput,
+  AddCandidateEducationInput,
+  AddCandidateExperienceInput,
 } from "./user.validation.js";
 import fs from "fs/promises";
 import path from "path";
@@ -294,4 +296,208 @@ export const removeCandidateResumeService = async (userId: string) => {
   });
 
   return updatedProfile;
+};
+
+export const addCandidateEducationService = async (
+  userId: string,
+  data: AddCandidateEducationInput,
+) => {
+  const candidateProfile = await prisma.candidateProfile.findUnique({
+    where: {
+      userId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!candidateProfile) {
+    throw new AppError("Candidate profile not found", 404);
+  }
+
+  const education = await prisma.education.create({
+    data: {
+      candidateId: candidateProfile.id,
+      school: data.school,
+      degree: data.degree,
+      startDate: data.startDate,
+      endDate: data.endDate ?? null,
+    },
+  });
+
+  return education;
+};
+export const updateCandidateEducationService = async (
+  userId: string,
+  educationId: string,
+  data: AddCandidateEducationInput,
+) => {
+  const candidateProfile = await prisma.candidateProfile.findUnique({
+    where: {
+      userId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!candidateProfile) {
+    throw new AppError("Candidate profile not found", 404);
+  }
+
+  const education = await prisma.education.findFirst({
+    where: {
+      id: educationId,
+      candidateId: candidateProfile.id,
+    },
+  });
+
+  if (!education) {
+    throw new AppError("Education not found", 404);
+  }
+
+  const updatedEducation = await prisma.education.update({
+    where: {
+      id: educationId,
+    },
+    data: {
+      school: data.school,
+      degree: data.degree,
+      startDate: data.startDate,
+      endDate: data.endDate ?? null,
+    },
+  });
+
+  return updatedEducation;
+};
+
+export const deleteCandidateEducationService = async (
+  userId: string,
+  educationId: string,
+) => {
+  const candidateProfile = await prisma.candidateProfile.findUnique({
+    where: {
+      userId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!candidateProfile) {
+    throw new AppError("Candidate profile not found", 404);
+  }
+
+  const education = await prisma.education.findFirst({
+    where: {
+      id: educationId,
+      candidateId: candidateProfile.id,
+    },
+  });
+
+  if (!education) {
+    throw new AppError("Education not found", 404);
+  }
+
+  await prisma.education.delete({
+    where: {
+      id: educationId,
+    },
+  });
+
+  return education;
+};
+export const addCandidateExperienceService = async (
+  userId: string,
+  data: AddCandidateExperienceInput,
+) => {
+  const candidateProfile = await prisma.candidateProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+
+  if (!candidateProfile) {
+    throw new AppError("Candidate profile not found", 404);
+  }
+
+  const experience = await prisma.experience.create({
+    data: {
+      candidateId: candidateProfile.id,
+      title: data.title,
+      company: data.company,
+      startDate: data.startDate,
+      endDate: data.endDate ?? null,
+      description: data.description ?? null,
+      order: data.order ?? 0,
+    },
+  });
+
+  return experience;
+};
+export const updateCandidateExperienceService = async (
+  userId: string,
+  experienceId: string,
+  data: AddCandidateExperienceInput,
+) => {
+  const candidateProfile = await prisma.candidateProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+
+  if (!candidateProfile) {
+    throw new AppError("Candidate profile not found", 404);
+  }
+
+  const experience = await prisma.experience.findFirst({
+    where: {
+      id: experienceId,
+      candidateId: candidateProfile.id,
+    },
+  });
+
+  if (!experience) {
+    throw new AppError("Experience not found", 404);
+  }
+
+  return prisma.experience.update({
+    where: { id: experienceId },
+    data: {
+      title: data.title,
+      company: data.company,
+      startDate: data.startDate,
+      endDate: data.endDate ?? null,
+      description: data.description ?? null,
+      order: data.order ?? 0,
+    },
+  });
+};
+export const deleteCandidateExperienceService = async (
+  userId: string,
+  experienceId: string,
+) => {
+  const candidateProfile = await prisma.candidateProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+
+  if (!candidateProfile) {
+    throw new AppError("Candidate profile not found", 404);
+  }
+
+  const experience = await prisma.experience.findFirst({
+    where: {
+      id: experienceId,
+      candidateId: candidateProfile.id,
+    },
+  });
+
+  if (!experience) {
+    throw new AppError("Experience not found", 404);
+  }
+
+  await prisma.experience.delete({
+    where: { id: experienceId },
+  });
+
+  return { message: "Experience deleted successfully" };
 };

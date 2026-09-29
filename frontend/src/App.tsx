@@ -21,7 +21,7 @@ import PublicLayout from "./layouts/PublicLayout.tsx";
 import CandidateSavedJobs from "./candidate/pages/CandidateSavedJobs.tsx";
 import CandidateLayout from "./layouts/CandidateLayout.tsx";
 import CandidateJobsPage from "./candidate/pages/CandidateJobsPage.tsx";
-import CandidateProfilePage from "./candidate/pages/CandidateProfilePage.tsx";
+import CandidateProfilePage from "./candidate/pages/profile/CandidateProfilePage.tsx";
 import CandidateSettingsPage from "./candidate/pages/CandidateSettingsPage.tsx";
 import CandidateApplicationsPage from "./candidate/pages/CandidateApplicationsPage.tsx";
 import ProtectedRoute from "./routes/ProtectedRoute.tsx";

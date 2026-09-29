@@ -47,6 +47,70 @@ export const changePasswordSchema = z
     message: "New password must be different from current password",
     path: ["newPassword"],
   });
+export const addCandidateEducationSchema = z
+  .object({
+    school: z
+      .string()
+      .min(1, "School is required")
+      .max(200, "School name is too long"),
+
+    degree: z
+      .string()
+      .min(1, "Degree is required")
+      .max(200, "Degree is too long"),
+
+    startDate: z.coerce.date({
+      message: "Start date must be a valid date",
+    }),
+
+    endDate: z.coerce
+      .date({
+        message: "End date must be a valid date",
+      })
+      .nullable()
+      .optional(),
+  })
+  .strict()
+  .refine((data) => !data.endDate || data.endDate >= data.startDate, {
+    message: "End date cannot be before start date",
+    path: ["endDate"],
+  });
+export const addCandidateExperienceSchema = z
+  .object({
+    title: z
+      .string()
+      .min(1, "Job title is required")
+      .max(200, "Job title is too long"),
+
+    company: z
+      .string()
+      .min(1, "Company is required")
+      .max(200, "Company name is too long"),
+
+    startDate: z.coerce.date({
+      message: "Start date must be a valid date",
+    }),
+
+    endDate: z.coerce
+      .date({
+        message: "End date must be a valid date",
+      })
+      .nullable()
+      .optional(),
+
+    description: z
+      .string()
+      .max(5000, "Description is too long")
+      .nullable()
+      .optional(),
+
+    order: z.number().int().min(0).optional(),
+  })
+  .strict()
+  .refine((data) => !data.endDate || data.endDate >= data.startDate, {
+    message: "End date cannot be before start date",
+    path: ["endDate"],
+  });
 
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 export type UpdateCandidateProfileInput = z.infer<
@@ -56,3 +120,9 @@ export type UpdateRecruiterProfileInput = z.infer<
   typeof updateRecruiterProfileSchema
 >;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+export type AddCandidateEducationInput = z.infer<
+  typeof addCandidateEducationSchema
+>;
+export type AddCandidateExperienceInput = z.infer<
+  typeof addCandidateExperienceSchema
+>;

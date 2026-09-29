@@ -9,6 +9,12 @@ import {
   removeUserAvatarService,
   uploadCandidateResumeService,
   removeCandidateResumeService,
+  addCandidateEducationService,
+  updateCandidateEducationService,
+  deleteCandidateEducationService,
+  addCandidateExperienceService,
+  updateCandidateExperienceService,
+  deleteCandidateExperienceService,
 } from "./user.service.js";
 import { Request, Response } from "express";
 import AppError from "../../utils/AppError.js";
@@ -144,5 +150,94 @@ export const removeCandidateResumeController = async (
     success: true,
     message: "Resume removed successfully",
     data: result,
+  });
+};
+
+export const addCandidateEducationController = async (
+  req: Request,
+  res: Response,
+) => {
+  const result = await addCandidateEducationService(req.user!.id, req.body);
+  res.status(200).json({
+    success: true,
+    message: "Education Added successfully",
+    data: result,
+  });
+};
+export const updateCandidateEducationController = async (
+  req: Request<{ educationId: string }>,
+  res: Response,
+) => {
+  const result = await updateCandidateEducationService(
+    req.user!.id,
+    req.params.educationId,
+    req.body,
+  );
+
+  res.status(200).json({
+    success: true,
+    message: "Education updated successfully",
+    data: result,
+  });
+};
+
+export const deleteCandidateEducationController = async (
+  req: Request<{ educationId: string }>,
+  res: Response,
+) => {
+  const result = await deleteCandidateEducationService(
+    req.user!.id,
+    req.params.educationId,
+  );
+
+  res.status(200).json({
+    success: true,
+    message: "Education deleted successfully",
+    data: result,
+  });
+};
+export const addCandidateExperienceController = async (
+  req: Request,
+  res: Response,
+) => {
+  const experience = await addCandidateExperienceService(
+    req.user!.id,
+    req.body,
+  );
+
+  res.status(201).json({
+    success: true,
+    message: "Experience added successfully",
+    data: experience,
+  });
+};
+export const updateCandidateExperienceController = async (
+  req: Request<{ experienceId: string }>,
+  res: Response,
+) => {
+  const experience = await updateCandidateExperienceService(
+    req.user!.id,
+    req.params.experienceId,
+    req.body,
+  );
+
+  res.status(200).json({
+    success: true,
+    message: "Experience updated successfully",
+    data: experience,
+  });
+};
+export const deleteCandidateExperienceController = async (
+  req: Request<{ experienceId: string }>,
+  res: Response,
+) => {
+  const result = await deleteCandidateExperienceService(
+    req.user!.id,
+    req.params.experienceId,
+  );
+
+  res.status(200).json({
+    success: true,
+    ...result,
   });
 };

@@ -22,9 +22,30 @@ export const userResponseSelect = {
       title: true,
       resumeUrl: true,
       skills: true,
+
+      educations: {
+        select: {
+          id: true,
+          school: true,
+          degree: true,
+          startDate: true,
+          endDate: true,
+        },
+      },
+
+      experiences: {
+        select: {
+          id: true,
+          title: true,
+          company: true,
+          startDate: true,
+          endDate: true,
+          description: true,
+          order: true,
+        },
+      },
     },
   },
-
   recruiterProfile: {
     select: {
       companyName: true,

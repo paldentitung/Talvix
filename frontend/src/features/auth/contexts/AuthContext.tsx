@@ -1,17 +1,12 @@
-import { createContext, useContext } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 import { useMe } from "../hooks/useMe";
-import type { User } from "../types/auth.type";
-interface AuthContextType {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-}
+import type { AuthContextType } from "../types/auth.type";
 
 export const AuthContext = createContext<AuthContextType | undefined>(
   undefined,
 );
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { data: user, isLoading } = useMe();
 
   return (
