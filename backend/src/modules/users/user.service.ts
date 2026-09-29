@@ -8,6 +8,7 @@ import {
   UpdateCandidateProfileInput,
   UpdateRecruiterProfileInput,
   ChangePasswordInput,
+  AddCandidateEducationInput,
 } from "./user.validation.js";
 import fs from "fs/promises";
 import path from "path";
@@ -294,4 +295,114 @@ export const removeCandidateResumeService = async (userId: string) => {
   });
 
   return updatedProfile;
+};
+
+export const addCandidateEducationService = async (
+  userId: string,
+  data: AddCandidateEducationInput,
+) => {
+  const candidateProfile = await prisma.candidateProfile.findUnique({
+    where: {
+      userId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!candidateProfile) {
+    throw new AppError("Candidate profile not found", 404);
+  }
+
+  const education = await prisma.education.create({
+    data: {
+      candidateId: candidateProfile.id,
+      school: data.school,
+      degree: data.degree,
+      startDate: data.startDate,
+      endDate: data.endDate ?? null,
+    },
+  });
+
+  return education;
+};
+export const updateCandidateEducationService = async (
+  userId: string,
+  educationId: string,
+  data: AddCandidateEducationInput,
+) => {
+  const candidateProfile = await prisma.candidateProfile.findUnique({
+    where: {
+      userId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!candidateProfile) {
+    throw new AppError("Candidate profile not found", 404);
+  }
+
+  const education = await prisma.education.findFirst({
+    where: {
+      id: educationId,
+      candidateId: candidateProfile.id,
+    },
+  });
+
+  if (!education) {
+    throw new AppError("Education not found", 404);
+  }
+
+  const updatedEducation = await prisma.education.update({
+    where: {
+      id: educationId,
+    },
+    data: {
+      school: data.school,
+      degree: data.degree,
+      startDate: data.startDate,
+      endDate: data.endDate ?? null,
+    },
+  });
+
+  return updatedEducation;
+};
+
+export const deleteCandidateEducationService = async (
+  userId: string,
+  educationId: string,
+) => {
+  const candidateProfile = await prisma.candidateProfile.findUnique({
+    where: {
+      userId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!candidateProfile) {
+    throw new AppError("Candidate profile not found", 404);
+  }
+
+  const education = await prisma.education.findFirst({
+    where: {
+      id: educationId,
+      candidateId: candidateProfile.id,
+    },
+  });
+
+  if (!education) {
+    throw new AppError("Education not found", 404);
+  }
+
+  await prisma.education.delete({
+    where: {
+      id: educationId,
+    },
+  });
+
+  return education;
 };

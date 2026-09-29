@@ -47,6 +47,34 @@ export const changePasswordSchema = z
     message: "New password must be different from current password",
     path: ["newPassword"],
   });
+export const addCandidateEducationSchema = z
+  .object({
+    school: z
+      .string()
+      .min(1, "School is required")
+      .max(200, "School name is too long"),
+
+    degree: z
+      .string()
+      .min(1, "Degree is required")
+      .max(200, "Degree is too long"),
+
+    startDate: z.coerce.date({
+      message: "Start date must be a valid date",
+    }),
+
+    endDate: z.coerce
+      .date({
+        message: "End date must be a valid date",
+      })
+      .nullable()
+      .optional(),
+  })
+  .strict()
+  .refine((data) => !data.endDate || data.endDate >= data.startDate, {
+    message: "End date cannot be before start date",
+    path: ["endDate"],
+  });
 
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 export type UpdateCandidateProfileInput = z.infer<
@@ -56,3 +84,6 @@ export type UpdateRecruiterProfileInput = z.infer<
   typeof updateRecruiterProfileSchema
 >;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+export type AddCandidateEducationInput = z.infer<
+  typeof addCandidateEducationSchema
+>;

@@ -8,16 +8,8 @@ export const useRemoveResume = () => {
     mutationFn: removeResume,
 
     onSuccess: () => {
-      queryClient.setQueryData(["me"], (old: any) => {
-        if (!old) return old;
-
-        return {
-          ...old,
-          data: {
-            ...old.data,
-            resumeUrl: null,
-          },
-        };
+      queryClient.invalidateQueries({
+        queryKey: ["me"],
       });
     },
   });

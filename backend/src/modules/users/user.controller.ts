@@ -9,6 +9,9 @@ import {
   removeUserAvatarService,
   uploadCandidateResumeService,
   removeCandidateResumeService,
+  addCandidateEducationService,
+  updateCandidateEducationService,
+  deleteCandidateEducationService,
 } from "./user.service.js";
 import { Request, Response } from "express";
 import AppError from "../../utils/AppError.js";
@@ -143,6 +146,50 @@ export const removeCandidateResumeController = async (
   res.status(200).json({
     success: true,
     message: "Resume removed successfully",
+    data: result,
+  });
+};
+
+export const addCandidateEducationController = async (
+  req: Request,
+  res: Response,
+) => {
+  const result = await addCandidateEducationService(req.user!.id, req.body);
+  res.status(200).json({
+    success: true,
+    message: "Education Added successfully",
+    data: result,
+  });
+};
+export const updateCandidateEducationController = async (
+  req: Request<{ educationId: string }>,
+  res: Response,
+) => {
+  const result = await updateCandidateEducationService(
+    req.user!.id,
+    req.params.educationId,
+    req.body,
+  );
+
+  res.status(200).json({
+    success: true,
+    message: "Education updated successfully",
+    data: result,
+  });
+};
+
+export const deleteCandidateEducationController = async (
+  req: Request<{ educationId: string }>,
+  res: Response,
+) => {
+  const result = await deleteCandidateEducationService(
+    req.user!.id,
+    req.params.educationId,
+  );
+
+  res.status(200).json({
+    success: true,
+    message: "Education deleted successfully",
     data: result,
   });
 };

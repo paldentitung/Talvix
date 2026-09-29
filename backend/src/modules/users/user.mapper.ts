@@ -18,6 +18,14 @@ export interface UserResponse {
   resumeUrl: string | null;
   skills: string[];
 
+  educations: {
+    id: string;
+    school: string;
+    degree: string;
+    startDate: Date;
+    endDate: Date | null;
+  }[];
+
   // Recruiter fields — null if not a recruiter or profile not yet created
   companyName: string | null;
   companyLogo: string | null;
@@ -50,6 +58,8 @@ export const toUserResponse = (user: UserResponsePayload): UserResponse => ({
   title: user.candidateProfile?.title ?? null,
   resumeUrl: user.candidateProfile?.resumeUrl ?? null,
   skills: user.candidateProfile?.skills ?? [],
+
+  educations: user.candidateProfile?.educations ?? [],
 
   companyName: user.recruiterProfile?.companyName ?? null,
   companyLogo: user.recruiterProfile?.companyLogo ?? null,

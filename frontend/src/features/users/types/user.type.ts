@@ -13,6 +13,7 @@ export interface User {
   title: string | null;
   resumeUrl: string | null;
   skills: string[];
+  educations?: CandidateEducation[];
   companyName: string | null;
   companyLogo: string | null;
   companyWebsite: string | null;
@@ -56,4 +57,17 @@ export interface UpdateRecruiterProfileRequest {
 export interface ChangePasswordRequest {
   currentPassword: string;
   newPassword: string;
+}
+export interface AddCandidateEducationInput {
+  school: string;
+  degree: string;
+  startDate: string;
+  endDate: string | null;
+}
+export interface CandidateEducation {
+  id: string;
+  school: string;
+  degree: string;
+  startDate: string; // ISO, e.g. "2024-05-01T00:00:00.000Z"
+  endDate: string | null;
 }

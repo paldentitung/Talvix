@@ -12,10 +12,14 @@ import {
   removeUserAvatarController,
   uploadCandidateResumeController,
   removeCandidateResumeController,
+  addCandidateEducationController,
+  updateCandidateEducationController,
+  deleteCandidateEducationController,
 } from "./user.controller.js";
 import { requireRole } from "../../middleware/role.middleware.js";
 import { validate } from "../../middleware/validate.middleware.js";
 import {
+  addCandidateEducationSchema,
   changePasswordSchema,
   updateCandidateProfileSchema,
   updateRecruiterProfileSchema,
@@ -95,5 +99,26 @@ router.delete(
   requireAuth,
   requireRole("CANDIDATE"),
   asyncHandler(removeCandidateResumeController),
+);
+
+router.post(
+  "/candidate/education",
+  requireAuth,
+  requireRole("CANDIDATE"),
+  validate(addCandidateEducationSchema),
+  asyncHandler(addCandidateEducationController),
+);
+router.put(
+  "/candidate/education/:educationId",
+  requireAuth,
+  validate(addCandidateEducationSchema),
+  requireRole("CANDIDATE"),
+  asyncHandler(updateCandidateEducationController),
+);
+router.delete(
+  "/candidate/education/:educationId",
+  requireAuth,
+  requireRole("CANDIDATE"),
+  asyncHandler(deleteCandidateEducationController),
 );
 export default router;

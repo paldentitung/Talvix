@@ -1,4 +1,5 @@
-import type { UserRole } from "../../../shared/types/user.types";
+import type { User } from "../../users/types/user.type";
+
 export interface RegisterRequest {
   firstName: string;
   lastName: string;
@@ -6,6 +7,7 @@ export interface RegisterRequest {
   password: string;
   role: "CANDIDATE" | "RECRUITER";
 }
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -16,13 +18,10 @@ export interface ResetPasswordRequest {
   newPassword: string;
 }
 
-export interface User {
-  id: string;
-  email: string;
-  role: UserRole;
-}
 export interface AuthContextType {
   user: User | null;
+  isAuthenticated: boolean;
   isLoading: boolean;
-  setUser: React.Dispatch<React.SetStateAction<User | null>>;
 }
+
+export type { User };

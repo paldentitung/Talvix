@@ -4,7 +4,8 @@ import type {
   LoginRequest,
   ResetPasswordRequest,
 } from "../types/auth.type";
-
+import type { ApiResponse } from "../../../shared/types/api.types";
+import type { User } from "../../users/types/user.type";
 export const register = async (data: RegisterRequest) => {
   return request(
     "/auth/register",
@@ -67,7 +68,7 @@ export const resetPassword = async (data: ResetPasswordRequest) => {
   );
 };
 
-export const getMe = async () => {
+export const getMe = async (): Promise<ApiResponse<User>> => {
   return request("/auth/me", {}, true);
 };
 
