@@ -5,13 +5,11 @@ export interface UserResponse {
   email: string;
   firstName: string;
   lastName: string;
-
   role: UserResponsePayload["role"];
-
   avatar: string | null;
   phone: string | null;
 
-  // Candidate fields — null if not a candidate or profile not yet created
+  // Candidate fields
   bio: string | null;
   location: string | null;
   title: string | null;
@@ -26,7 +24,17 @@ export interface UserResponse {
     endDate: Date | null;
   }[];
 
-  // Recruiter fields — null if not a recruiter or profile not yet created
+  experiences: {
+    id: string;
+    title: string;
+    company: string;
+    startDate: Date;
+    endDate: Date | null;
+    description: string | null;
+    order: number;
+  }[];
+
+  // Recruiter fields
   companyName: string | null;
   companyLogo: string | null;
   companyWebsite: string | null;
@@ -37,19 +45,15 @@ export interface UserResponse {
   companySize: string | null;
 
   isVerified: boolean;
-
   createdAt: Date;
   updatedAt: Date;
 }
-
 export const toUserResponse = (user: UserResponsePayload): UserResponse => ({
   id: user.id,
   email: user.email,
   firstName: user.firstName,
   lastName: user.lastName,
-
   role: user.role,
-
   avatar: user.avatar,
   phone: user.phone,
 
@@ -60,6 +64,7 @@ export const toUserResponse = (user: UserResponsePayload): UserResponse => ({
   skills: user.candidateProfile?.skills ?? [],
 
   educations: user.candidateProfile?.educations ?? [],
+  experiences: user.candidateProfile?.experiences ?? [],
 
   companyName: user.recruiterProfile?.companyName ?? null,
   companyLogo: user.recruiterProfile?.companyLogo ?? null,
@@ -71,7 +76,6 @@ export const toUserResponse = (user: UserResponsePayload): UserResponse => ({
   companySize: user.recruiterProfile?.companySize ?? null,
 
   isVerified: user.isVerified,
-
   createdAt: user.createdAt,
   updatedAt: user.updatedAt,
 });

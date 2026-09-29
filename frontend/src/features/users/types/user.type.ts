@@ -8,17 +8,25 @@ export interface User {
   role: UserRole;
   avatar: string | null;
   phone: string | null;
+
   bio: string | null;
   location: string | null;
   title: string | null;
   resumeUrl: string | null;
   skills: string[];
+
   educations?: CandidateEducation[];
+  experiences?: CandidateExperience[];
+
   companyName: string | null;
   companyLogo: string | null;
   companyWebsite: string | null;
   companyDescription: string | null;
   companyLocation: string | null;
+  companyTagline: string | null;
+  companyIndustry: string | null;
+  companySize: string | null;
+
   isVerified: boolean;
   createdAt: string;
   updatedAt: string;
@@ -58,16 +66,39 @@ export interface ChangePasswordRequest {
   currentPassword: string;
   newPassword: string;
 }
+
+// POST /candidate/education
 export interface AddCandidateEducationInput {
   school: string;
   degree: string;
   startDate: string;
   endDate: string | null;
 }
+
 export interface CandidateEducation {
   id: string;
   school: string;
   degree: string;
-  startDate: string; // ISO, e.g. "2024-05-01T00:00:00.000Z"
+  startDate: string;
   endDate: string | null;
+}
+
+// POST /candidate/experience
+export interface AddCandidateExperienceInput {
+  title: string;
+  company: string;
+  startDate: string;
+  endDate: string | null;
+  description: string | null;
+  order?: number;
+}
+
+export interface CandidateExperience {
+  id: string;
+  title: string;
+  company: string;
+  startDate: string;
+  endDate: string | null;
+  description: string | null;
+  order: number;
 }

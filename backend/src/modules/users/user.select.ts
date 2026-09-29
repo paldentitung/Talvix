@@ -32,6 +32,18 @@ export const userResponseSelect = {
           endDate: true,
         },
       },
+
+      experiences: {
+        select: {
+          id: true,
+          title: true,
+          company: true,
+          startDate: true,
+          endDate: true,
+          description: true,
+          order: true,
+        },
+      },
     },
   },
   recruiterProfile: {

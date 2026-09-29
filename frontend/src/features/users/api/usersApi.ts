@@ -5,6 +5,7 @@ import type {
   UpdateRecruiterProfileRequest,
   ChangePasswordRequest,
   AddCandidateEducationInput,
+  AddCandidateExperienceInput,
 } from "../types/user.type";
 
 export const getUsers = (page: number, limit: number) => {
@@ -141,6 +142,42 @@ export const updateCandidateEducation = async (
 export const deleteCandidateEducation = async (educationId: string) => {
   return request(
     `/users/candidate/education/${educationId}`,
+    {
+      method: "DELETE",
+    },
+    true,
+  );
+};
+export const addCandidateExperience = async (
+  data: AddCandidateExperienceInput,
+) => {
+  return request(
+    "/users/candidate/experience",
+    {
+      method: "POST",
+      body: JSON.stringify(data),
+    },
+    true,
+  );
+};
+
+export const updateCandidateExperience = async (
+  experienceId: string,
+  data: AddCandidateExperienceInput,
+) => {
+  return request(
+    `/users/candidate/experience/${experienceId}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(data),
+    },
+    true,
+  );
+};
+
+export const deleteCandidateExperience = async (experienceId: string) => {
+  return request(
+    `/users/candidate/experience/${experienceId}`,
     {
       method: "DELETE",
     },

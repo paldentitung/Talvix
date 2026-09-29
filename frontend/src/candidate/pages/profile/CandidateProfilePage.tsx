@@ -11,9 +11,9 @@ import ProfileHeader from "./ProfileHeader";
 import OverviewTab from "./OverviewTab";
 import BasicTab from "./BasicTab";
 import ResumeTab from "./ResumeTab";
-import EntryList from "./EntryList";
 import EducationSection, { toEducationEntry } from "./EducationSection";
-import type { Entry, Tab } from "./shared";
+import ExperienceSection, { toExperienceEntry } from "./ExperienceSection";
+import type { Tab } from "./shared";
 
 const TABS = [
   { id: "overview", label: "Overview", icon: LayoutGrid },
@@ -25,36 +25,7 @@ const TABS = [
 
 export default function CandidateProfilePage() {
   const { data: user, isLoading } = useMe();
-  console.log("user data", user);
   const [tab, setTab] = useState<Tab>("overview");
-
-  // Placeholder until experience has endpoints.
-  const [experience, setExperience] = useState<Entry[]>([
-    {
-      id: "e1",
-      title: "Senior Product Designer",
-      org: "Loom",
-      start: "2022-01",
-      end: null,
-      description: "Led design for the core recording experience.",
-    },
-    {
-      id: "e2",
-      title: "Product Designer",
-      org: "Airbnb",
-      start: "2019-03",
-      end: "2021-12",
-    },
-  ]);
-
-  const saveExperience = (entry: Entry) =>
-    setExperience((list) =>
-      entry.id
-        ? list.map((x) => (x.id === entry.id ? entry : x))
-        : [{ ...entry, id: crypto.randomUUID() }, ...list],
-    );
-  const removeExperience = (entry: Entry) =>
-    setExperience((list) => list.filter((x) => x.id !== entry.id));
 
   if (isLoading || !user) {
     return (
@@ -63,6 +34,9 @@ export default function CandidateProfilePage() {
       </div>
     );
   }
+
+  const educations = user.educations ?? [];
+  const experiences = user.experiences ?? [];
 
   return (
     <div className="space-y-6 pb-28 lg:pb-10">
@@ -88,27 +62,14 @@ export default function CandidateProfilePage() {
       {tab === "overview" && (
         <OverviewTab
           user={user}
-          experience={experience}
-          education={(user.educations ?? []).map(toEducationEntry)}
+          experience={experiences.map(toExperienceEntry)}
+          education={educations.map(toEducationEntry)}
           go={setTab}
         />
       )}
       {tab === "basic" && <BasicTab key={user.id} user={user} />}
-      {tab === "experience" && (
-        <EntryList
-          heading="Experience"
-          titleLabel="Job title"
-          orgLabel="Company"
-          currentLabel="I currently work here"
-          withDescription
-          entries={experience}
-          onSave={saveExperience}
-          onDelete={removeExperience}
-        />
-      )}
-      {tab === "education" && (
-        <EducationSection education={user.educations ?? []} />
-      )}
+      {tab === "experience" && <ExperienceSection experience={experiences} />}
+      {tab === "education" && <EducationSection education={educations} />}
       {tab === "resume" && <ResumeTab resumeUrl={user.resumeUrl ?? null} />}
     </div>
   );

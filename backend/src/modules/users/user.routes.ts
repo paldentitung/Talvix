@@ -15,6 +15,9 @@ import {
   addCandidateEducationController,
   updateCandidateEducationController,
   deleteCandidateEducationController,
+  addCandidateExperienceController,
+  updateCandidateExperienceController,
+  deleteCandidateExperienceController,
 } from "./user.controller.js";
 import { requireRole } from "../../middleware/role.middleware.js";
 import { validate } from "../../middleware/validate.middleware.js";
@@ -24,6 +27,7 @@ import {
   updateCandidateProfileSchema,
   updateRecruiterProfileSchema,
   updateUserSchema,
+  addCandidateExperienceSchema,
 } from "./user.validation.js";
 import {
   uploadAvatar,
@@ -120,5 +124,27 @@ router.delete(
   requireAuth,
   requireRole("CANDIDATE"),
   asyncHandler(deleteCandidateEducationController),
+);
+router.post(
+  "/candidate/experience",
+  requireAuth,
+  requireRole("CANDIDATE"),
+  validate(addCandidateExperienceSchema),
+  asyncHandler(addCandidateExperienceController),
+);
+
+router.put(
+  "/candidate/experience/:experienceId",
+  requireAuth,
+  requireRole("CANDIDATE"),
+  validate(addCandidateExperienceSchema),
+  asyncHandler(updateCandidateExperienceController),
+);
+
+router.delete(
+  "/candidate/experience/:experienceId",
+  requireAuth,
+  requireRole("CANDIDATE"),
+  asyncHandler(deleteCandidateExperienceController),
 );
 export default router;

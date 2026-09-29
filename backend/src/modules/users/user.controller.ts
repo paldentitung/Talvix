@@ -12,6 +12,9 @@ import {
   addCandidateEducationService,
   updateCandidateEducationService,
   deleteCandidateEducationService,
+  addCandidateExperienceService,
+  updateCandidateExperienceService,
+  deleteCandidateExperienceService,
 } from "./user.service.js";
 import { Request, Response } from "express";
 import AppError from "../../utils/AppError.js";
@@ -191,5 +194,50 @@ export const deleteCandidateEducationController = async (
     success: true,
     message: "Education deleted successfully",
     data: result,
+  });
+};
+export const addCandidateExperienceController = async (
+  req: Request,
+  res: Response,
+) => {
+  const experience = await addCandidateExperienceService(
+    req.user!.id,
+    req.body,
+  );
+
+  res.status(201).json({
+    success: true,
+    message: "Experience added successfully",
+    data: experience,
+  });
+};
+export const updateCandidateExperienceController = async (
+  req: Request<{ experienceId: string }>,
+  res: Response,
+) => {
+  const experience = await updateCandidateExperienceService(
+    req.user!.id,
+    req.params.experienceId,
+    req.body,
+  );
+
+  res.status(200).json({
+    success: true,
+    message: "Experience updated successfully",
+    data: experience,
+  });
+};
+export const deleteCandidateExperienceController = async (
+  req: Request<{ experienceId: string }>,
+  res: Response,
+) => {
+  const result = await deleteCandidateExperienceService(
+    req.user!.id,
+    req.params.experienceId,
+  );
+
+  res.status(200).json({
+    success: true,
+    ...result,
   });
 };
