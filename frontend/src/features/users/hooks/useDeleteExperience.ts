@@ -9,7 +9,7 @@ export const useDeleteExperience = () => {
 
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["me"],
+        queryKey: ["currentUser"],
       });
     },
   });

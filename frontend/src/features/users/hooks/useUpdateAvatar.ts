@@ -12,7 +12,7 @@ export const useUpdateAvatar = () => {
       toast.success("Avatar updated successfully");
 
       queryClient.invalidateQueries({
-        queryKey: ["me"],
+        queryKey: ["currentUser"],
       });
     },
 

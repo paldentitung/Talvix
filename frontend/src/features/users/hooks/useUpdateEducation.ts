@@ -1,7 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-
 import { updateCandidateEducation } from "../api/usersApi";
-
 import type { AddCandidateEducationInput } from "../types/user.type";
 import { queryClient } from "../../../shared/lib/queryClient";
 
@@ -16,7 +14,7 @@ export const useUpdateEducation = () => {
     }) => updateCandidateEducation(educationId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["me"],
+        queryKey: ["currentUser"],
       });
     },
   });

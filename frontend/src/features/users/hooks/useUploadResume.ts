@@ -8,7 +8,7 @@ export const useUploadResume = () => {
     mutationFn: (resume: File) => uploadResume(resume),
 
     onSuccess: (response) => {
-      queryClient.setQueryData(["me"], (old: any) => {
+      queryClient.setQueryData(["currentUser"], (old: any) => {
         if (!old) return old;
 
         return {

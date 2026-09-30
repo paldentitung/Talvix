@@ -68,7 +68,7 @@ export const resetPassword = async (data: ResetPasswordRequest) => {
   );
 };
 
-export const getMe = async (): Promise<ApiResponse<User>> => {
+export const getMe = async () => {
   return request("/auth/me", {}, true);
 };
 

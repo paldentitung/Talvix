@@ -6,7 +6,7 @@ export const useDeleteEducation = () => {
     mutationFn: (educationId: string) => deleteCandidateEducation(educationId),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["me"],
+        queryKey: ["currentUser"],
       });
     },
   });

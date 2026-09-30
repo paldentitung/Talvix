@@ -5,8 +5,10 @@ import {
   CalendarClock,
   UserRound,
   FileText,
-  Briefcase,
-  ArrowRight,
+  Check,
+  ChevronRight,
+  Sparkles,
+  PartyPopper,
 } from "lucide-react";
 import CandidateJobCard from "../components/CandidateJobCard";
 import type {
@@ -17,13 +19,10 @@ import { useJobSaveActions } from "../../features/jobs/hooks/useJobSaveActions";
 import { useState } from "react";
 import { useJobs } from "../../features/jobs/hooks/useJobs";
 import { useCandidateApplication } from "../../features/applications/hooks/useCandidateApplication";
+import { getProfileCompleteness } from "../../features/users/utils/profileCompleteness";
+import { useGetCurrentUser } from "../../features/users/hooks/useGetCurrentUser";
+import { useSavedJobs } from "../../features/jobs/hooks/useSavedJobs";
 
-// ---------------------------------------------------------------------------
-// Shared status mapping (should really live in a shared file, e.g.
-// features/applications/utils/status.ts, and be imported by both
-// DashboardPage and CandidateApplicationsPage instead of being duplicated).
-// Logic/values unchanged from the previous version of this file.
-// ---------------------------------------------------------------------------
 type Status =
   | "Applied"
   | "In Review"
@@ -49,19 +48,6 @@ const statusStyles: Record<Status, string> = {
   Rejected: "bg-(--danger-bg) text-(--danger)",
   Withdrawn: "bg-slate-200 text-(--text-muted)",
 };
-
-// ---------------------------------------------------------------------------
-// Static content that isn't backed by a real endpoint yet.
-// TODO: replace with real data as soon as the relevant hooks/endpoints exist
-// (saved-jobs count, profile completion). Unchanged from the previous
-// version of this file — this is a UI/layout pass only.
-// ---------------------------------------------------------------------------
-const profileChecklist = [
-  { label: "Add work experience", done: true },
-  { label: "Upload resume", done: true },
-  { label: "Add portfolio link", done: false },
-  { label: "Set salary expectations", done: false },
-];
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -105,16 +91,12 @@ const StatCard = ({
   );
 };
 
-const CandidateDashboardPage = () => {
+const CandidateDashboard = () => {
   const JOBS_PAGE_SIZE = 3;
   const APPLICATIONS_LIMIT = 5;
 
-  // Separate pagination state for jobs vs. applications — they have
-  // different page sizes and no shared pagination control, so sharing one
-  // `page` variable would silently break one list if the other paginates.
   const [jobsPage] = useState(1);
   const [applicationsPage] = useState(1);
-
   const {
     data: jobsData,
     isLoading: isJobsLoading,
@@ -122,6 +104,16 @@ const CandidateDashboardPage = () => {
   } = useJobs(jobsPage, JOBS_PAGE_SIZE, undefined);
 
   const jobs = jobsData?.jobs ?? [];
+  const { data: user, isLoading: isUserLoading } = useGetCurrentUser();
+
+  const profileCompletion = user ? getProfileCompleteness(user) : null;
+
+  // Incomplete items first so the most useful actions show up on top
+  const checklistItems = profileCompletion
+    ? [...profileCompletion.checks]
+        .sort((a, b) => Number(a.done) - Number(b.done))
+        .slice(0, 5)
+    : [];
 
   const {
     data: applicationsData,
@@ -134,7 +126,9 @@ const CandidateDashboardPage = () => {
   const totalApplications = applicationsData?.data?.pagination?.total ?? 0;
 
   const { isJobSaved, isSavingJob, toggleSave } = useJobSaveActions();
+  const { data: savedJobs, isPending: isSavedPending } = useSavedJobs();
 
+  const savedCount = savedJobs?.length ?? 0;
   const stats = [
     {
       label: "Jobs applied",
@@ -145,7 +139,7 @@ const CandidateDashboardPage = () => {
     },
     {
       label: "Saved jobs",
-      value: "—",
+      value: isSavedPending ? "—" : String(savedCount),
       icon: Bookmark,
       iconBg: "bg-(--accent-light)",
       iconColor: "text-(--accent)",
@@ -161,7 +155,7 @@ const CandidateDashboardPage = () => {
     },
     {
       label: "Profile completion",
-      value: "82%",
+      value: profileCompletion ? `${profileCompletion.percentage}%` : "—",
       icon: UserRound,
       iconBg: "bg-(--success-bg)",
       iconColor: "text-(--success)",
@@ -257,61 +251,140 @@ const CandidateDashboardPage = () => {
           <div className="h-5" />
         </div>
 
-        <div className="rounded-(--radius-lg) border border-(--border) bg-(--card) p-5">
-          <h2 className="text-sm font-semibold text-(--text-primary)">
-            Complete your profile
-          </h2>
-          <p className="mt-1 text-sm text-(--text-secondary)">
-            Better profiles get 4x more interviews.
-          </p>
+        {/* Complete your profile */}
+        <div className="overflow-hidden rounded-(--radius-lg) border border-(--border) bg-(--card) shadow-(--shadow-sm)">
+          {/* Header with ring */}
+          <div className="bg-linear-to-br from-(--primary-light) via-(--card) to-(--card) p-5">
+            {isUserLoading || !profileCompletion ? (
+              <div className="flex animate-pulse items-center gap-4">
+                <div className="h-20 w-20 rounded-full bg-(--border)" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-3/4 rounded bg-(--border)" />
+                  <div className="h-3 w-1/2 rounded bg-(--border)" />
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-4">
+                <div className="relative h-20 w-20 shrink-0">
+                  <svg viewBox="0 0 80 80" className="h-full w-full -rotate-90">
+                    <circle
+                      cx="40"
+                      cy="40"
+                      r="34"
+                      fill="none"
+                      stroke="var(--border)"
+                      strokeWidth="7"
+                    />
+                    <circle
+                      cx="40"
+                      cy="40"
+                      r="34"
+                      fill="none"
+                      stroke={
+                        profileCompletion.remaining === 0
+                          ? "var(--success)"
+                          : "var(--primary)"
+                      }
+                      strokeWidth="7"
+                      strokeLinecap="round"
+                      strokeDasharray={2 * Math.PI * 34}
+                      strokeDashoffset={
+                        2 *
+                        Math.PI *
+                        34 *
+                        (1 - profileCompletion.percentage / 100)
+                      }
+                      className="transition-all duration-700 ease-out"
+                    />
+                  </svg>
+                  <div
+                    role="progressbar"
+                    aria-valuenow={profileCompletion.percentage}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label="Profile completion"
+                    className="absolute inset-0 flex items-center justify-center font-display text-lg font-bold text-(--text-primary)"
+                  >
+                    {profileCompletion.percentage}%
+                  </div>
+                </div>
 
-          <div className="mt-5 flex items-center justify-between text-sm">
-            <span className="font-semibold text-(--text-primary)">
-              82% complete
-            </span>
-            <span className="text-(--text-muted)">2 items left</span>
+                <div className="min-w-0">
+                  <h2 className="font-display text-base font-semibold text-(--text-primary)">
+                    {profileCompletion.remaining === 0
+                      ? "Your profile is complete"
+                      : "Complete your profile"}
+                  </h2>
+                  <p className="mt-1 text-sm leading-snug text-(--text-secondary)">
+                    {profileCompletion.remaining === 0
+                      ? "Nice work. Recruiters can see your full profile."
+                      : `${profileCompletion.remaining} ${
+                          profileCompletion.remaining === 1 ? "step" : "steps"
+                        } left. Better profiles get 4x more interviews.`}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
-          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-(--bg)">
-            <div
-              className="h-full rounded-full bg-(--primary)"
-              style={{ width: "82%" }}
-            />
+
+          {/* Checklist */}
+          {profileCompletion && (
+            <>
+              {profileCompletion.remaining === 0 ? (
+                <div className="flex items-center gap-2 border-t border-(--border) bg-(--success-bg) px-5 py-3 text-sm font-medium text-(--success)">
+                  <PartyPopper size={16} />
+                  You're all set. Keep it up to date.
+                </div>
+              ) : (
+                <ul className="border-t border-(--border) p-2">
+                  {checklistItems.map((item) =>
+                    item.done ? (
+                      <li
+                        key={item.label}
+                        className="flex items-center gap-3 rounded-(--radius-md) px-3 py-2.5 text-sm"
+                      >
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-(--success-bg) text-(--success)">
+                          <Check size={12} strokeWidth={3} />
+                        </span>
+                        <span className="text-(--text-muted)">
+                          {item.label}
+                        </span>
+                      </li>
+                    ) : (
+                      <li key={item.label}>
+                        <Link
+                          to="/candidate/profile"
+                          className="group flex items-center gap-3 rounded-(--radius-md) px-3 py-2.5 text-sm transition-colors hover:bg-(--primary-light) focus-visible:outline-2 focus-visible:outline-(--primary)"
+                        >
+                          <span className="h-5 w-5 shrink-0 rounded-full border-2 border-dashed border-(--text-muted) transition-colors group-hover:border-(--primary)" />
+                          <span className="flex-1 font-medium text-(--text-primary)">
+                            {item.label}
+                          </span>
+                          <ChevronRight
+                            size={16}
+                            className="text-(--text-muted) transition-transform group-hover:translate-x-0.5 group-hover:text-(--primary)"
+                          />
+                        </Link>
+                      </li>
+                    ),
+                  )}
+                </ul>
+              )}
+            </>
+          )}
+
+          {/* CTA */}
+          <div className="p-5 pt-3">
+            <Link
+              to="/candidate/profile"
+              className="flex items-center justify-center gap-2 rounded-(--radius-md) bg-(--primary) py-2.5 text-sm font-medium text-white shadow-(--shadow-sm) transition-all hover:bg-(--primary-dark) hover:shadow-(--shadow-md) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--primary)"
+            >
+              <Sparkles size={15} />
+              {profileCompletion?.remaining === 0
+                ? "View profile"
+                : "Continue setup"}
+            </Link>
           </div>
-
-          <ul className="mt-5 flex flex-col gap-3">
-            {profileChecklist.map((item) => (
-              <li
-                key={item.label}
-                className="flex items-center gap-2.5 text-sm"
-              >
-                <span
-                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] ${
-                    item.done
-                      ? "bg-(--success) text-white"
-                      : "border border-(--border) text-transparent"
-                  }`}
-                >
-                  ✓
-                </span>
-                <span
-                  className={
-                    item.done
-                      ? "text-(--text-muted) line-through"
-                      : "text-(--text-secondary)"
-                  }
-                >
-                  {item.label}
-                </span>
-              </li>
-            ))}
-          </ul>
-
-          <Link
-            to="/candidate/profile"
-            className="mt-6 block rounded-(--radius-md) border border-(--border) py-2.5 text-center text-sm font-medium text-(--text-primary) transition-colors hover:bg-(--bg)"
-          >
-            Edit profile
-          </Link>
         </div>
       </div>
 
@@ -362,4 +435,4 @@ const CandidateDashboardPage = () => {
   );
 };
 
-export default CandidateDashboardPage;
+export default CandidateDashboard;

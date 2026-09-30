@@ -14,6 +14,7 @@ import ResumeTab from "./ResumeTab";
 import EducationSection, { toEducationEntry } from "./EducationSection";
 import ExperienceSection, { toExperienceEntry } from "./ExperienceSection";
 import type { Tab } from "./shared";
+import { useGetCurrentUser } from "../../../features/users/hooks/useGetCurrentUser";
 
 const TABS = [
   { id: "overview", label: "Overview", icon: LayoutGrid },
@@ -24,7 +25,7 @@ const TABS = [
 ] as const;
 
 export default function CandidateProfilePage() {
-  const { data: user, isLoading } = useMe();
+  const { data: user, isLoading } = useGetCurrentUser();
   const [tab, setTab] = useState<Tab>("overview");
 
   if (isLoading || !user) {

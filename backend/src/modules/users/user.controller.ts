@@ -15,6 +15,7 @@ import {
   addCandidateExperienceService,
   updateCandidateExperienceService,
   deleteCandidateExperienceService,
+  getUserInformationService,
 } from "./user.service.js";
 import { Request, Response } from "express";
 import AppError from "../../utils/AppError.js";
@@ -239,5 +240,17 @@ export const deleteCandidateExperienceController = async (
   res.status(200).json({
     success: true,
     ...result,
+  });
+};
+export const getUserInformationController = async (
+  req: Request<{ experienceId: string }>,
+  res: Response,
+) => {
+  const result = await getUserInformationService(req.user!.id);
+
+  res.status(200).json({
+    success: true,
+    message: "User data fetched successfully",
+    data: result,
   });
 };

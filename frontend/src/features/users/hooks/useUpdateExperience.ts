@@ -15,7 +15,7 @@ export const useUpdateExperience = () => {
 
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["me"],
+        queryKey: ["currentUser"],
       });
     },
   });
