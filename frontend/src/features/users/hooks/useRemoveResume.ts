@@ -9,7 +9,7 @@ export const useRemoveResume = () => {
 
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["me"],
+        queryKey: ["currentUser"],
       });
     },
   });

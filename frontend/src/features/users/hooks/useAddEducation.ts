@@ -8,7 +8,7 @@ export const useAddEducation = () => {
       addCandidateEducation(data),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["me"],
+        queryKey: ["currentUser"],
       });
     },
   });

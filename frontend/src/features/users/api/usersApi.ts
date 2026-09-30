@@ -7,7 +7,8 @@ import type {
   AddCandidateEducationInput,
   AddCandidateExperienceInput,
 } from "../types/user.type";
-
+import type { User } from "../types/user.type";
+import type { ApiResponse } from "../../../shared/types/api.types";
 export const getUsers = (page: number, limit: number) => {
   return request(`/users/all?page=${page}&limit=${limit}`, {}, true);
 };
@@ -156,6 +157,7 @@ export const addCandidateExperience = async (
     {
       method: "POST",
       body: JSON.stringify(data),
+      headers: { "Content-Type": "application/json" },
     },
     true,
   );
@@ -170,6 +172,7 @@ export const updateCandidateExperience = async (
     {
       method: "PUT",
       body: JSON.stringify(data),
+      headers: { "Content-Type": "application/json" },
     },
     true,
   );
@@ -180,7 +183,12 @@ export const deleteCandidateExperience = async (experienceId: string) => {
     `/users/candidate/experience/${experienceId}`,
     {
       method: "DELETE",
+      headers: { "Content-Type": "application/json" },
     },
     true,
   );
+};
+
+export const getUser = async (): Promise<ApiResponse<User>> => {
+  return request("/users/me", {}, true);
 };

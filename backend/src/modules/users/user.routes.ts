@@ -18,6 +18,7 @@ import {
   addCandidateExperienceController,
   updateCandidateExperienceController,
   deleteCandidateExperienceController,
+  getUserInformationController,
 } from "./user.controller.js";
 import { requireRole } from "../../middleware/role.middleware.js";
 import { validate } from "../../middleware/validate.middleware.js";
@@ -43,6 +44,8 @@ router.get(
   requireRole("ADMIN"),
   asyncHandler(getUsersController),
 );
+
+router.get("/me", requireAuth, asyncHandler(getUserInformationController));
 router.patch(
   "/profile",
   requireAuth,

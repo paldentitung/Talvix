@@ -10,7 +10,7 @@ export const useAddExperience = () => {
 
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["me"],
+        queryKey: ["currentUser"],
       });
     },
   });

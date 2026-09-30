@@ -501,3 +501,17 @@ export const deleteCandidateExperienceService = async (
 
   return { message: "Experience deleted successfully" };
 };
+export const getUserInformationService = async (userId: string) => {
+  const user = await prisma.user.findFirst({
+    where: {
+      id: userId,
+    },
+    select: userResponseSelect,
+  });
+
+  if (!user) {
+    throw new AppError("User not found", 400);
+  }
+
+  return toUserResponse(user);
+};

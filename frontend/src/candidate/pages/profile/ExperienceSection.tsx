@@ -41,7 +41,6 @@ export default function ExperienceSection({
     addExperience.isPending ||
     updateExperience.isPending ||
     deleteExperience.isPending;
-
   const save = async (entry: Entry) => {
     try {
       if (entry.id) {

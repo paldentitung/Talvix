@@ -10,7 +10,7 @@ export const useRemoveAvatar = () => {
     onSuccess: () => {
       toast.success("Avatar removed");
       queryClient.invalidateQueries({
-        queryKey: ["me"],
+        queryKey: ["currentUser"],
       });
     },
   });

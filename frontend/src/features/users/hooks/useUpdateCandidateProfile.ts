@@ -8,7 +8,7 @@ export const useUpdateCandidateProfile = () => {
     mutationFn: (data: UpdateCandidateProfileRequest) =>
       updateCandidateProfile(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["me"] });
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
     },
   });
 };
