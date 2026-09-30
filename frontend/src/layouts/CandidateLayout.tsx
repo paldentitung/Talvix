@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import CandidateHeader from "../candidate/components/CandidateHeader";
 import CandidateSidebar from "../candidate/components/CandidateSidebar";
+import { useGetCurrentUser } from "../features/users/hooks/useGetCurrentUser";
 
 const CandidateLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { data: user } = useGetCurrentUser();
 
   return (
     <div className="h-screen overflow-hidden bg-(--bg)">
@@ -28,7 +30,10 @@ const CandidateLayout = () => {
       {/* Content offset by the sidebar's width on large screens */}
       <div className="flex h-screen flex-col lg:ml-64">
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <CandidateHeader onMenuClick={() => setIsSidebarOpen(true)} />
+          <CandidateHeader
+            onMenuClick={() => setIsSidebarOpen(true)}
+            avatarUrl={user?.avatar}
+          />
           <Outlet />
         </main>
       </div>
