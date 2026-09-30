@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { Bell, Menu } from "lucide-react";
-
+import initials from "../../shared/utils/getInitials";
 const pageMeta: Record<string, { title: string; subtitle: string }> = {
   "/candidate/dashboard": {
     title: "Dashboard",
@@ -56,12 +56,6 @@ const CandidateHeader = ({
 }: Props) => {
   const { pathname } = useLocation();
   const { title, subtitle } = getMeta(pathname);
-  const initials = userName
-    .split(" ")
-    .map((n) => n[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
 
   const navigate = useNavigate();
 
@@ -108,7 +102,7 @@ const CandidateHeader = ({
               className="h-full w-full object-cover"
             />
           ) : (
-            initials
+            initials(userName)
           )}
         </button>
       </div>
