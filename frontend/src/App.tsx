@@ -6,7 +6,7 @@ import ForgotPasswordPage from "./features/auth/pages/ForgotPasswordPage";
 import VerifyEmailPage from "./features/auth/pages/VerifyEmailPage";
 import ResetPasswordPage from "./features/auth/pages/ResetPasswordPage";
 
-import CandidateDashboardPage from "./candidate/pages/CandidateDashboard.tsx";
+import CandidateDashboard from "./candidate/pages/CandidateDashboard.tsx";
 import RecruiterDashboardPage from "./recruiter/pages/DashboardPage.tsx";
 
 import RecruiterMainLayout from "./recruiter/layouts/RecruiterLayout.tsx";
@@ -123,7 +123,7 @@ const App = () => {
           <Route element={<RoleRoute allowedRoles={["CANDIDATE"]} />}>
             {" "}
             <Route path="/candidate" element={<CandidateLayout />}>
-              <Route path="dashboard" element={<CandidateDashboardPage />} />
+              <Route path="dashboard" element={<CandidateDashboard />} />
               <Route path="saved-jobs" element={<CandidateSavedJobs />} />
               <Route path="jobs" element={<CandidateJobsPage />} />
               <Route
