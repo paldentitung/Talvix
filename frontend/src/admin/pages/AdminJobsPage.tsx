@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { Search, Briefcase, ChevronDown } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Search, Briefcase } from "lucide-react";
 import { useAdminJobs } from "../../features/jobs/hooks/useAdminJobs";
+import { useUpdateJobStatus } from "../../features/jobs/hooks/useUpdateJobStatus";
+import { useDebouncedValue } from "../../shared/hooks/useDebouncedValue";
 import Pagination from "../../shared/components/Pagination";
 import RowMenu from "../../shared/components/RowMenu";
-import { useUpdateJobStatus } from "../../features/jobs/hooks/useUpdateJobStatus";
 import type { Job, JobStatus } from "../../features/jobs/types/job.types";
 
 const FILTERS = ["All", "OPEN", "DRAFT", "CLOSED"] as const;
@@ -16,13 +17,19 @@ const FILTER_LABELS: Record<Filter, string> = {
   CLOSED: "Closed",
 };
 
+const PAGE_SIZE = 10;
+
+const STATUS_STYLES: Record<
+  JobStatus,
+  { bg: string; fg: string; label: string }
+> = {
+  OPEN: { bg: "var(--success-bg)", fg: "var(--success)", label: "Live" },
+  DRAFT: { bg: "var(--warning-bg)", fg: "var(--warning)", label: "Draft" },
+  CLOSED: { bg: "var(--danger-bg)", fg: "var(--danger)", label: "Closed" },
+};
+
 function StatusBadge({ status }: { status: JobStatus }) {
-  const styles: Record<JobStatus, { bg: string; fg: string; label: string }> = {
-    OPEN: { bg: "var(--success-bg)", fg: "var(--success)", label: "Live" },
-    DRAFT: { bg: "var(--danger-bg)", fg: "var(--danger)", label: "Draft" },
-    CLOSED: { bg: "var(--warning-bg)", fg: "var(--warning)", label: "Closed" },
-  };
-  const s = styles[status];
+  const s = STATUS_STYLES[status];
   return (
     <span
       className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
@@ -38,20 +45,40 @@ const AdminJobsPage = () => {
   const [filter, setFilter] = useState<Filter>("All");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const size = 10;
 
-  const { data, isLoading, isError } = useAdminJobs(
-    page,
-    size,
-    query,
-    filter !== "All" ? { status: filter as JobStatus } : undefined,
+  // Only the debounced value reaches the API, so typing doesn't fire a
+  // request per keystroke. The input itself still reads `query`.
+  const debouncedQuery = useDebouncedValue(query).trim();
+
+  // Reset to page 1 when the *effective* criteria change. Doing this in the
+  // input's onChange would reset the page before the debounce settles and
+  // fetch page 1 with the old search term.
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedQuery, filter]);
+
+  // Stable object so the query key doesn't change identity every render.
+  const apiFilters = useMemo(
+    () => (filter !== "All" ? { status: filter as JobStatus } : undefined),
+    [filter],
   );
 
-  const { mutate: updateStatus, isPending } = useUpdateJobStatus();
+  const { data, isLoading, isFetching, isError } = useAdminJobs(
+    page,
+    PAGE_SIZE,
+    debouncedQuery,
+    apiFilters,
+  );
+
+  const {
+    mutate: updateStatus,
+    isPending,
+    variables: pendingVars,
+  } = useUpdateJobStatus();
 
   const jobs: Job[] = data?.data?.jobs ?? [];
   const total = data?.data?.total ?? 0;
-  const totalPages = data?.data?.totalPages ?? 1;
+  const totalPages = Math.max(1, data?.data?.totalPages ?? 1);
 
   return (
     <div onClick={() => openMenuId && setOpenMenuId(null)}>
@@ -77,11 +104,9 @@ const AdminJobsPage = () => {
             />
             <input
               value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setPage(1);
-              }}
+              onChange={(e) => setQuery(e.target.value)}
               placeholder="Search jobs..."
+              aria-label="Search jobs"
               className="w-full rounded-full border py-2.5 pl-10 pr-4 text-sm outline-none transition-shadow focus:ring-2"
               style={{
                 borderColor: "var(--border)",
@@ -97,10 +122,8 @@ const AdminJobsPage = () => {
               return (
                 <button
                   key={f}
-                  onClick={() => {
-                    setFilter(f);
-                    setPage(1);
-                  }}
+                  onClick={() => setFilter(f)}
+                  aria-pressed={active}
                   className="rounded-full px-4 py-1.5 text-sm font-medium transition-colors"
                   style={
                     active
@@ -128,12 +151,7 @@ const AdminJobsPage = () => {
               >
                 <th className="px-6 py-3.5 font-semibold">Job</th>
                 <th className="px-6 py-3.5 font-semibold">Company</th>
-                <th className="px-6 py-3.5 font-semibold">
-                  <span className="inline-flex items-center gap-1">
-                    Applicants
-                    <ChevronDown size={12} />
-                  </span>
-                </th>
+                <th className="px-6 py-3.5 font-semibold">Applicants</th>
                 <th className="px-6 py-3.5 font-semibold">Status</th>
                 <th className="px-6 py-3.5" />
               </tr>
@@ -158,7 +176,7 @@ const AdminJobsPage = () => {
                     className="px-6 py-16 text-center text-sm"
                     style={{ color: "var(--danger)" }}
                   >
-                    Failed to load jobs.
+                    Couldn't load jobs. Please try again.
                   </td>
                 </tr>
               )}
@@ -194,7 +212,7 @@ const AdminJobsPage = () => {
                       className="px-6 py-3.5 text-sm"
                       style={{ color: "var(--text-secondary)" }}
                     >
-                      {j.recruiter?.companyName ?? "—"}
+                      {j.recruiter?.recruiterProfile?.companyName ?? "—"}
                     </td>
                     <td
                       className="px-6 py-3.5 text-sm"
@@ -228,7 +246,10 @@ const AdminJobsPage = () => {
                               onClick: () =>
                                 updateStatus({ jobId: j.id, status: "CLOSED" }),
                               danger: true,
-                              disabled: isPending || j.status === "CLOSED",
+                              // Disable only the row being updated, not every row.
+                              disabled:
+                                j.status === "CLOSED" ||
+                                (isPending && pendingVars?.jobId === j.id),
                             },
                           ]}
                         />
@@ -265,7 +286,7 @@ const AdminJobsPage = () => {
           onPageChange={setPage}
           total={total}
           itemLabel="jobs"
-          isFetching={isLoading}
+          isFetching={isFetching}
         />
       </div>
     </div>

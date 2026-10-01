@@ -1,12 +1,13 @@
 import request from "../../../shared/services/api";
 import type {
+  AdminJobFilters,
   Job,
   JobFilters,
   JobFormValues,
   UpdateJobStatusPayload,
 } from "../types/job.types";
 
-export const getJobs = async (
+export const getPublicJobs = async (
   page = 1,
   pageSize = 10,
   search?: string,
@@ -140,42 +141,47 @@ export const getAdminJobs = async (
   page = 1,
   pageSize = 10,
   search?: string,
+  filters?: AdminJobFilters,
+) => {
+  const query = buildJobParams(page, pageSize, search, filters);
+  return await request(`/jobs/admin?${query}`, {}, true);
+};
+export const getCandidateJobs = async (
+  page = 1,
+  pageSize = 10,
+  search?: string,
   filters?: JobFilters,
 ) => {
-  const params = new URLSearchParams();
-  params.append("page", page.toString());
-  params.append("pageSize", pageSize.toString());
+  const query = buildJobParams(page, pageSize, search, filters);
+  return await request(`/jobs/candidates?${query}`, {}, true);
+};
+const buildJobParams = (
+  page: number,
+  pageSize: number,
+  search?: string,
+  filters?: AdminJobFilters,
+) => {
+  const params = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+  });
 
-  if (search) {
-    params.append("search", search);
-  }
-  if (filters?.status) {
-    params.append("status", filters.status);
-  }
-  if (filters?.location) {
-    params.append("location", filters.location);
-  }
-  if (filters?.workMode) {
-    params.append("workMode", filters.workMode);
-  }
-  if (filters?.employmentType) {
-    params.append("employmentType", filters.employmentType);
-  }
-  if (filters?.experienceLevel) {
-    params.append("experienceLevel", filters.experienceLevel);
-  }
-  if (filters?.skills?.length) {
-    params.append("skills", filters.skills.join(","));
-  }
-  if (filters?.minSalary !== undefined) {
-    params.append("minSalary", filters.minSalary.toString());
-  }
-  if (filters?.maxSalary !== undefined) {
-    params.append("maxSalary", filters.maxSalary.toString());
-  }
-  if (filters?.currency) {
-    params.append("currency", filters.currency);
-  }
+  if (search) params.set("search", search);
+  if (filters?.status) params.set("status", filters.status);
+  if (filters?.location) params.set("location", filters.location);
+  if (filters?.workMode) params.set("workMode", filters.workMode);
+  if (filters?.employmentType)
+    params.set("employmentType", filters.employmentType);
+  if (filters?.experienceLevel)
+    params.set("experienceLevel", filters.experienceLevel);
+  if (filters?.skills?.length) params.set("skills", filters.skills.join(","));
+  if (filters?.minSalary !== undefined)
+    params.set("minSalary", String(filters.minSalary));
+  if (filters?.maxSalary !== undefined)
+    params.set("maxSalary", String(filters.maxSalary));
+  if (filters?.currency) params.set("currency", filters.currency);
+  if (filters?.featuredOnly) params.set("featuredOnly", "true");
+  if (filters?.sort) params.set("sort", filters.sort);
 
-  return await request(`/jobs/admin?${params.toString()}`, {}, true);
+  return params.toString();
 };

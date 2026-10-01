@@ -9,13 +9,15 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import type { ApplicationStatus } from "../../features/applications/types/application.types";
+import type {
+  ApplicationStatus,
+  Application,
+} from "../../features/applications/types/application.types";
 import { useCandidateApplication } from "../../features/applications/hooks/useCandidateApplication";
 import Button from "../../components/ui/Button";
 import { useWithdrawApplication } from "../../features/applications/hooks/useWithdrawApplication";
 import Modal from "../../components/ui/Modal";
 import { Link } from "react-router-dom";
-import type { Application } from "../../features/applications/types/application.types";
 type Status =
   | "Applied"
   | "In Review"
@@ -207,14 +209,22 @@ export default function CandidateApplicationsPage() {
               <button
                 key={app.id}
                 onClick={() => setSelectedId(app.id)}
-                className={`flex w-full items-center gap-3 px-4 py-4 text-left transition-colors sm:gap-4 sm:px-6 sm:py-5 ${
+                className={`flex w-full items-center gap-3 px-4 py-4 text-left transition-colors sm:gap-4 sm:px-6 sm:py-5 cursor-pointer ${
                   i !== visible.length - 1
                     ? "border-b border-[var(--border)]"
                     : ""
                 } ${isSelected ? "bg-[var(--primary-light)]" : "hover:bg-slate-50"}`}
               >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-slate-100">
-                  <Briefcase size={18} color="var(--text-secondary)" />
+                  {app.job.recruiter?.recruiterProfile?.companyLogo ? (
+                    <img
+                      src={`${import.meta.env.VITE_API_BACKEND_URL}${app.job.recruiter.recruiterProfile.companyLogo}`}
+                      alt={app.job.recruiter.companyName ?? "Company logo"}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <Briefcase size={18} color="var(--text-secondary)" />
+                  )}
                 </div>
 
                 <div className="min-w-0 flex-1">

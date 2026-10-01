@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import {
-  getJobsService,
+  getPublicJobsService,
   getJobService,
   createJobService,
   deleteJobService,
@@ -10,9 +10,10 @@ import {
   saveJobService,
   getSavedJobsService,
   getAdminJobsService,
+  getCandidateJobsService,
 } from "./job.service.js";
 import { jobFiltersSchema } from "./job.types.js";
-export const getJobsController = async (req: Request, res: Response) => {
+export const getPublicJobsController = async (req: Request, res: Response) => {
   const page = Number(req.query.page) || 1;
   const pageSize = Number(req.query.pageSize) || 10;
   const search = req.query.search as string | undefined;
@@ -26,7 +27,12 @@ export const getJobsController = async (req: Request, res: Response) => {
     });
   }
 
-  const result = await getJobsService(page, pageSize, search, parsed.data);
+  const result = await getPublicJobsService(
+    page,
+    pageSize,
+    search,
+    parsed.data,
+  );
 
   res.status(200).json({
     success: true,
@@ -141,6 +147,7 @@ export const saveJobController = async (
   });
 };
 export const getSavedJobsController = async (req: Request, res: Response) => {
+  console.log("getSavedJobsController called with userId:", req.user?.id);
   const savedJobs = await getSavedJobsService(req.user!.id);
   res.status(200).json({
     success: true,
@@ -162,6 +169,36 @@ export const getAdminJobsController = async (req: Request, res: Response) => {
   }
 
   const result = await getAdminJobsService(page, pageSize, search, parsed.data);
+
+  res.status(200).json({
+    success: true,
+    message: "Jobs fetched successfully",
+    data: result,
+  });
+};
+export const getCandidateJobsController = async (
+  req: Request,
+  res: Response,
+) => {
+  const page = Number(req.query.page) || 1;
+  const pageSize = Number(req.query.pageSize) || 10;
+  const search = req.query.search as string | undefined;
+
+  const parsed = jobFiltersSchema.safeParse(req.query);
+  if (!parsed.success) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid filter parameters",
+      errors: parsed.error.flatten().fieldErrors,
+    });
+  }
+
+  const result = await getCandidateJobsService(
+    page,
+    pageSize,
+    search,
+    parsed.data,
+  );
 
   res.status(200).json({
     success: true,

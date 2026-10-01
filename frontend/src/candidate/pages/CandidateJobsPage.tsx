@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Search,
   MapPin,
-  Bookmark,
   ChevronRight,
   X,
   SlidersHorizontal,
@@ -12,14 +11,12 @@ import type {
   WorkMode,
   EmploymentType,
   ExperienceLevel,
+  Job,
 } from "../../features/jobs/types/job.types";
 import CandidateJobCard from "../components/CandidateJobCard";
 import { useJobSaveActions } from "../../features/jobs/hooks/useJobSaveActions";
-import { useJobs } from "../../features/jobs/hooks/useJobs";
-
-// ---------------------------------------------------------------------------
-// Label maps for the enum values coming back from the API
-// ---------------------------------------------------------------------------
+import { useCandidateJobs } from "../../features/jobs/hooks/useCandidateJobs";
+import { useDebouncedValue } from "../../shared/hooks/useDebouncedValue";
 
 const WORK_MODE_LABEL: Record<WorkMode, string> = {
   REMOTE: "Remote",
@@ -43,19 +40,8 @@ const EXPERIENCE_LEVEL_LABEL: Record<ExperienceLevel, string> = {
 
 const PAGE_SIZE = 10;
 
-type LocalFilters = JobFilters & { featuredOnly?: boolean };
-
-const EMPTY_FILTERS: LocalFilters = {};
-
-/** Debounce a fast-changing value (e.g. keystrokes) before it hits an API call. */
-function useDebouncedValue<T>(value: T, delayMs = 350): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const id = setTimeout(() => setDebounced(value), delayMs);
-    return () => clearTimeout(id);
-  }, [value, delayMs]);
-  return debounced;
-}
+const EMPTY_FILTERS: JobFilters = {};
+type SortOption = NonNullable<JobFilters["sort"]>;
 
 // ---------------------------------------------------------------------------
 // Small pieces
@@ -88,18 +74,27 @@ function RadioRow({
 const CandidateJobsPage = () => {
   const [keyword, setKeyword] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
-  const [filters, setFilters] = useState<LocalFilters>(EMPTY_FILTERS);
+  const [filters, setFilters] = useState<JobFilters>(EMPTY_FILTERS);
+  const [sort, setSort] = useState<SortOption>("newest");
   const [page, setPage] = useState(1);
 
-  // Debounce the free-text inputs so we don't fire a request per keystroke.
   const debouncedKeyword = useDebouncedValue(keyword);
   const debouncedLocation = useDebouncedValue(locationQuery);
+  const debouncedMinSalary = useDebouncedValue(filters.minSalary);
 
-  // Reset back to page 1 whenever the search/filter criteria change —
-  // otherwise you can get stuck on page 4 of a filtered set that only has 2 pages.
   useEffect(() => {
     setPage(1);
-  }, [debouncedKeyword, debouncedLocation, filters]);
+  }, [
+    debouncedKeyword,
+    debouncedLocation,
+    debouncedMinSalary,
+    filters.workMode,
+    filters.employmentType,
+    filters.experienceLevel,
+    filters.maxSalary,
+    filters.featuredOnly,
+    sort,
+  ]);
 
   const apiFilters: JobFilters = useMemo(
     () => ({
@@ -107,33 +102,41 @@ const CandidateJobsPage = () => {
       workMode: filters.workMode,
       employmentType: filters.employmentType,
       experienceLevel: filters.experienceLevel,
-      minSalary: filters.minSalary,
+      minSalary: debouncedMinSalary,
       maxSalary: filters.maxSalary,
+      featuredOnly: filters.featuredOnly,
+      sort,
     }),
-    [debouncedLocation, filters],
+    [
+      debouncedLocation,
+      debouncedMinSalary,
+      filters.workMode,
+      filters.employmentType,
+      filters.experienceLevel,
+      filters.maxSalary,
+      filters.featuredOnly,
+      sort,
+    ],
   );
 
   const {
     data: jobsData,
     isLoading,
     isError,
-  } = useJobs(page, PAGE_SIZE, debouncedKeyword || undefined, apiFilters);
+  } = useCandidateJobs(
+    page,
+    PAGE_SIZE,
+    debouncedKeyword || undefined,
+    apiFilters,
+  );
 
   const jobs = jobsData?.jobs ?? [];
   const total = jobsData?.total ?? 0;
-  const totalPages = jobsData?.totalPages ?? 1;
+  const totalPages = Math.max(1, jobsData?.totalPages ?? 1);
 
   const { isJobSaved, isSavingJob, toggleSave } = useJobSaveActions();
 
-  // `featuredOnly` isn't wired into the API yet — apply it client-side over
-  // the current page as a stopgap. If featured filtering needs to apply
-  // across the whole catalog (not just the current page), add it to
-  // JobFilters/getJobs on the backend instead.
-  const visibleJobs = filters.featuredOnly
-    ? jobs.filter((job) => job.featured)
-    : jobs;
-
-  const activeChips: { key: keyof LocalFilters; label: string }[] = [
+  const activeChips: { key: keyof JobFilters; label: string }[] = [
     filters.workMode && {
       key: "workMode",
       label: WORK_MODE_LABEL[filters.workMode],
@@ -147,9 +150,9 @@ const CandidateJobsPage = () => {
       label: EXPERIENCE_LEVEL_LABEL[filters.experienceLevel],
     },
     filters.featuredOnly && { key: "featuredOnly", label: "Featured" },
-  ].filter(Boolean) as { key: keyof LocalFilters; label: string }[];
+  ].filter(Boolean) as { key: keyof JobFilters; label: string }[];
 
-  const clearFilter = (key: keyof LocalFilters) =>
+  const clearFilter = (key: keyof JobFilters) =>
     setFilters((f) => ({ ...f, [key]: undefined }));
 
   return (
@@ -165,7 +168,7 @@ const CandidateJobsPage = () => {
             <input
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
-              type="text"
+              type="search"
               placeholder="Job title, skill, or company"
               className="w-full rounded-(--radius-md) border border-(--border) py-2.5 pl-9 pr-3 text-sm placeholder:text-(--text-muted) focus:border-(--primary) focus:outline-none focus:ring-2 focus:ring-(--primary-light)"
             />
@@ -183,6 +186,7 @@ const CandidateJobsPage = () => {
               className="w-full rounded-(--radius-md) border border-(--border) py-2.5 pl-9 pr-3 text-sm placeholder:text-(--text-muted) focus:border-(--primary) focus:outline-none focus:ring-2 focus:ring-(--primary-light)"
             />
           </div>
+          {/* Inputs search as you type (debounced), so this button is optional. */}
           <button className="rounded-(--radius-md) bg-(--primary) px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-(--primary-dark)">
             Search
           </button>
@@ -231,15 +235,6 @@ const CandidateJobsPage = () => {
               </button>
             </div>
 
-            {/*
-              Note: these facet lists used to show a count next to each
-              option, computed from the currently loaded jobs. Now that
-              jobs are paginated server-side, that count would only reflect
-              the current page (misleading), so it's been removed rather
-              than shipped wrong. If you want real counts back, add a
-              facets/aggregate endpoint (e.g. GET /jobs/facets) that returns
-              counts across the whole filtered set, independent of page.
-            */}
             <div className="mb-5">
               <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-(--text-muted)">
                 Job type
@@ -356,7 +351,7 @@ const CandidateJobsPage = () => {
             <p className="text-sm text-(--text-secondary)">
               Showing{" "}
               <span className="font-semibold text-(--text-primary)">
-                {visibleJobs.length}
+                {jobs.length}
               </span>{" "}
               of{" "}
               <span className="font-semibold text-(--text-primary)">
@@ -364,10 +359,14 @@ const CandidateJobsPage = () => {
               </span>{" "}
               jobs
             </p>
-            <select className="rounded-(--radius-sm) border border-(--border) bg-(--card) px-3 py-1.5 text-sm text-(--text-secondary) focus:outline-none">
-              <option>Most relevant</option>
-              <option>Newest</option>
-              <option>Salary: high to low</option>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as SortOption)}
+              className="rounded-(--radius-sm) border border-(--border) bg-(--card) px-3 py-1.5 text-sm text-(--text-secondary) focus:outline-none"
+            >
+              <option value="relevant">Most relevant</option>
+              <option value="newest">Newest</option>
+              <option value="salary_desc">Salary: high to low</option>
             </select>
           </div>
 
@@ -379,14 +378,14 @@ const CandidateJobsPage = () => {
             <div className="rounded-(--radius-lg) border border-dashed border-(--border) p-10 text-center text-sm text-(--text-muted)">
               Couldn't load jobs. Please try again.
             </div>
-          ) : visibleJobs.length === 0 ? (
+          ) : jobs.length === 0 ? (
             <div className="rounded-(--radius-lg) border border-dashed border-(--border) p-10 text-center text-sm text-(--text-muted)">
               No roles match your filters yet. Try clearing a filter or
               broadening your search.
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {visibleJobs.map((job) => (
+              {jobs.map((job: Job) => (
                 <CandidateJobCard
                   job={job}
                   isSaved={isJobSaved(job.id)}
@@ -423,7 +422,7 @@ const CandidateJobsPage = () => {
                 </button>
               ))}
             <button
-              disabled={page === totalPages}
+              disabled={page >= totalPages}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               className="flex items-center gap-1 rounded-(--radius-sm) border border-(--border) px-3 py-1.5 text-sm font-medium text-(--text-secondary) hover:bg-slate-50 disabled:opacity-40"
             >

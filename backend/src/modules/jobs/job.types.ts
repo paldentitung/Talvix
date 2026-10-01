@@ -31,20 +31,9 @@ export const updateJobSchema = createJobSchema.partial();
 export type CreateJobInput = z.infer<typeof createJobSchema>;
 export type UpdateJobInput = z.infer<typeof updateJobSchema>;
 export type JobStatus = "OPEN" | "DRAFT" | "CLOSED";
-export interface JobFilters {
-  status?: JobStatus;
-  location?: string;
-  workMode?: z.infer<typeof createJobSchema>["workMode"];
-  employmentType?: z.infer<typeof createJobSchema>["employmentType"];
-  experienceLevel?: z.infer<typeof createJobSchema>["experienceLevel"];
-  skills?: string[];
-  minSalary?: number;
-  maxSalary?: number;
-  currency?: string;
-}
-export const jobFiltersSchema = z.object({
-  status: z.enum(["DRAFT", "OPEN", "CLOSED"]).optional(),
-  location: z.string().optional(),
+
+const jobFiltersBase = z.object({
+  location: z.string().trim().optional(),
   workMode: z.enum(["ONSITE", "REMOTE", "HYBRID"]).optional(),
   employmentType: z
     .enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERNSHIP"])
@@ -53,9 +42,43 @@ export const jobFiltersSchema = z.object({
   skills: z
     .string()
     .optional()
-    .transform((val) => (val ? val.split(",") : undefined)),
+    .transform((val) =>
+      val
+        ? val
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : undefined,
+    ),
   minSalary: z.coerce.number().positive().optional(),
   maxSalary: z.coerce.number().positive().optional(),
   currency: z.string().optional(),
+  featuredOnly: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((v) => (v === undefined ? undefined : v === "true")),
+  sort: z.enum(["relevant", "newest", "salary_desc"]).optional(),
 });
-export type JobFiltersInput = z.infer<typeof jobFiltersSchema>;
+
+const salaryRangeValid = (f: { minSalary?: number; maxSalary?: number }) =>
+  f.minSalary === undefined ||
+  f.maxSalary === undefined ||
+  f.minSalary <= f.maxSalary;
+
+const salaryRangeError = {
+  message: "minSalary cannot be greater than maxSalary",
+  path: ["minSalary"],
+};
+
+// public + candidate: no status
+export const jobFiltersSchema = jobFiltersBase.refine(
+  salaryRangeValid,
+  salaryRangeError,
+);
+export type JobFilters = z.infer<typeof jobFiltersSchema>;
+
+// admin / employer: adds status
+export const adminJobFiltersSchema = jobFiltersBase
+  .extend({ status: z.enum(["DRAFT", "OPEN", "CLOSED"]).optional() })
+  .refine(salaryRangeValid, salaryRangeError);
+export type AdminJobFilters = z.infer<typeof adminJobFiltersSchema>;

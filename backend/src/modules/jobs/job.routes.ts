@@ -5,8 +5,9 @@ import {
   createJobController,
   deleteJobController,
   getAdminJobsController,
+  getCandidateJobsController,
   getJobController,
-  getJobsController,
+  getPublicJobsController,
   getRecruiterJobsController,
   getSavedJobsController,
   saveJobController,
@@ -19,8 +20,14 @@ import { createJobSchema, updateJobSchema } from "./job.types.js";
 
 const router = express.Router();
 
-router.get("/", asyncHandler(getJobsController));
+router.get("/", asyncHandler(getPublicJobsController));
 router.get("/me", requireAuth, asyncHandler(getRecruiterJobsController));
+router.get(
+  "/candidates",
+  requireAuth,
+  requireRole("CANDIDATE"),
+  asyncHandler(getCandidateJobsController),
+);
 router.get("/saved", requireAuth, asyncHandler(getSavedJobsController));
 router.get(
   "/admin",

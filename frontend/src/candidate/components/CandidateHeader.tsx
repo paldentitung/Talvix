@@ -60,7 +60,7 @@ const CandidateHeader = ({
   const navigate = useNavigate();
 
   return (
-    <header className="mb-6 flex items-center justify-between gap-3 border-b border-(--border) pb-5">
+    <header className="mb-6 flex items-center justify-between gap-3 border-b border-(--border) pb-5 ">
       <div className="flex min-w-0 flex-1 items-center gap-3">
         {onMenuClick && (
           <button
