@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getJobs } from "../api/jobApi";
+import { getPublicJobs } from "../api/jobApi";
 import type { Job, JobFilters } from "../types/job.types";
 
 interface JobsApiEnvelope {
@@ -21,7 +21,7 @@ export function useJobs(
 ) {
   return useQuery({
     queryKey: ["jobs", page, pageSize, search, filters],
-    queryFn: () => getJobs(page, pageSize, search, filters),
+    queryFn: () => getPublicJobs(page, pageSize, search, filters),
     // API returns { success, message, data: { jobs, total, page, totalPages } }.
     // Unwrap down to just the { jobs, total, page, totalPages } payload —
     // that's the only part any consumer of this hook needs.

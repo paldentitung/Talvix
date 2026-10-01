@@ -87,10 +87,12 @@ const CandidateJobCard = ({
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-(--radius-md) border border-(--border) bg-(--bg)">
-            {job.recruiter.companyLogo ? (
+            {`${import.meta.env.VITE_API_BACKEND_URL}${job.recruiter?.recruiterProfile?.companyLogo}` ? (
               <img
-                src={job.recruiter.companyLogo}
-                alt={job.recruiter.companyName ?? "Company logo"}
+                src={`${import.meta.env.VITE_API_BACKEND_URL}${job.recruiter?.recruiterProfile?.companyLogo}`}
+                alt={
+                  job.recruiter?.recruiterProfile?.companyName ?? "Company logo"
+                }
                 className="h-full w-full object-cover"
               />
             ) : (
@@ -113,8 +115,8 @@ const CandidateJobCard = ({
               )}
             </div>
             <p className="text-sm text-(--text-secondary)">
-              {job.recruiter.companyName ??
-                `${job.recruiter.firstName} ${job.recruiter.lastName}`}
+              {job.recruiter?.recruiterProfile?.companyName ??
+                `${job.recruiter?.firstName} ${job.recruiter?.lastName}`}
             </p>
           </div>
         </div>

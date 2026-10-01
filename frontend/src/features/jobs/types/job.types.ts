@@ -82,4 +82,9 @@ export interface JobFilters {
   minSalary?: number;
   maxSalary?: number;
   currency?: string;
+  featuredOnly?: boolean;
+  sort?: "relevant" | "newest" | "salary_desc";
+}
+export interface AdminJobFilters extends JobFilters {
+  status?: "DRAFT" | "OPEN" | "CLOSED";
 }

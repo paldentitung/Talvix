@@ -5,73 +5,25 @@ import {
   JobStatus,
   UpdateJobInput,
   JobFilters,
+  AdminJobFilters,
 } from "./job.types.js";
 import AppError from "../../utils/AppError.js";
 import { Prisma } from "@prisma/client";
+import { buildJobWhere, queryJobs, SORTS } from "./jobs.query.js";
 
-export const getJobsService = async (
+export const getPublicJobsService = (
   page = 1,
   pageSize = 10,
   search?: string,
   filters?: JobFilters,
-): Promise<{
-  jobs: JobResponse[];
-  total: number;
-  page: number;
-  totalPages: number;
-}> => {
-  const where: Prisma.JobWhereInput = {
-    status: "OPEN",
-    ...(search && {
-      OR: [
-        { title: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } },
-        { location: { contains: search, mode: "insensitive" } },
-        { skills: { hasSome: [search] } },
-      ],
-    }),
-    ...(filters?.location && {
-      location: { contains: filters.location, mode: "insensitive" },
-    }),
-    ...(filters?.workMode && { workMode: filters.workMode }),
-    ...(filters?.employmentType && { employmentType: filters.employmentType }),
-    ...(filters?.experienceLevel && {
-      experienceLevel: filters.experienceLevel,
-    }),
-    ...(filters?.skills?.length && { skills: { hasSome: filters.skills } }),
-    ...(filters?.currency && { currency: filters.currency }),
-    ...((filters?.minSalary !== undefined ||
-      filters?.maxSalary !== undefined) && {
-      OR: undefined, // see note below
-      AND: [
-        ...(filters.minSalary !== undefined
-          ? [{ salaryMax: { gte: filters.minSalary } }]
-          : []),
-        ...(filters.maxSalary !== undefined
-          ? [{ salaryMin: { lte: filters.maxSalary } }]
-          : []),
-      ],
-    }),
-  };
-
-  const [jobs, total] = await Promise.all([
-    prisma.job.findMany({
-      where,
-      select: jobSelect,
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-    }),
-    prisma.job.count({ where }),
-  ]);
-
-  return {
-    jobs,
-    total,
+) =>
+  queryJobs(
+    buildJobWhere("OPEN", search, filters),
     page,
-    totalPages: Math.ceil(total / pageSize),
-  };
-};
+    pageSize,
+    SORTS[filters?.sort ?? "newest"],
+  );
+
 export const getRecruiterJobsService = async (
   userId: string | undefined,
   userRole: string | undefined,
@@ -322,7 +274,11 @@ export const getSavedJobsService = async (userId: string) => {
     include: {
       job: {
         include: {
-          recruiter: true,
+          recruiter: {
+            include: {
+              recruiterProfile: true,
+            },
+          },
         },
       },
     },
@@ -331,65 +287,27 @@ export const getSavedJobsService = async (userId: string) => {
     },
   });
 };
-export const getAdminJobsService = async (
+export const getAdminJobsService = (
+  page = 1,
+  pageSize = 10,
+  search?: string,
+  filters?: AdminJobFilters,
+) =>
+  queryJobs(
+    buildJobWhere(filters?.status, search, filters),
+    page,
+    pageSize,
+    SORTS[filters?.sort ?? "newest"],
+  );
+export const getCandidateJobsService = (
   page = 1,
   pageSize = 10,
   search?: string,
   filters?: JobFilters,
-): Promise<{
-  jobs: JobResponse[];
-  total: number;
-  page: number;
-  totalPages: number;
-}> => {
-  const where: Prisma.JobWhereInput = {
-    ...(filters?.status && { status: filters.status }),
-    ...(search && {
-      OR: [
-        { title: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } },
-        { location: { contains: search, mode: "insensitive" } },
-        { skills: { hasSome: [search] } },
-      ],
-    }),
-    ...(filters?.location && {
-      location: { contains: filters.location, mode: "insensitive" },
-    }),
-    ...(filters?.workMode && { workMode: filters.workMode }),
-    ...(filters?.employmentType && { employmentType: filters.employmentType }),
-    ...(filters?.experienceLevel && {
-      experienceLevel: filters.experienceLevel,
-    }),
-    ...(filters?.skills?.length && { skills: { hasSome: filters.skills } }),
-    ...(filters?.currency && { currency: filters.currency }),
-    ...((filters?.minSalary !== undefined ||
-      filters?.maxSalary !== undefined) && {
-      AND: [
-        ...(filters.minSalary !== undefined
-          ? [{ salaryMax: { gte: filters.minSalary } }]
-          : []),
-        ...(filters.maxSalary !== undefined
-          ? [{ salaryMin: { lte: filters.maxSalary } }]
-          : []),
-      ],
-    }),
-  };
-
-  const [jobs, total] = await Promise.all([
-    prisma.job.findMany({
-      where,
-      select: jobSelect,
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.job.count({ where }),
-  ]);
-
-  return {
-    jobs,
-    total,
+) =>
+  queryJobs(
+    buildJobWhere("OPEN", search, filters),
     page,
-    totalPages: Math.ceil(total / pageSize),
-  };
-};
+    pageSize,
+    SORTS[filters?.sort ?? "newest"],
+  );
