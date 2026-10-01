@@ -81,6 +81,11 @@ export interface Application {
       companyName: string | null;
       companyLogo: string | null;
       companyWebsite: string | null;
+      recruiterProfile?: {
+        companyName?: string | null;
+        companyLogo?: string | null;
+        companyWebsite?: string | null;
+      } | null;
     };
   };
 }
