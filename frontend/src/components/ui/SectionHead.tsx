@@ -10,10 +10,6 @@ interface SectionHeadProps {
   align?: "left" | "center";
 }
 
-/**
- * Reusable section header used by Featured Jobs, Testimonials, and future
- * sections on Job Search / Dashboard pages that need a heading + "view all" link.
- */
 export default function SectionHead({
   kicker,
   title,
@@ -26,19 +22,27 @@ export default function SectionHead({
 
   return (
     <div
-      className={`flex items-end justify-between gap-6 flex-wrap mb-10 ${
-        isCenter ? "flex-col items-center text-center" : ""
+      className={`mb-8 sm:mb-10 flex gap-4 sm:gap-6 ${
+        isCenter
+          ? "flex-col items-center text-center"
+          : "flex-col items-start sm:flex-row sm:items-end sm:justify-between"
       }`}
     >
-      <div>
+      <div className={isCenter ? "mx-auto" : ""}>
         {kicker && (
           <div className="text-[13px] font-bold text-[var(--accent)] uppercase tracking-wide mb-2">
             {kicker}
           </div>
         )}
-        <h2 className="text-[32px] font-extrabold font-display">{title}</h2>
+        <h2 className="text-[26px] sm:text-[30px] lg:text-[32px] leading-tight font-extrabold font-display text-balance">
+          {title}
+        </h2>
         {description && (
-          <p className="text-[var(--text-secondary)] text-[15px] mt-1.5 max-w-[480px]">
+          <p
+            className={`text-[var(--text-secondary)] text-[15px] mt-1.5 max-w-[480px] ${
+              isCenter ? "mx-auto" : ""
+            }`}
+          >
             {description}
           </p>
         )}
