@@ -4,15 +4,8 @@ import type { Job, WorkMode } from "../../features/jobs/types/job.types";
 import { useJobs } from "../../features/jobs/hooks/useJobs";
 import Button from "../ui/Button";
 import { Link, useNavigate } from "react-router-dom";
-
+import formatSalary from "../../shared/utils/formatSalary";
 const ACCENT_COLORS = ["#4f46e5", "#0f172a", "#14b8a6", "#c026d3", "#0369a1"];
-
-const CURRENCY_SYMBOLS: Record<string, string> = {
-  USD: "$",
-  EUR: "€",
-  GBP: "£",
-  INR: "₹",
-};
 
 const EMPLOYMENT_LABELS: Record<Job["employmentType"], string> = {
   FULL_TIME: "Full-time",
@@ -43,15 +36,6 @@ function companyName(job: Job) {
 function accentFor(name: string) {
   const sum = name.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
   return ACCENT_COLORS[sum % ACCENT_COLORS.length];
-}
-
-function formatSalary(job: Job) {
-  if (job.salaryMin && job.salaryMax) {
-    const symbol = CURRENCY_SYMBOLS[job.currency] ?? `${job.currency} `;
-    const fmt = (n: number) => `${symbol}${Math.round(n / 1000)}k`;
-    return `${fmt(job.salaryMin)}–${fmt(job.salaryMax)}`;
-  }
-  return null;
 }
 
 function JobCard({ job, index }: { job: Job; index: number }) {

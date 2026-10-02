@@ -2,15 +2,15 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Bookmark, BookmarkCheck, Loader2, Pencil, Trash2 } from "lucide-react";
 import { toast } from "react-hot-toast";
-import type { Job, JobFormValues } from "../../features/jobs/types/job.types";
-import Button from "../../components/ui/Button";
-import { useDeleteJob } from "../../features/jobs/hooks/useDeleteJob";
-import { useUpdateJob } from "../../features/jobs/hooks/useUpdateJob";
-import PostJobModal from "../../recruiter/components/JobPostingModal";
-import { useApplyJob } from "../../features/applications/hooks/useApplyJob";
-import ApplyJobModal from "../../features/applications/components/ApplyJobModal";
-import Modal from "../ui/Modal";
-import { useJobSaveActions } from "../../features/jobs/hooks/useJobSaveActions";
+import type { Job, JobFormValues } from "../types/job.types";
+import Button from "../../../components/ui/Button";
+import { useDeleteJob } from "../hooks/useDeleteJob";
+import { useUpdateJob } from "../hooks/useUpdateJob";
+import PostJobModal from "../../../recruiter/components/JobPostingModal";
+import { useApplyJob } from "../../applications/hooks/useApplyJob";
+import ApplyJobModal from "../../applications/components/ApplyJobModal";
+import Modal from "../../../components/ui/Modal";
+import { useJobSaveActions } from "../hooks/useJobSaveActions";
 
 type Props = {
   variant: "public" | "candidate" | "recruiter";

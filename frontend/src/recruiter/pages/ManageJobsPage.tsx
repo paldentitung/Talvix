@@ -15,7 +15,7 @@ import { useRecruiterJobs } from "../../features/jobs/hooks/useRecruiterJobs";
 import { useUpdateJobStatus } from "../../features/jobs/hooks/useUpdateJobStatus";
 import Modal from "../../components/ui/Modal";
 import Button from "../../components/ui/Button";
-
+import formatSalary from "../../shared/utils/formatSalary";
 const statusStyles: Record<JobStatus, string> = {
   OPEN: "bg-(--success-bg) text-(--success)",
   DRAFT: "bg-(--border) text-(--text-secondary)",
@@ -33,14 +33,6 @@ const statusActionIcons: Record<JobStatus, typeof Lock> = {
   DRAFT: Unlock,
   OPEN: Lock,
   CLOSED: RotateCcw,
-};
-
-const formatSalary = (job: Job) => {
-  if (!job.salaryMin && !job.salaryMax) return "Not disclosed";
-  const fmt = (n: number) => `${job.currency} ${(n / 1000).toFixed(0)}k`;
-  if (job.salaryMin && job.salaryMax)
-    return `${fmt(job.salaryMin)} – ${fmt(job.salaryMax)}`;
-  return fmt(job.salaryMin ?? job.salaryMax ?? 0);
 };
 
 const formatDeadline = (deadline: string | null) => {

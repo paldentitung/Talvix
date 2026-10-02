@@ -1,4 +1,4 @@
-import JobCard from "../jobs/JobCard";
+import JobCard from "../../features/jobs/components/JobCard";
 import SectionHead from "../ui/SectionHead";
 import { useJobs } from "../../features/jobs/hooks/useJobs";
 import type { Job } from "../../features/jobs/types/job.types";

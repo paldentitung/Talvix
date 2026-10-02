@@ -12,8 +12,8 @@ import {
 } from "lucide-react";
 import type { Job } from "../features/jobs/types/job.types";
 import { useJob } from "../features/jobs/hooks/useJob";
-import JobActionsSidebar from "../components/jobs/JobActionsSidebar";
-
+import JobActionsSidebar from "../features/jobs/components/JobActionsSidebar";
+import formatSalary from "../shared/utils/formatSalary";
 type JobStatus = Job["status"];
 
 const statusStyles: Record<JobStatus, string> = {
@@ -40,14 +40,6 @@ const experienceLabels: Record<Job["experienceLevel"], string> = {
   MID: "Mid level",
   SENIOR: "Senior",
   LEAD: "Lead",
-};
-
-const formatSalary = (job: Job) => {
-  if (!job.salaryMin && !job.salaryMax) return "Not disclosed";
-  const fmt = (n: number) => `${job.currency} ${(n / 1000).toFixed(0)}k`;
-  if (job.salaryMin && job.salaryMax)
-    return `${fmt(job.salaryMin)} – ${fmt(job.salaryMax)}`;
-  return fmt(job.salaryMin ?? job.salaryMax ?? 0);
 };
 
 const formatDate = (date: string | null) => {
@@ -120,8 +112,8 @@ const JobDetailPage = () => {
   }
 
   const companyName =
-    job.recruiter.companyName ??
-    `${job.recruiter.firstName} ${job.recruiter.lastName}`;
+    job.recruiter?.recruiterProfile?.companyName ??
+    `${job.recruiter?.firstName} ${job.recruiter?.lastName}`;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-2">

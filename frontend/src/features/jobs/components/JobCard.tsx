@@ -1,10 +1,11 @@
 import { useState } from "react";
-import Badge from "../ui/Badge";
+import Badge from "../../../components/ui/Badge";
 import { Bookmark, Building2 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import type { Job } from "../../features/jobs/types/job.types";
-import JobCardSkeleton from "../../shared/components/JobCardSkeleton";
-import { useAuth } from "../../features/auth/contexts/AuthContext";
+import type { Job } from "../types/job.types";
+import { useAuth } from "../../auth/contexts/AuthContext";
+import formatSalaryCompact from "../../../shared/utils/formatSalary";
+
 interface JobCardProps {
   job: Job;
   initiallySaved?: boolean;
@@ -31,7 +32,6 @@ const LEVEL_LABELS: Record<Job["experienceLevel"], string> = {
   LEAD: "Lead",
 };
 
-// Deterministic color from company name so the same company always gets the same avatar color
 const AVATAR_COLORS = [
   "#4f46e5",
   "#0891b2",
@@ -46,16 +46,6 @@ function colorForName(name: string) {
   return AVATAR_COLORS[hash % AVATAR_COLORS.length];
 }
 
-function formatSalary(job: Job) {
-  const { salaryMin, salaryMax, currency } = job;
-  if (salaryMin == null && salaryMax == null) return "Salary not disclosed";
-  const fmt = (n: number) => `${currency} ${n.toLocaleString()}`;
-  if (salaryMin != null && salaryMax != null)
-    return `${fmt(salaryMin)} - ${fmt(salaryMax)}`;
-  if (salaryMin != null) return `From ${fmt(salaryMin)}`;
-  return `Up to ${fmt(salaryMax as number)}`;
-}
-
 function formatPostedAt(createdAt: string) {
   const diffMs = Date.now() - new Date(createdAt).getTime();
   const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -68,10 +58,6 @@ function formatPostedAt(createdAt: string) {
   return `${months}mo ago`;
 }
 
-/**
- * Reusable job card. Used on: Home (Featured Jobs), Job Search results,
- * Saved Jobs page, and Related Jobs on the Job Details page.
- */
 export default function JobCard({
   job,
   initiallySaved = false,
@@ -79,7 +65,6 @@ export default function JobCard({
 }: JobCardProps) {
   const [saved, setSaved] = useState(initiallySaved);
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  const canSave = user?.role === "CANDIDATE";
   const navigate = useNavigate();
   const routerLocation = useLocation();
 
@@ -188,7 +173,7 @@ export default function JobCard({
 
       <div className="flex items-center justify-between pt-3 border-t border-[var(--border)]">
         <span className="font-bold text-[14.5px] text-[var(--text-primary)]">
-          {formatSalary(job)}
+          {formatSalaryCompact(job)}
         </span>
         <span className="text-xs text-[var(--text-muted)]">
           Posted {formatPostedAt(job.createdAt)}

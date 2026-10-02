@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useJobs } from "../features/jobs/hooks/useJobs";
-import JobCard from "../components/jobs/JobCard";
+import JobCard from "../features/jobs/components/JobCard";
 import type {
   JobFilters,
   Job,
@@ -9,6 +9,7 @@ import type {
   EmploymentType,
 } from "../features/jobs/types/job.types";
 import { useSearchParams } from "react-router-dom";
+import JobCardSkeleton from "../shared/components/JobCardSkeleton";
 
 const WORK_MODES: WorkMode[] = ["ONSITE", "REMOTE", "HYBRID"];
 const EMPLOYMENT_TYPES: EmploymentType[] = [
@@ -19,10 +20,11 @@ const EMPLOYMENT_TYPES: EmploymentType[] = [
 ];
 const EXPERIENCE_LEVELS: ExperienceLevel[] = ["ENTRY", "MID", "SENIOR", "LEAD"];
 
-// `status` is deliberately excluded from the user-editable filter state:
-// this page always searches OPEN jobs, and that shouldn't be a filter a
-// job seeker can remove via a chip or "Clear all". See queryFilters below.
-type EditableFilters = Omit<JobFilters, "status">;
+// `status`, `featuredOnly` and `sort` are deliberately excluded from the
+// user-editable filter state: this page always searches OPEN jobs and has
+// no UI for the others, so they shouldn't appear as chips or be cleared
+// by "Clear all".
+type EditableFilters = Omit<JobFilters, "status" | "featuredOnly" | "sort">;
 
 const FILTER_LABELS: Record<keyof EditableFilters, string> = {
   location: "Location",
@@ -35,9 +37,6 @@ const FILTER_LABELS: Record<keyof EditableFilters, string> = {
   currency: "Currency",
 };
 
-// Single source of truth for which filter keys are synced to/from the URL,
-// so search typing, dropdown changes, chip removal, and "Clear all" all
-// stay consistent instead of each writing to the URL differently.
 const FILTER_KEYS = Object.keys(FILTER_LABELS) as (keyof EditableFilters)[];
 
 const formatEnumLabel = (value: string) =>
@@ -45,31 +44,6 @@ const formatEnumLabel = (value: string) =>
     .split("_")
     .map((w) => w[0] + w.slice(1).toLowerCase())
     .join(" ");
-
-const JobCardSkeleton = () => (
-  <div
-    className="border border-[var(--border)] p-4 animate-pulse"
-    style={{ borderRadius: "var(--radius-md)" }}
-  >
-    <div className="flex items-start justify-between gap-3">
-      <div
-        className="h-10 w-10 bg-[var(--border)]"
-        style={{ borderRadius: "var(--radius-sm)" }}
-      />
-      <div className="h-5 w-16 rounded-full bg-[var(--border)]" />
-    </div>
-    <div className="mt-4 h-4 w-3/4 rounded bg-[var(--border)]" />
-    <div className="mt-2 h-3 w-1/2 rounded bg-[var(--border)]" />
-    <div className="mt-4 flex gap-2">
-      <div className="h-3 w-14 rounded bg-[var(--border)]" />
-      <div className="h-3 w-14 rounded bg-[var(--border)]" />
-    </div>
-    <div
-      className="mt-4 h-8 w-full bg-[var(--border)]"
-      style={{ borderRadius: "var(--radius-sm)" }}
-    />
-  </div>
-);
 
 const selectClass =
   "border border-[var(--border)] bg-[var(--card)] text-sm px-3 py-2 pr-8 outline-none transition appearance-none cursor-pointer text-[var(--text-primary)] focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-light)] hover:border-[var(--primary)]";
