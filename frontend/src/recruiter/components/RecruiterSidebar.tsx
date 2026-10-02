@@ -72,7 +72,7 @@ const NavSection = ({
   </div>
 );
 
-const Sidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
+const RecruiterSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
   const { pathname } = useLocation();
   const { mutate: logoutUser } = useLogout();
   const handleLogout = () => {
@@ -116,4 +116,4 @@ const Sidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
   );
 };
 
-export default Sidebar;
+export default RecruiterSidebar;

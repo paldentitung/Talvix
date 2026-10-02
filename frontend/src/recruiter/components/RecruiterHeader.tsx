@@ -48,7 +48,7 @@ const getPageMeta = (pathname: string) => {
 
   return match ? pageMeta[match] : defaultMeta;
 };
-const Header = ({ onMenuClick, openJobPostingModal }: any) => {
+const RecruiterHeader = ({ onMenuClick, openJobPostingModal }: any) => {
   const { pathname } = useLocation();
   const { title, subtitle } = getPageMeta(pathname);
 
@@ -108,4 +108,4 @@ const Header = ({ onMenuClick, openJobPostingModal }: any) => {
   );
 };
 
-export default Header;
+export default RecruiterHeader;

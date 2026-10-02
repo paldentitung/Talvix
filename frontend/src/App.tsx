@@ -9,7 +9,7 @@ import ResetPasswordPage from "./features/auth/pages/ResetPasswordPage";
 import CandidateDashboard from "./candidate/pages/CandidateDashboard.tsx";
 import RecruiterDashboardPage from "./recruiter/pages/DashboardPage.tsx";
 
-import RecruiterMainLayout from "./recruiter/layouts/RecruiterLayout.tsx";
+import RecruiterMainLayout from "./layouts/RecruiterLayout.tsx";
 import ManageJobsPage from "./recruiter/pages/ManageJobsPage.tsx";
 import CompanyProfilePage from "./recruiter/pages/CompanyProfilePage.tsx";
 import SettingsPage from "./recruiter/pages/SettingsPage.tsx";

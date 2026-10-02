@@ -1,4 +1,3 @@
-// components/JobActionsSidebar.tsx
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Bookmark, BookmarkCheck, Loader2, Pencil, Trash2 } from "lucide-react";
@@ -11,11 +10,7 @@ import PostJobModal from "../../recruiter/components/JobPostingModal";
 import { useApplyJob } from "../../features/applications/hooks/useApplyJob";
 import ApplyJobModal from "../../features/applications/components/ApplyJobModal";
 import Modal from "../ui/Modal";
-import { useSavedJobs } from "../../features/jobs/hooks/useSavedJobs";
 import { useJobSaveActions } from "../../features/jobs/hooks/useJobSaveActions";
-// TODO: swap these in once you confirm the hook names for candidate actions
-// import { useSaveJob } from "../../features/jobs/hooks/useSaveJob";
-// import { useApplyToJob } from "../../features/jobs/hooks/useApplyToJob";
 
 type Props = {
   variant: "public" | "candidate" | "recruiter";
