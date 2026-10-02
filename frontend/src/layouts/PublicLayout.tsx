@@ -1,13 +1,13 @@
-import React from "react";
+import { Outlet } from "react-router-dom";
 import Navbar from "../components/layout/Navbar";
 
-const PublicLayout = ({ children }: { children: React.ReactNode }) => {
+const PublicLayout = () => {
   return (
-    <div className="flex flex-col min-h-screen">
-      <header>
-        <Navbar />
-      </header>
-      <main>{children}</main>
+    <div className="flex min-h-screen flex-col">
+      <Navbar />
+      <main>
+        <Outlet />
+      </main>
     </div>
   );
 };

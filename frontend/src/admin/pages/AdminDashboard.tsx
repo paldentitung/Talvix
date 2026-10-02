@@ -20,13 +20,13 @@ import { useUsers } from "../../features/users/hooks/useUsers";
 import { ROLE_LABELS } from "../../shared/constants/roleLabels";
 import { Link } from "react-router-dom";
 import { useAdminJobs } from "../../features/jobs/hooks/useAdminJobs";
-import type { ApiUser } from "../../shared/types/user.types";
 import { tintFor } from "../../shared/utils/avatarTint";
 import { fullName } from "../../shared/utils/getFullname";
 import initials from "../../shared/utils/getInitials";
 import relativeTime from "../../shared/utils/relativeTime";
 import { useCompanies } from "../../features/company/hooks/useCompanies";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
+import type { AdminUser } from "../../features/users/types/user.type";
 const growthData = [
   { month: "Jan", users: 1200 },
   { month: "Feb", users: 1900 },
@@ -130,7 +130,7 @@ const AdminDashboard = () => {
   const { data: companiesData } = useCompanies(1, 1);
   const { data: jobsData } = useAdminJobs(1, 1, undefined, undefined);
 
-  const users: ApiUser[] = usersData?.data?.users ?? [];
+  const users: AdminUser[] = usersData?.data?.users ?? [];
   const totalUsers = usersData?.data?.pagination?.totalUsers ?? 0;
   const totalCompanies = companiesData?.data?.total ?? 0;
   const totalJobs = jobsData?.data?.total ?? 0;

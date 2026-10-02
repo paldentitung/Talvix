@@ -2,13 +2,14 @@ import { useMemo, useState } from "react";
 import { Search, MoreHorizontal, UserPlus, ChevronDown } from "lucide-react";
 import { useUsers } from "../../features/users/hooks/useUsers";
 import Pagination from "../../shared/components/Pagination";
-import type { UserRole, ApiUser } from "../../shared/types/user.types";
+import type { UserRole } from "../../shared/types/user.types";
 import relativeTime from "../../shared/utils/relativeTime";
 import VerifiedBadge from "../../features/company/components/VerifiedBadge";
 import { tintFor } from "../../shared/utils/avatarTint";
 import initials from "../../shared/utils/getInitials";
 import { fullName } from "../../shared/utils/getFullname";
 import RowMenu from "../../shared/components/RowMenu";
+import type { AdminUser } from "../../features/users/types/user.type";
 
 const FILTERS = ["All", "Candidates", "Recruiters", "Admins"] as const;
 type Filter = (typeof FILTERS)[number];
@@ -43,7 +44,7 @@ const AdminUsersPage = () => {
 
   const { data, isLoading, isError } = useUsers(page, limit);
 
-  const users: ApiUser[] = data?.data?.users ?? [];
+  const users: AdminUser[] = data?.data?.users ?? [];
   const totalUsers = data?.data?.pagination?.totalUsers ?? 0;
   const totalPages = data?.data?.pagination?.totalPages ?? 1;
 

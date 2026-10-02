@@ -102,3 +102,14 @@ export interface CandidateExperience {
   description: string | null;
   order: number;
 }
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: UserRole;
+  companyName: string | null;
+  isVerified: boolean;
+  createdAt: string;
+}
