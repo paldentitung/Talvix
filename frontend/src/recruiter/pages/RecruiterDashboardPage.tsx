@@ -77,7 +77,7 @@ const StatCard = ({ label, value, delta }: Stat) => (
   </div>
 );
 
-const DashboardPage = () => {
+const RecruiterDashboardPage = () => {
   const { data } = useRecruiterJobs();
 
   const jobs = data?.jobs ?? [];
@@ -260,4 +260,4 @@ const DashboardPage = () => {
   );
 };
 
-export default DashboardPage;
+export default RecruiterDashboardPage;

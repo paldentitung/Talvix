@@ -51,7 +51,7 @@ const Toggle = ({
   </div>
 );
 
-const SettingsPage = () => {
+const RecruiterSettingsPage = () => {
   const [activeTab, setActiveTab] = useState<TabId>("profile");
 
   const [name, setName] = useState("Jordan Reyes");
@@ -256,4 +256,4 @@ const SettingsPage = () => {
   );
 };
 
-export default SettingsPage;
+export default RecruiterSettingsPage;

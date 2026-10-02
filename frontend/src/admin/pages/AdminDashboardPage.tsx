@@ -125,7 +125,7 @@ const StatCard = ({ stat }: { stat: Stat }) => {
     </div>
   );
 };
-const AdminDashboard = () => {
+const AdminDashboardPage = () => {
   const { data: usersData } = useUsers(1, 5);
   const { data: companiesData } = useCompanies(1, 1);
   const { data: jobsData } = useAdminJobs(1, 1, undefined, undefined);
@@ -363,4 +363,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard;
+export default AdminDashboardPage;

@@ -37,7 +37,7 @@ const ErrorState = () => (
   </div>
 );
 
-const CandidateSavedJobs = () => {
+const CandidateSavedJobsPage = () => {
   const { data: jobs = [], isLoading, isError } = useSavedJobs();
   const { isSavingJob, toggleSave } = useJobSaveActions();
   return (
@@ -67,4 +67,4 @@ const CandidateSavedJobs = () => {
   );
 };
 
-export default CandidateSavedJobs;
+export default CandidateSavedJobsPage;

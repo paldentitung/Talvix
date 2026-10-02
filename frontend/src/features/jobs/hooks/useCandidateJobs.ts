@@ -1,4 +1,3 @@
-// features/jobs/hooks/useCandidateJobs.ts
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import type { JobFilters } from "../types/job.types";
 import { getCandidateJobs } from "../api/jobApi";

@@ -24,11 +24,11 @@ import JobsPage from "../pages/JobsPage";
 import JobDetailPage from "../pages/JobDetailPage";
 
 // Role pages are lazy-loaded: a candidate never downloads admin code
-const CandidateDashboard = lazy(
-  () => import("../candidate/pages/CandidateDashboard"),
+const CandidateDashboardPage = lazy(
+  () => import("../candidate/pages/CandidateDashboardPage"),
 );
-const CandidateSavedJobs = lazy(
-  () => import("../candidate/pages/CandidateSavedJobs"),
+const CandidateSavedJobsPage = lazy(
+  () => import("../candidate/pages/CandidateSavedJobsPage"),
 );
 const CandidateJobsPage = lazy(
   () => import("../candidate/pages/CandidateJobsPage"),
@@ -44,7 +44,7 @@ const CandidateSettingsPage = lazy(
 );
 
 const RecruiterDashboardPage = lazy(
-  () => import("../recruiter/pages/DashboardPage"),
+  () => import("../recruiter/pages/RecruiterDashboardPage"),
 );
 const AnalyticsPage = lazy(() => import("../recruiter/pages/AnalyticsPage"));
 const ApplicantsPage = lazy(() => import("../recruiter/pages/ApplicantsPage"));
@@ -52,9 +52,13 @@ const CompanyProfilePage = lazy(
   () => import("../recruiter/pages/CompanyProfilePage"),
 );
 const ManageJobsPage = lazy(() => import("../recruiter/pages/ManageJobsPage"));
-const SettingsPage = lazy(() => import("../recruiter/pages/SettingsPage"));
+const RecruiterSettingsPage = lazy(
+  () => import("../recruiter/pages/RecruiterSettingsPage"),
+);
 
-const AdminDashboard = lazy(() => import("../admin/pages/AdminDashboard"));
+const AdminDashboardPage = lazy(
+  () => import("../admin/pages/AdminDashboardPage"),
+);
 const AdminUsersPage = lazy(() => import("../admin/pages/AdminUsersPage"));
 const AdminJobsPage = lazy(() => import("../admin/pages/AdminJobsPage"));
 const AdminCompaniesPage = lazy(
@@ -98,8 +102,8 @@ const routes: RouteObject[] = [
   { path: "/reset-password/:token", element: <ResetPasswordPage /> },
 
   guarded(USER_ROLE.CANDIDATE, "/candidate", <CandidateLayout />, [
-    { path: "dashboard", element: <CandidateDashboard /> },
-    { path: "saved-jobs", element: <CandidateSavedJobs /> },
+    { path: "dashboard", element: <CandidateDashboardPage /> },
+    { path: "saved-jobs", element: <CandidateSavedJobsPage /> },
     { path: "jobs", element: <CandidateJobsPage /> },
     { path: "jobs/:jobId", element: <JobDetailPage /> },
     { path: "applications", element: <CandidateApplicationsPage /> },
@@ -114,11 +118,11 @@ const routes: RouteObject[] = [
     { path: "company", element: <CompanyProfilePage /> },
     { path: "jobs", element: <ManageJobsPage /> },
     { path: "jobs/:jobId", element: <JobDetailPage /> },
-    { path: "settings", element: <SettingsPage /> },
+    { path: "settings", element: <RecruiterSettingsPage /> },
   ]),
 
   guarded(USER_ROLE.ADMIN, "/admin", <AdminLayout />, [
-    { path: "dashboard", element: <AdminDashboard /> },
+    { path: "dashboard", element: <AdminDashboardPage /> },
     { path: "users", element: <AdminUsersPage /> },
     { path: "jobs", element: <AdminJobsPage /> },
     { path: "companies", element: <AdminCompaniesPage /> },

@@ -91,7 +91,7 @@ const StatCard = ({
   );
 };
 
-const CandidateDashboard = () => {
+const CandidateDashboardPage = () => {
   const JOBS_PAGE_SIZE = 3;
   const APPLICATIONS_LIMIT = 5;
 
@@ -435,4 +435,4 @@ const CandidateDashboard = () => {
   );
 };
 
-export default CandidateDashboard;
+export default CandidateDashboardPage;
