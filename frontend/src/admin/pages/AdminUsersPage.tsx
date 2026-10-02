@@ -9,7 +9,7 @@ import { tintFor } from "../../shared/utils/avatarTint";
 import initials from "../../shared/utils/getInitials";
 import { fullName } from "../../shared/utils/getFullname";
 import RowMenu from "../../shared/components/RowMenu";
-import type { AdminUser } from "../../features/users/types/user.type";
+import type { AdminUser } from "../../features/users/types/user.types";
 
 const FILTERS = ["All", "Candidates", "Recruiters", "Admins"] as const;
 type Filter = (typeof FILTERS)[number];

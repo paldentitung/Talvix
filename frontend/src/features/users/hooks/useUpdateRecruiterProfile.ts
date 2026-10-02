@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { updateRecruiterProfile } from "../api/usersApi";
-import type { UpdateRecruiterProfileRequest } from "../types/user.type";
+import type { UpdateRecruiterProfileRequest } from "../types/user.types";
 import { queryClient } from "../../../shared/lib/queryClient";
 
 export const useUpdateRecruiterProfile = () => {

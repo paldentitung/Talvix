@@ -3,9 +3,9 @@ import type {
   RegisterRequest,
   LoginRequest,
   ResetPasswordRequest,
-} from "../types/auth.type";
+} from "../types/auth.types";
 import type { ApiResponse } from "../../../shared/types/api.types";
-import type { User } from "../../users/types/user.type";
+import type { User } from "../../users/types/user.types";
 export const register = async (data: RegisterRequest) => {
   return request(
     "/auth/register",

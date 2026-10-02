@@ -1,4 +1,3 @@
-// recruiter/pages/JobDetailPage.tsx  (rename/move to a shared pages folder if you like)
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   ArrowLeft,

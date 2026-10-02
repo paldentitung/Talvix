@@ -26,7 +26,7 @@ import initials from "../../shared/utils/getInitials";
 import relativeTime from "../../shared/utils/relativeTime";
 import { useCompanies } from "../../features/company/hooks/useCompanies";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
-import type { AdminUser } from "../../features/users/types/user.type";
+import type { AdminUser } from "../../features/users/types/user.types";
 const growthData = [
   { month: "Jan", users: 1200 },
   { month: "Feb", users: 1900 },

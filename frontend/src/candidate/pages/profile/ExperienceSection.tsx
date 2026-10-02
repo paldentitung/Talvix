@@ -5,7 +5,7 @@ import { useDeleteExperience } from "../../../features/users/hooks/useDeleteExpe
 import type {
   AddCandidateExperienceInput,
   CandidateExperience,
-} from "../../../features/users/types/user.type";
+} from "../../../features/users/types/user.types";
 import EntryList from "./EntryList";
 import type { Entry } from "./shared";
 

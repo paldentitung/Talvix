@@ -5,7 +5,7 @@ import { useDeleteEducation } from "../../../features/users/hooks/useDeleteEduca
 import type {
   AddCandidateEducationInput,
   CandidateEducation,
-} from "../../../features/users/types/user.type";
+} from "../../../features/users/types/user.types";
 import EntryList from "./EntryList";
 import type { Entry } from "./shared";
 
