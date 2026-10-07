@@ -97,6 +97,10 @@ export const loginService = async (data: LoginInput) => {
     where: {
       email: data.email,
     },
+    select: {
+      ...userResponseSelect,
+      password: true,
+    },
   });
 
   if (!existingUser) {
@@ -116,9 +120,11 @@ export const loginService = async (data: LoginInput) => {
     throw new AppError("Invalid email or password", 401);
   }
 
-  const { password, ...safeUser } = existingUser;
+  if (!existingUser.isVerified) {
+    throw new AppError("Please verify your email before logging in", 403);
+  }
 
-  return safeUser;
+  return toUserResponse(existingUser);
 };
 export const forgotPasswordService = async (data: ForgotPasswordInput) => {
   const user = await prisma.user.findUnique({

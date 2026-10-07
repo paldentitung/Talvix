@@ -11,12 +11,8 @@ export function useLogin() {
     mutationFn: login,
 
     onSuccess: (data) => {
-      console.log("login response:", data); // add this temporarily
       const user = data.data;
-      console.log("user:", user, "role:", user?.role);
-
       queryClient.setQueryData(["me"], data);
-
       toast.success("Login successful!");
 
       switch (user.role) {
