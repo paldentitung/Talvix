@@ -12,7 +12,7 @@ export function useLogin() {
 
     onSuccess: (data) => {
       const user = data.data;
-      queryClient.setQueryData(["me"], data);
+      queryClient.setQueryData(["me"], user);
       toast.success("Login successful!");
 
       switch (user.role) {

@@ -211,19 +211,17 @@ export const resetPasswordService = async (data: ResetPasswordInput) => {
 
 export const getMeService = async (userId: string) => {
   const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      email: true,
-      role: true,
+    where: {
+      id: userId,
     },
+    select: userResponseSelect,
   });
 
   if (!user) {
     throw new AppError("User not found", 404);
   }
 
-  return user;
+  return toUserResponse(user);
 };
 // auth.service.ts
 export const googleLoginService = async (
