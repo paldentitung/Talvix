@@ -25,7 +25,7 @@ export const registerService = async (data: RegisterInput) => {
   }
   const hashedPassword = await bcrypt.hash(data.password, 10);
   const verificationToken = crypto.randomBytes(32).toString("hex");
-  const verificationTokenExpires = new Date(Date.now() + 1000 * 60 * 60);
+  const verificationTokenExpires = new Date(Date.now() + 1000 * 60 * 30);
 
   const user = await prisma.user.create({
     data: {
