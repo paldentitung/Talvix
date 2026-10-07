@@ -10,26 +10,28 @@ export function useLogin() {
   return useMutation({
     mutationFn: login,
 
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       const user = data.data;
-      queryClient.setQueryData(["me"], user);
+
+      queryClient.setQueryData(["me"], data);
+
       toast.success("Login successful!");
 
       switch (user.role) {
         case "ADMIN":
-          navigate("/admin/dashboard");
+          navigate("/admin/dashboard", { replace: true });
           break;
 
         case "RECRUITER":
-          navigate("/recruiter/dashboard");
+          navigate("/recruiter/dashboard", { replace: true });
           break;
 
         case "CANDIDATE":
-          navigate("/candidate/dashboard");
+          navigate("/candidate/dashboard", { replace: true });
           break;
 
         default:
-          navigate("/");
+          navigate("/", { replace: true });
       }
     },
 
