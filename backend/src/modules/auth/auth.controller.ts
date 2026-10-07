@@ -11,6 +11,7 @@ import {
 import { signToken } from "../../utils/jwt.js";
 import { clearAuthCookie, setAuthCookie } from "../../utils/cookies.js";
 import { getGoogleAuthUrl, getGoogleUser } from "./googleOAuth.js";
+import AppError from "../../utils/AppError.js";
 
 export const registerController = async (req: Request, res: Response) => {
   const result = await registerService(req.body);
@@ -90,32 +91,44 @@ export const googleAuthController = (req: Request, res: Response) => {
 };
 
 export const googleCallbackController = async (req: Request, res: Response) => {
-  const { code, state } = req.query;
+  try {
+    const { code, state } = req.query;
 
-  if (typeof code !== "string") {
-    return res.status(400).json({
-      success: false,
-      message: "Google authorization code is missing",
-    });
-  }
+    if (typeof code !== "string") {
+      return res.redirect(
+        `${process.env.CLIENT_URL}/login?error=${encodeURIComponent(
+          "Google authorization code is missing",
+        )}`,
+      );
+    }
 
-  const roleFromState =
-    state === "CANDIDATE" || state === "RECRUITER" ? state : undefined;
+    const roleFromState =
+      state === "CANDIDATE" || state === "RECRUITER" ? state : undefined;
 
-  const googleUser = await getGoogleUser(code);
-  const user = await googleLoginService(googleUser, roleFromState);
+    const googleUser = await getGoogleUser(code);
+    const user = await googleLoginService(googleUser, roleFromState);
 
-  const token = signToken({ id: user.id, role: user.role });
-  setAuthCookie(res, token);
+    const token = signToken({ id: user.id, role: user.role });
+    setAuthCookie(res, token);
 
-  switch (user.role) {
-    case "ADMIN":
-      return res.redirect(`${process.env.CLIENT_URL}/admin/dashboard`);
-    case "RECRUITER":
-      return res.redirect(`${process.env.CLIENT_URL}/recruiter/dashboard`);
-    case "CANDIDATE":
-      return res.redirect(`${process.env.CLIENT_URL}/candidate/dashboard`);
-    default:
-      return res.redirect(`${process.env.CLIENT_URL}/`);
+    switch (user.role) {
+      case "ADMIN":
+        return res.redirect(`${process.env.CLIENT_URL}/admin/dashboard`);
+      case "RECRUITER":
+        return res.redirect(`${process.env.CLIENT_URL}/recruiter/dashboard`);
+      case "CANDIDATE":
+        return res.redirect(`${process.env.CLIENT_URL}/candidate/dashboard`);
+      default:
+        return res.redirect(`${process.env.CLIENT_URL}/`);
+    }
+  } catch (error) {
+    const message =
+      error instanceof AppError
+        ? error.message
+        : "Google authentication failed";
+
+    return res.redirect(
+      `${process.env.CLIENT_URL}/login?error=${encodeURIComponent(message)}`,
+    );
   }
 };
