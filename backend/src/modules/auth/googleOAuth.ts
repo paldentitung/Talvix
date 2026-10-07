@@ -8,11 +8,11 @@ export const googleOAuth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CALLBACK_URL,
 );
 
-export const getGoogleAuthUrl = (role?: "CANDIDATE" | "RECRUITER") => {
+export const getGoogleAuthUrl = (state: string) => {
   return googleOAuth2Client.generateAuthUrl({
     access_type: "offline",
     scope: ["openid", "email", "profile"],
-    state: role ?? "LOGIN",
+    state,
   });
 };
 

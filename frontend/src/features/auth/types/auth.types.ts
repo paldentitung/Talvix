@@ -1,10 +1,4 @@
-import type { UserRole } from "../../../shared/types/user.types";
-
-export interface AuthUser {
-  id: string;
-  email: string;
-  role: UserRole;
-}
+import type { User } from "../../users/types/user.types";
 
 export interface RegisterRequest {
   firstName: string;
@@ -25,7 +19,7 @@ export interface ResetPasswordRequest {
 }
 
 export interface AuthContextType {
-  user: AuthUser | null;
+  user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
 }

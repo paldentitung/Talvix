@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from "lucide-react";
 import AuthLayout from "../../../components/layout/AuthLayout";
 import { useLogin } from "../hooks/useLogin";
 import { loginWithGoogle } from "../api/authApi";
-
+import { useSearchParams } from "react-router-dom";
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -17,8 +17,10 @@ export default function LoginPage() {
     email?: string;
     password?: string;
   }>({});
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const loginMutation = useLogin();
+  const errorMessage = searchParams.get("error");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -48,6 +50,11 @@ export default function LoginPage() {
 
   return (
     <AuthLayout>
+      {errorMessage && (
+        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 mb-3">
+          {errorMessage}
+        </div>
+      )}
       {/* Heading with a two-tone rule tying back to the logo mark */}
       <div className="mb-8">
         <h1 className="font-display text-[30px] font-bold tracking-tight text-[var(--text-primary)] mb-2 leading-tight">

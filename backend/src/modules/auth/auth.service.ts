@@ -25,7 +25,7 @@ export const registerService = async (data: RegisterInput) => {
   }
   const hashedPassword = await bcrypt.hash(data.password, 10);
   const verificationToken = crypto.randomBytes(32).toString("hex");
-  const verificationTokenExpires = new Date(Date.now() + 1000 * 60 * 60);
+  const verificationTokenExpires = new Date(Date.now() + 1000 * 60 * 30);
 
   const user = await prisma.user.create({
     data: {
@@ -97,6 +97,10 @@ export const loginService = async (data: LoginInput) => {
     where: {
       email: data.email,
     },
+    select: {
+      ...userResponseSelect,
+      password: true,
+    },
   });
 
   if (!existingUser) {
@@ -116,9 +120,11 @@ export const loginService = async (data: LoginInput) => {
     throw new AppError("Invalid email or password", 401);
   }
 
-  const { password, ...safeUser } = existingUser;
+  if (!existingUser.isVerified) {
+    throw new AppError("Please verify your email before logging in", 403);
+  }
 
-  return safeUser;
+  return toUserResponse(existingUser);
 };
 export const forgotPasswordService = async (data: ForgotPasswordInput) => {
   const user = await prisma.user.findUnique({
@@ -205,19 +211,17 @@ export const resetPasswordService = async (data: ResetPasswordInput) => {
 
 export const getMeService = async (userId: string) => {
   const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      email: true,
-      role: true,
+    where: {
+      id: userId,
     },
+    select: userResponseSelect,
   });
 
   if (!user) {
     throw new AppError("User not found", 404);
   }
 
-  return user;
+  return toUserResponse(user);
 };
 // auth.service.ts
 export const googleLoginService = async (

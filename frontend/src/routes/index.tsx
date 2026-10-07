@@ -95,8 +95,9 @@ const routes: RouteObject[] = [
   },
 
   // Auth
-  { path: "/login", element: <LoginPage /> },
   { path: "/register", element: <RegisterPage /> },
+  { path: "/login", element: <LoginPage /> },
+  { path: "/verify-email", element: <VerifyEmailPage /> },
   { path: "/verify-email/:token", element: <VerifyEmailPage /> },
   { path: "/forgot-password", element: <ForgotPasswordPage /> },
   { path: "/reset-password/:token", element: <ResetPasswordPage /> },

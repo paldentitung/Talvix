@@ -10,10 +10,8 @@ export function useLogin() {
   return useMutation({
     mutationFn: login,
 
-    onSuccess: (data) => {
-      console.log("login response:", data); // add this temporarily
+    onSuccess: async (data) => {
       const user = data.data;
-      console.log("user:", user, "role:", user?.role);
 
       queryClient.setQueryData(["me"], data);
 
@@ -21,19 +19,19 @@ export function useLogin() {
 
       switch (user.role) {
         case "ADMIN":
-          navigate("/admin/dashboard");
+          navigate("/admin/dashboard", { replace: true });
           break;
 
         case "RECRUITER":
-          navigate("/recruiter/dashboard");
+          navigate("/recruiter/dashboard", { replace: true });
           break;
 
         case "CANDIDATE":
-          navigate("/candidate/dashboard");
+          navigate("/candidate/dashboard", { replace: true });
           break;
 
         default:
-          navigate("/");
+          navigate("/", { replace: true });
       }
     },
 

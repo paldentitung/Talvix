@@ -11,6 +11,8 @@ import {
 import { signToken } from "../../utils/jwt.js";
 import { clearAuthCookie, setAuthCookie } from "../../utils/cookies.js";
 import { getGoogleAuthUrl, getGoogleUser } from "./googleOAuth.js";
+import AppError from "../../utils/AppError.js";
+import crypto from "crypto";
 
 export const registerController = async (req: Request, res: Response) => {
   const result = await registerService(req.body);
@@ -82,40 +84,114 @@ export const getMeController = async (req: Request, res: Response) => {
 
 export const googleAuthController = (req: Request, res: Response) => {
   const role = req.query.role;
+
   const validRole =
     role === "CANDIDATE" || role === "RECRUITER" ? role : undefined;
 
-  const url = getGoogleAuthUrl(validRole);
-  res.redirect(url);
+  const state = crypto.randomBytes(32).toString("hex");
+
+  res.cookie(
+    "google_oauth_state",
+    JSON.stringify({
+      state,
+      role: validRole,
+    }),
+    {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 10 * 60 * 1000,
+    },
+  );
+
+  const url = getGoogleAuthUrl(state);
+
+  return res.redirect(url);
 };
 
 export const googleCallbackController = async (req: Request, res: Response) => {
-  const { code, state } = req.query;
+  try {
+    const { code, state } = req.query;
 
-  if (typeof code !== "string") {
-    return res.status(400).json({
-      success: false,
-      message: "Google authorization code is missing",
-    });
-  }
+    if (typeof code !== "string") {
+      return res.redirect(
+        `${process.env.CLIENT_URL}/login?error=${encodeURIComponent(
+          "Google authorization code is missing",
+        )}`,
+      );
+    }
 
-  const roleFromState =
-    state === "CANDIDATE" || state === "RECRUITER" ? state : undefined;
+    if (typeof state !== "string") {
+      return res.redirect(
+        `${process.env.CLIENT_URL}/login?error=${encodeURIComponent(
+          "Google OAuth state is missing",
+        )}`,
+      );
+    }
 
-  const googleUser = await getGoogleUser(code);
-  const user = await googleLoginService(googleUser, roleFromState);
+    const oauthStateCookie = req.cookies.google_oauth_state;
 
-  const token = signToken({ id: user.id, role: user.role });
-  setAuthCookie(res, token);
+    if (!oauthStateCookie) {
+      return res.redirect(
+        `${process.env.CLIENT_URL}/login?error=${encodeURIComponent(
+          "Google OAuth session expired",
+        )}`,
+      );
+    }
 
-  switch (user.role) {
-    case "ADMIN":
-      return res.redirect(`${process.env.CLIENT_URL}/admin/dashboard`);
-    case "RECRUITER":
-      return res.redirect(`${process.env.CLIENT_URL}/recruiter/dashboard`);
-    case "CANDIDATE":
-      return res.redirect(`${process.env.CLIENT_URL}/candidate/dashboard`);
-    default:
-      return res.redirect(`${process.env.CLIENT_URL}/`);
+    let oauthState: {
+      state: string;
+      role?: "CANDIDATE" | "RECRUITER";
+    };
+
+    try {
+      oauthState = JSON.parse(oauthStateCookie);
+    } catch {
+      return res.redirect(
+        `${process.env.CLIENT_URL}/login?error=${encodeURIComponent(
+          "Invalid Google OAuth session",
+        )}`,
+      );
+    }
+
+    if (state !== oauthState.state) {
+      return res.redirect(
+        `${process.env.CLIENT_URL}/login?error=${encodeURIComponent(
+          "Invalid Google OAuth state",
+        )}`,
+      );
+    }
+
+    res.clearCookie("google_oauth_state");
+
+    const googleUser = await getGoogleUser(code);
+
+    const user = await googleLoginService(googleUser, oauthState.role);
+
+    const token = signToken({ id: user.id, role: user.role });
+    setAuthCookie(res, token);
+
+    switch (user.role) {
+      case "ADMIN":
+        return res.redirect(`${process.env.CLIENT_URL}/admin/dashboard`);
+
+      case "RECRUITER":
+        return res.redirect(`${process.env.CLIENT_URL}/recruiter/dashboard`);
+
+      case "CANDIDATE":
+        return res.redirect(`${process.env.CLIENT_URL}/candidate/dashboard`);
+
+      default:
+        return res.redirect(`${process.env.CLIENT_URL}/`);
+    }
+  } catch (error) {
+    const message =
+      error instanceof AppError
+        ? error.message
+        : "Google authentication failed";
+
+    return res.redirect(
+      `${process.env.CLIENT_URL}/login?error=${encodeURIComponent(message)}`,
+    );
   }
 };

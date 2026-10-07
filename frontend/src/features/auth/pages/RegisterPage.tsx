@@ -68,12 +68,14 @@ export default function RegisterPage() {
 
     if (Object.keys(validationErrors).length > 0) return;
 
-    await registerMutation.mutate({
+    await registerMutation.mutateAsync({
       ...formData,
       role: ROLE_MAP[role],
     });
 
-    // navigate("/verify-email", { state: formData.email });
+    navigate("/verify-email", {
+      state: formData.email,
+    });
   };
 
   const fieldClass = (hasError: boolean) =>
