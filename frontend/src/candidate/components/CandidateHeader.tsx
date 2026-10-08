@@ -1,6 +1,12 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Bell, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
+import NotificationButton from "../../shared/components/NotificationButton";
 import initials from "../../shared/utils/getInitials";
+import { useNotifications } from "../../features/notification/hooks/useNotifications";
+import { useUnreadNotificationCount } from "../../features/notification/hooks/useUnreadNotificationCount";
+import { useMarkNotificationRead } from "../../features/notification/hooks/useMarkNotificationRead";
+import { useMarkAllNotificationsRead } from "../../features/notification/hooks/useMarkAllNotificationsRead";
+
 const pageMeta: Record<string, { title: string; subtitle: string }> = {
   "/candidate/dashboard": {
     title: "Dashboard",
@@ -45,19 +51,21 @@ type Props = {
   onMenuClick?: () => void;
   userName?: string;
   avatarUrl?: string | null;
-  hasUnread?: boolean;
 };
 
 const CandidateHeader = ({
   onMenuClick,
   userName = "User",
   avatarUrl,
-  hasUnread = true,
 }: Props) => {
   const { pathname } = useLocation();
   const { title, subtitle } = getMeta(pathname);
 
   const navigate = useNavigate();
+  const { data: notifications = [] } = useNotifications();
+  const { data: unreadCount = 0 } = useUnreadNotificationCount();
+  const { mutate: markAsRead } = useMarkNotificationRead();
+  const { mutate: markAllAsRead } = useMarkAllNotificationsRead();
 
   return (
     <header className="mb-6 flex items-center justify-between gap-3 border-b border-(--border) pb-5 ">
@@ -83,12 +91,12 @@ const CandidateHeader = ({
       </div>
 
       <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-        <button aria-label="Notifications" className={iconButton}>
-          <Bell size={18} />
-          {hasUnread && (
-            <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-(--accent) ring-2 ring-(--card)" />
-          )}
-        </button>
+        <NotificationButton
+          notifications={notifications}
+          unreadCount={unreadCount}
+          onMarkAsRead={markAsRead}
+          onMarkAllAsRead={markAllAsRead}
+        />
 
         <button
           aria-label="Account"

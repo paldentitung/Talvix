@@ -1,6 +1,11 @@
 import { useLocation } from "react-router-dom";
-import { Bell, User, Menu, Pencil } from "lucide-react";
+import { User, Menu, Pencil } from "lucide-react";
 import Button from "../../components/ui/Button";
+import NotificationButton from "../../shared/components/NotificationButton";
+import { useNotifications } from "../../features/notification/hooks/useNotifications";
+import { useUnreadNotificationCount } from "../../features/notification/hooks/useUnreadNotificationCount";
+import { useMarkNotificationRead } from "../../features/notification/hooks/useMarkNotificationRead";
+import { useMarkAllNotificationsRead } from "../../features/notification/hooks/useMarkAllNotificationsRead";
 
 const pageMeta: Record<string, { title: string; subtitle: string }> = {
   "/recruiter/dashboard": {
@@ -52,6 +57,12 @@ const RecruiterHeader = ({ onMenuClick, openJobPostingModal }: any) => {
   const { pathname } = useLocation();
   const { title, subtitle } = getPageMeta(pathname);
 
+  const { data: notifications = [] } = useNotifications();
+  const { data: unreadCount = 0 } = useUnreadNotificationCount();
+
+  const { mutate: markAsRead } = useMarkNotificationRead();
+  const { mutate: markAllAsRead } = useMarkAllNotificationsRead();
+
   return (
     <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
       <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
@@ -75,15 +86,12 @@ const RecruiterHeader = ({ onMenuClick, openJobPostingModal }: any) => {
       </div>
 
       <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
-        <button
-          aria-label="Notifications"
-          className="relative flex h-9 w-9 items-center justify-center rounded-(--radius-md) text-(--text-secondary) transition-colors hover:bg-(--card) hover:text-(--text-primary) sm:h-10 sm:w-10"
-        >
-          <Bell size={18} className="sm:hidden" />
-          <Bell size={20} className="hidden sm:block" />
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-(--accent)" />
-        </button>
-
+        <NotificationButton
+          notifications={notifications}
+          unreadCount={unreadCount}
+          onMarkAsRead={markAsRead}
+          onMarkAllAsRead={markAllAsRead}
+        />
         <button
           aria-label="Account"
           className="flex h-9 w-9 items-center justify-center rounded-(--radius-md) text-(--text-secondary) transition-colors hover:bg-(--card) hover:text-(--text-primary) sm:h-10 sm:w-10"
