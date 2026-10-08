@@ -5,6 +5,9 @@ import {
   UpdateApplicationInput,
 } from "./application.types.js";
 import { ApplicationStatus } from "@prisma/client";
+import { createNotificationService } from "../notification/notification.service.js";
+import { NotificationType } from "@prisma/client";
+
 export const getApplicationsService = async (page = 1, limit = 10) => {
   const skip = (page - 1) * limit;
 
@@ -270,6 +273,15 @@ export const createApplicationService = async (
     return app;
   });
 
+  await createNotificationService({
+    userId: job.recruiterId,
+    type: NotificationType.APPLICATION_SUBMITTED,
+    title: "New application received",
+    message: `You received a new application for ${job.title}.`,
+    entityId: application.id,
+    entityType: "APPLICATION",
+  });
+
   return application;
 };
 export const withdrawApplicationService = async (
@@ -336,18 +348,21 @@ export const updateApplicationService = async (
       );
     }
   }
+  const statusChanged =
+    data.status !== undefined && data.status !== application.status;
 
   const [updated] = await prisma.$transaction([
     prisma.application.update({
       where: { id: applicationId },
       data,
     }),
-    ...(data.status
+
+    ...(statusChanged
       ? [
           prisma.applicationStatusHistory.create({
             data: {
               applicationId,
-              status: data.status,
+              status: data.status!,
               changedById: recruiterId,
               note: data.recruiterNotes,
             },
@@ -355,6 +370,17 @@ export const updateApplicationService = async (
         ]
       : []),
   ]);
+
+  if (statusChanged) {
+    await createNotificationService({
+      userId: application.userId,
+      type: NotificationType.APPLICATION_STATUS_CHANGED,
+      title: "Application status updated",
+      message: `Your application status has been changed to ${data.status}.`,
+      entityId: application.id,
+      entityType: "APPLICATION",
+    });
+  }
 
   return updated;
 };
