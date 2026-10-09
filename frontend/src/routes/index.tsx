@@ -40,7 +40,7 @@ const CandidateProfilePage = lazy(
   () => import("../candidate/pages/profile/CandidateProfilePage"),
 );
 const CandidateSettingsPage = lazy(
-  () => import("../candidate/pages/CandidateSettingsPage"),
+  () => import("../candidate/pages/settings/CandidateSettingsPage"),
 );
 
 const RecruiterDashboardPage = lazy(
