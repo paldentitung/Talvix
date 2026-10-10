@@ -7,6 +7,7 @@ import NotificationsTab from "./NotificationsTab";
 import PrivacyTab from "./PrivacyTab";
 import BillingTab from "./BillingTab";
 import DangerTab from "./DangerTab";
+import ChangePasswordCard from "../../../shared/components/ChangePasswordCard";
 
 export default function CandidateSettingsPage() {
   const { data: user, isLoading } = useGetCurrentUser();
@@ -64,6 +65,7 @@ export default function CandidateSettingsPage() {
                 <AccountTab key={user.id} user={user} />
               ))}
             {tab === "notifications" && <NotificationsTab />}
+            {tab === "security" && <ChangePasswordCard />}
             {tab === "privacy" && <PrivacyTab />}
             {tab === "billing" && <BillingTab />}
             {tab === "danger" && <DangerTab />}

@@ -2,12 +2,11 @@ import { useState, useEffect } from "react";
 import DangerTab from "./DangerTab";
 import NotificationsTab from "./NotificationsTab";
 import ProfileTab from "./ProfileTab";
-import SecurityTab from "./SecurityTab";
 import type { Notifications, TabId } from "./Shared";
 import { useGetCurrentUser } from "../../../features/users/hooks/useGetCurrentUser";
 import { useUserUpdateProfile } from "../../../features/users/hooks/useUpdateUserProfile";
 import toast from "react-hot-toast";
-import { useChangePassword } from "../../../features/users/hooks/useChangePassword";
+import ChangePasswordCard from "../../../shared/components/ChangePasswordCard";
 
 const tabs: { id: TabId; label: string }[] = [
   { id: "profile", label: "Profile" },
@@ -56,23 +55,6 @@ const RecruiterSettingsPage = () => {
     );
   };
 
-  const { mutate: changePassword, isPending: isChangingPassword } =
-    useChangePassword();
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const handleChangePassword = () => {
-    changePassword(
-      { currentPassword, newPassword },
-      {
-        onSuccess: () => {
-          setCurrentPassword("");
-          setNewPassword("");
-          setConfirmPassword("");
-        },
-      },
-    );
-  };
   const [notifications, setNotifications] = useState<Notifications>({
     newApplicants: true,
     jobExpiring: true,
@@ -124,18 +106,7 @@ const RecruiterSettingsPage = () => {
         />
       )}
 
-      {activeTab === "security" && (
-        <SecurityTab
-          currentPassword={currentPassword}
-          newPassword={newPassword}
-          confirmPassword={confirmPassword}
-          onCurrentPasswordChange={setCurrentPassword}
-          onNewPasswordChange={setNewPassword}
-          onConfirmPasswordChange={setConfirmPassword}
-          onSubmit={handleChangePassword}
-          isSubmitting={isChangingPassword}
-        />
-      )}
+      {activeTab === "security" && <ChangePasswordCard />}
       {activeTab === "danger" && <DangerTab />}
     </div>
   );

@@ -5,6 +5,7 @@ import {
   ShieldCheck,
   CreditCard,
   AlertTriangle,
+  Shield,
 } from "lucide-react";
 
 export type TabId =
@@ -12,11 +13,13 @@ export type TabId =
   | "notifications"
   | "privacy"
   | "billing"
-  | "danger";
+  | "danger"
+  | "security";
 
 export const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "account", label: "Account", icon: User },
   { id: "notifications", label: "Notifications", icon: Bell },
+  { id: "security", label: "Security", icon: Shield },
   { id: "privacy", label: "Privacy", icon: ShieldCheck },
   { id: "billing", label: "Billing", icon: CreditCard },
   { id: "danger", label: "Danger zone", icon: AlertTriangle },
