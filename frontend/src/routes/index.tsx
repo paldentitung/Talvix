@@ -53,7 +53,7 @@ const CompanyProfilePage = lazy(
 );
 const ManageJobsPage = lazy(() => import("../recruiter/pages/ManageJobsPage"));
 const RecruiterSettingsPage = lazy(
-  () => import("../recruiter/pages/RecruiterSettingsPage"),
+  () => import("../recruiter/pages/settings/RecruiterSettingsPage"),
 );
 
 const AdminDashboardPage = lazy(

@@ -18,7 +18,6 @@ const AdminCompaniesPage = () => {
   const limit = 10;
 
   const { data, isLoading, isError } = useCompanies(page, limit, query);
-  console.log("data", data);
 
   const companies: CompanyListItem[] = data?.data.companies ?? [];
   const total = data?.data.total ?? 0;

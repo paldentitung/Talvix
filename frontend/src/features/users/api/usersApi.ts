@@ -9,6 +9,7 @@ import type {
 } from "../types/user.types";
 import type { User } from "../types/user.types";
 import type { ApiResponse } from "../../../shared/types/api.types";
+
 export const getUsers = (page: number, limit: number) => {
   return request(`/users/all?page=${page}&limit=${limit}`, {}, true);
 };

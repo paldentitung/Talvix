@@ -26,7 +26,6 @@ const NotificationButton = ({
   const [isOpen, setIsOpen] = useState(false);
 
   const hasUnread = unreadCount > 0;
-  console.log(hasUnread);
   return (
     <div className="relative">
       <button
