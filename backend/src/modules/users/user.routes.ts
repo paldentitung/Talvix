@@ -83,7 +83,6 @@ router.patch(
 router.patch(
   "/profile/avatar",
   requireAuth,
-  requireRole("CANDIDATE"),
   uploadAvatar,
   asyncHandler(updateUserAvatarController),
 );
@@ -91,7 +90,6 @@ router.patch(
 router.delete(
   "/profile/avatar",
   requireAuth,
-  requireRole("CANDIDATE"),
   asyncHandler(removeUserAvatarController),
 );
 router.patch(

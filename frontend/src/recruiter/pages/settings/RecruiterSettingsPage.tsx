@@ -7,7 +7,9 @@ import { useGetCurrentUser } from "../../../features/users/hooks/useGetCurrentUs
 import { useUserUpdateProfile } from "../../../features/users/hooks/useUpdateUserProfile";
 import toast from "react-hot-toast";
 import ChangePasswordCard from "../../../shared/components/ChangePasswordCard";
-
+import { useUpdateAvatar } from "../../../features/users/hooks/useUpdateAvatar";
+import initials from "../../../shared/utils/getInitials";
+import { useRemoveAvatar } from "../../../features/users/hooks/useRemoveAvatar";
 const tabs: { id: TabId; label: string }[] = [
   { id: "profile", label: "Profile" },
   { id: "notifications", label: "Notifications" },
@@ -65,6 +67,11 @@ const RecruiterSettingsPage = () => {
   const updateNotification = (key: keyof Notifications, value: boolean) => {
     setNotifications((prev) => ({ ...prev, [key]: value }));
   };
+  const { mutate: uploadAvatar, isPending: isUploadingAvatar } =
+    useUpdateAvatar();
+
+  const { mutate: removeAvatar, isPending: isRemovingAvatar } =
+    useRemoveAvatar();
 
   return (
     <div className="flex flex-col gap-4">
@@ -89,16 +96,21 @@ const RecruiterSettingsPage = () => {
           firstName={firstName}
           lastName={lastName}
           phone={phone}
+          avatarUrl={currentUser?.avatar}
+          initials={initials(`${firstName} ${lastName}`)}
           onFirstNameChange={setFirstName}
           onLastNameChange={setLastName}
           onPhoneChange={setPhone}
+          onAvatarSelect={uploadAvatar}
           onSave={handleSaveProfile}
           isSaving={isSaving}
-          isSuccess={isSuccess}
-          isError={isError}
+          isUploadingAvatar={isUploadingAvatar}
           isLoading={isLoading}
+          removeAvatar={removeAvatar}
+          isRemovingAvatar={isRemovingAvatar}
         />
       )}
+
       {activeTab === "notifications" && (
         <NotificationsTab
           values={notifications}

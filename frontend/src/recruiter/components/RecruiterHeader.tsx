@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { User, Menu, Pencil } from "lucide-react";
 import Button from "../../components/ui/Button";
 import NotificationButton from "../../shared/components/NotificationButton";
@@ -6,6 +6,7 @@ import { useNotifications } from "../../features/notification/hooks/useNotificat
 import { useUnreadNotificationCount } from "../../features/notification/hooks/useUnreadNotificationCount";
 import { useMarkNotificationRead } from "../../features/notification/hooks/useMarkNotificationRead";
 import { useMarkAllNotificationsRead } from "../../features/notification/hooks/useMarkAllNotificationsRead";
+import { useGetCurrentUser } from "../../features/users/hooks/useGetCurrentUser";
 
 const pageMeta: Record<string, { title: string; subtitle: string }> = {
   "/recruiter/dashboard": {
@@ -54,6 +55,7 @@ const getPageMeta = (pathname: string) => {
   return match ? pageMeta[match] : defaultMeta;
 };
 const RecruiterHeader = ({ onMenuClick, openJobPostingModal }: any) => {
+  const { data: currentUser } = useGetCurrentUser();
   const { pathname } = useLocation();
   const { title, subtitle } = getPageMeta(pathname);
 
@@ -62,7 +64,7 @@ const RecruiterHeader = ({ onMenuClick, openJobPostingModal }: any) => {
 
   const { mutate: markAsRead } = useMarkNotificationRead();
   const { mutate: markAllAsRead } = useMarkAllNotificationsRead();
-
+  const navigate = useNavigate();
   return (
     <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
       <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
@@ -94,10 +96,22 @@ const RecruiterHeader = ({ onMenuClick, openJobPostingModal }: any) => {
         />
         <button
           aria-label="Account"
-          className="flex h-9 w-9 items-center justify-center rounded-(--radius-md) text-(--text-secondary) transition-colors hover:bg-(--card) hover:text-(--text-primary) sm:h-10 sm:w-10"
+          onClick={() => navigate("/recruiter/settings")}
+          className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-(--card) text-(--text-secondary) transition-colors hover:text-(--text-primary) sm:h-10 sm:w-10"
         >
-          <User size={20} className="sm:hidden" />
-          <User size={24} className="hidden sm:block" />
+          {currentUser?.avatar ? (
+            <img
+              src={`${import.meta.env.VITE_API_BACKEND_URL}${currentUser.avatar}`}
+              alt="Your profile"
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <User size={20} className="sm:hidden" />
+          )}
+
+          {!currentUser?.avatar && (
+            <User size={24} className="hidden sm:block" />
+          )}
         </button>
 
         <div>
