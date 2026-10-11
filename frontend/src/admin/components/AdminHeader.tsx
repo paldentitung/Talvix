@@ -50,7 +50,7 @@ const AdminHeader = ({ onMenuClick }: { onMenuClick?: () => void }) => {
   const [imageError, setImageError] = useState(false);
 
   const avatarUrl = currentUser?.avatar
-    ? `${import.meta.env.VITE_BACKEND_URL}${currentUser.avatar}`
+    ? `${import.meta.env.VITE_API_BACKEND_URL}${currentUser.avatar}`
     : null;
   return (
     <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
