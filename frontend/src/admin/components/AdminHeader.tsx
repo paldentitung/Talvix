@@ -1,6 +1,8 @@
 import { useLocation } from "react-router-dom";
-import { MessageSquare, Bell, Menu } from "lucide-react";
-
+import { MessageSquare, Bell, Menu, User } from "lucide-react";
+import { useGetCurrentUser } from "../../features/users/hooks/useGetCurrentUser";
+import initials from "../../shared/utils/getInitials";
+import { useState } from "react";
 const pageMeta: Record<string, { title: string; subtitle: string }> = {
   "/admin/overview": {
     title: "Platform overview",
@@ -44,7 +46,12 @@ const getPageMeta = (pathname: string) => {
 const AdminHeader = ({ onMenuClick }: { onMenuClick?: () => void }) => {
   const { pathname } = useLocation();
   const { title, subtitle } = getPageMeta(pathname);
+  const { data: currentUser } = useGetCurrentUser();
+  const [imageError, setImageError] = useState(false);
 
+  const avatarUrl = currentUser?.avatar
+    ? `${import.meta.env.VITE_BACKEND_URL}${currentUser.avatar}`
+    : null;
   return (
     <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
       <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
@@ -84,12 +91,24 @@ const AdminHeader = ({ onMenuClick }: { onMenuClick?: () => void }) => {
         </button>
 
         <button className="flex items-center gap-2 rounded-(--radius-md) py-1 pl-1 pr-2 transition-colors hover:bg-(--card)">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-(--primary-light) text-xs font-semibold text-(--primary)">
-            AM
-          </span>
-          <span className="hidden text-sm font-medium text-(--text-primary) sm:inline">
-            Alex
-          </span>
+          {avatarUrl && !imageError ? (
+            <img
+              src={avatarUrl}
+              alt="Profile avatar"
+              className="h-8 w-8 rounded-full object-cover"
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <div className="flex h-8 w-8 items-center justify-center rounded-full text-white bg-(--primary)">
+              {currentUser ? (
+                initials(
+                  `${currentUser.firstName ?? ""} ${currentUser.lastName ?? ""}`.trim(),
+                )
+              ) : (
+                <User size={18} />
+              )}
+            </div>
+          )}
         </button>
       </div>
     </div>
