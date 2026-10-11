@@ -23,10 +23,6 @@ const AdminCompaniesPage = () => {
   const total = data?.data.total ?? 0;
   const totalPages = data?.data.totalPages ?? 1;
 
-  // NOTE: search is already applied server-side via useCompanies(page, limit, query).
-  // This only applies the verified/unverified filter, client-side, to the current
-  // page of results — same limitation as the Users page: switching this filter
-  // won't re-scan companies on other pages. Move server-side if that matters.
   const filtered = useMemo(() => {
     return companies.filter((c) => {
       if (filter === "Verified") return c.isVerified;
@@ -37,24 +33,6 @@ const AdminCompaniesPage = () => {
 
   return (
     <div onClick={() => openMenuId && setOpenMenuId(null)}>
-      {/* Page header */}
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1
-            className="font-display text-3xl font-bold"
-            style={{ color: "var(--text-primary)" }}
-          >
-            Companies
-          </h1>
-          <p
-            className="mt-1 text-sm"
-            style={{ color: "var(--text-secondary)" }}
-          >
-            {total.toLocaleString()} companies actively hiring
-          </p>
-        </div>
-      </div>
-
       {/* Card */}
       <div
         className="overflow-hidden rounded-2xl border"

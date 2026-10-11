@@ -10,12 +10,14 @@ export const getCompaniesService = async (
 ) => {
   const where: Prisma.UserWhereInput = {
     role: "RECRUITER",
-    recruiterProfile: {
-      companyName: { not: null },
-      ...(search && {
-        companyName: { contains: search, mode: "insensitive" },
-      }),
-    },
+    ...(search?.trim() && {
+      recruiterProfile: {
+        companyName: {
+          contains: search.trim(),
+          mode: "insensitive",
+        },
+      },
+    }),
   };
 
   const [companies, total] = await Promise.all([
