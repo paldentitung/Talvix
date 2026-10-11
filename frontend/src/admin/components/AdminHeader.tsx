@@ -3,6 +3,11 @@ import { MessageSquare, Bell, Menu, User } from "lucide-react";
 import { useGetCurrentUser } from "../../features/users/hooks/useGetCurrentUser";
 import initials from "../../shared/utils/getInitials";
 import { useState } from "react";
+import { useNotifications } from "../../features/notification/hooks/useNotifications";
+import { useUnreadNotificationCount } from "../../features/notification/hooks/useUnreadNotificationCount";
+import { useMarkNotificationRead } from "../../features/notification/hooks/useMarkNotificationRead";
+import { useMarkAllNotificationsRead } from "../../features/notification/hooks/useMarkAllNotificationsRead";
+import NotificationButton from "../../shared/components/NotificationButton";
 const pageMeta: Record<string, { title: string; subtitle: string }> = {
   "/admin/overview": {
     title: "Platform overview",
@@ -52,6 +57,10 @@ const AdminHeader = ({ onMenuClick }: { onMenuClick?: () => void }) => {
   const avatarUrl = currentUser?.avatar
     ? `${import.meta.env.VITE_API_BACKEND_URL}${currentUser.avatar}`
     : null;
+  const { data: notifications = [] } = useNotifications();
+  const { data: unreadCount = 0 } = useUnreadNotificationCount();
+  const { mutate: markAsRead } = useMarkNotificationRead();
+  const { mutate: markAllAsRead } = useMarkAllNotificationsRead();
   return (
     <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
       <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
@@ -82,13 +91,12 @@ const AdminHeader = ({ onMenuClick }: { onMenuClick?: () => void }) => {
           <MessageSquare size={20} />
         </button>
 
-        <button
-          aria-label="Notifications"
-          className="relative flex h-9 w-9 items-center justify-center rounded-(--radius-md) text-(--text-secondary) transition-colors hover:bg-(--card) hover:text-(--text-primary) sm:h-10 sm:w-10"
-        >
-          <Bell size={20} />
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-(--accent)" />
-        </button>
+        <NotificationButton
+          notifications={notifications}
+          unreadCount={unreadCount}
+          onMarkAsRead={markAsRead}
+          onMarkAllAsRead={markAllAsRead}
+        />
 
         <button className="flex items-center gap-2 rounded-(--radius-md) py-1 pl-1 pr-2 transition-colors hover:bg-(--card)">
           {avatarUrl && !imageError ? (
