@@ -20,7 +20,7 @@ const NotificationDropdown = ({
   );
 
   return (
-    <div className="absolute right-0 top-12 z-50 w-80 max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl border border-(--border) bg-(--card) shadow-(--shadow-lg)">
+    <div className="absolute -right-12 md:right-0 top-12 z-50 w-80 max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl border border-(--border) bg-(--card) shadow-(--shadow-lg)">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-(--border) px-4 py-3">
         <div>

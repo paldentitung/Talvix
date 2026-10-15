@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { User, Menu, Pencil } from "lucide-react";
+import { User, Menu, Plus } from "lucide-react";
 import Button from "../../components/ui/Button";
 import NotificationButton from "../../shared/components/NotificationButton";
 import { useNotifications } from "../../features/notification/hooks/useNotifications";
@@ -114,17 +114,15 @@ const RecruiterHeader = ({ onMenuClick, openJobPostingModal }: any) => {
           )}
         </button>
 
-        <div>
-          <Button
-            variant="primary"
-            className="hidden sm:inline-flex"
-            onClick={openJobPostingModal}
-            size="sm"
-          >
-            <Pencil size={12} />
-            Post a Job
-          </Button>
-        </div>
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={openJobPostingModal}
+          aria-label="Post a Job"
+        >
+          <Plus size={14} className="shrink-0" />
+          <span className="hidden sm:inline">Post a Job</span>
+        </Button>
       </div>
     </div>
   );
