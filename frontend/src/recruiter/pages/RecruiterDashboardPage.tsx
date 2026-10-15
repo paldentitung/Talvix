@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   BarChart,
   Bar,
@@ -13,7 +13,10 @@ import {
 } from "recharts";
 import { useRecruiterJobs } from "../../features/jobs/hooks/useRecruiterJobs";
 import type { Job, JobStatus } from "../../features/jobs/types/job.types";
-
+import Button from "../../components/ui/Button";
+import { BriefcaseBusiness, Plus } from "lucide-react";
+import { useState } from "react";
+import { useOutletContext } from "react-router-dom";
 type Stat = {
   label: string;
   value: string;
@@ -76,11 +79,16 @@ const StatCard = ({ label, value, delta }: Stat) => (
     </p>
   </div>
 );
-
+type RecruiterOutletContext = {
+  openJobPostingModal: () => void;
+};
 const RecruiterDashboardPage = () => {
   const { data } = useRecruiterJobs();
 
   const jobs = data?.jobs ?? [];
+  const navigate = useNavigate();
+  const { openJobPostingModal } =
+  useOutletContext<RecruiterOutletContext>();
 
   return (
     <div className="flex flex-col gap-6">
@@ -196,36 +204,63 @@ const RecruiterDashboardPage = () => {
           </div>
 
           <div className="mt-4 flex flex-col divide-y divide-(--border)">
-            {jobs.slice(0, Math.ceil(jobs.length * 0.4)).map((job: Job) => (
-              <Link
-                to={`/recruiter/jobs/${job.id}`}
-                key={job.id}
-                className="group flex items-center justify-between gap-4 py-4 px-2 -mx-2 rounded-lg transition-colors hover:bg-(--surface-hover)"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-(--text-primary)">
-                    {job.title}
-                  </p>
-
-                  <p className="mt-0.5 text-xs text-(--text-secondary)">
-                    {job.location}
-                  </p>
-                </div>
-
-                <div className="hidden shrink-0 items-baseline gap-1 text-xs text-(--text-secondary) sm:flex">
-                  <span className="font-medium text-(--text-primary)">
-                    {job.applicationsCount ?? 0}
-                  </span>
-                  <span>applicants</span>
-                </div>
-
-                <span
-                  className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium transition-transform group-hover:scale-105 ${statusStyles[job.status]}`}
+            {jobs.length > 0 ? (
+              jobs.slice(0, Math.ceil(jobs.length * 0.4)).map((job: Job) => (
+                <Link
+                  to={`/recruiter/jobs/${job.id}`}
+                  key={job.id}
+                  className="group -mx-2 flex items-center justify-between gap-4 rounded-lg px-2 py-4 transition-colors hover:bg-(--surface-hover)"
                 >
-                  {job.status}
-                </span>
-              </Link>
-            ))}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-(--text-primary)">
+                      {job.title}
+                    </p>
+                    <p className="mt-0.5 text-xs text-(--text-secondary)">
+                      {job.location}
+                    </p>
+                  </div>
+
+                  <div className="hidden shrink-0 items-baseline gap-1 text-xs text-(--text-secondary) sm:flex">
+                    <span className="font-medium text-(--text-primary)">
+                      {job.applicationsCount ?? 0}
+                    </span>
+                    <span>applicants</span>
+                  </div>
+
+                  <span
+                    className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium transition-transform group-hover:scale-105 ${statusStyles[job.status]}`}
+                  >
+                    {job.status}
+                  </span>
+                </Link>
+              ))
+            ) : (
+              <div className="flex flex-col items-center rounded-xl border border-dashed border-(--border) px-6 py-10 text-center">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-(--surface-hover)">
+                  <BriefcaseBusiness
+                    size={24}
+                    className="text-(--text-secondary)"
+                  />
+                </div>
+
+                <h3 className="text-sm font-semibold text-(--text-primary)">
+                  No job postings yet
+                </h3>
+
+                <p className="mt-2 max-w-xs text-sm leading-6 text-(--text-secondary)">
+                  Create your first job posting to start attracting candidates.
+                  Your published jobs will appear here.
+                </p>
+
+                <Button
+                  onClick={openJobPostingModal}
+                  className="mt-5"
+                >
+                  <Plus size={16} />
+                  Create a job
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 

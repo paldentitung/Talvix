@@ -36,7 +36,7 @@ const RecruiterLayout = () => {
             onMenuClick={() => setIsSidebarOpen(true)}
             openJobPostingModal={() => setIsPostOpen(true)}
           />
-          <Outlet />
+          <Outlet context={{ openJobPostingModal: () => setIsPostOpen(true) }} />
         </main>
       </div>
 
