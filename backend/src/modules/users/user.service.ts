@@ -13,6 +13,7 @@ import {
 } from "./user.validation.js";
 import fs from "fs/promises";
 import path from "path";
+import { AccountStatus } from "@prisma/client";
 
 export const getUsersService = async (page: number, limit: number) => {
   const [users, totalUsers] = await Promise.all([
@@ -514,4 +515,26 @@ export const getUserInformationService = async (userId: string) => {
   }
 
   return toUserResponse(user);
+};
+
+export const updateUserStatusService = async (
+  userId: string,
+  status: AccountStatus,
+) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true },
+  });
+
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: { status },
+    select: userResponseSelect,
+  });
+
+  return toUserResponse(updatedUser);
 };

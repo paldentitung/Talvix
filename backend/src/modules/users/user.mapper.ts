@@ -5,7 +5,9 @@ export interface UserResponse {
   email: string;
   firstName: string;
   lastName: string;
-  role: UserResponsePayload["role"];
+  role: UserResponsePayload["role"];  
+  status: UserResponsePayload["status"];
+
   avatar: string | null;
   phone: string | null;
 
@@ -54,6 +56,7 @@ export const toUserResponse = (user: UserResponsePayload): UserResponse => ({
   firstName: user.firstName,
   lastName: user.lastName,
   role: user.role,
+  status:user.status,
   avatar: user.avatar,
   phone: user.phone,
 

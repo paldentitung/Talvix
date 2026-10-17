@@ -8,12 +8,13 @@ datasource db {
 }
 
 model User {
-  id        String  @id @default(cuid())
-  email     String  @unique
+  id        String        @id @default(cuid())
+  email     String        @unique
   password  String?
-  firstName String  @default("")
-  lastName  String  @default("")
+  firstName String        @default("")
+  lastName  String        @default("")
   role      Role
+  status    AccountStatus @default(ACTIVE)
   avatar    String?
   phone     String?
 
@@ -258,4 +259,9 @@ enum NotificationType {
   INTERVIEW_SCHEDULED
   NEW_MESSAGE
   SYSTEM
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
 }

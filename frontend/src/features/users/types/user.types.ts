@@ -109,7 +109,9 @@ export interface AdminUser {
   firstName: string;
   lastName: string;
   role: UserRole;
+  status: AccountStatus;
   companyName: string | null;
-  isVerified: boolean;
+  isVerified: boolean; 
   createdAt: string;
 }
+export type AccountStatus = "ACTIVE" | "SUSPENDED";

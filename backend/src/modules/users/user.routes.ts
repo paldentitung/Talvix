@@ -19,6 +19,7 @@ import {
   updateCandidateExperienceController,
   deleteCandidateExperienceController,
   getUserInformationController,
+  updateUserStatusController,
 } from "./user.controller.js";
 import { requireRole } from "../../middleware/role.middleware.js";
 import { validate } from "../../middleware/validate.middleware.js";
@@ -29,6 +30,7 @@ import {
   updateRecruiterProfileSchema,
   updateUserSchema,
   addCandidateExperienceSchema,
+  updateUserStatusSchema,
 } from "./user.validation.js";
 import {
   uploadAvatar,
@@ -148,4 +150,13 @@ router.delete(
   requireRole("CANDIDATE"),
   asyncHandler(deleteCandidateExperienceController),
 );
+
+router.patch(
+  "/:id/status",
+  requireAuth,
+  requireRole("ADMIN"),
+  validate(updateUserStatusSchema),
+  asyncHandler(updateUserStatusController),
+);
+
 export default router;
