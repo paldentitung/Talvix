@@ -8,12 +8,13 @@ datasource db {
 }
 
 model User {
-  id        String  @id @default(cuid())
-  email     String  @unique
+  id        String        @id @default(cuid())
+  email     String        @unique
   password  String?
-  firstName String  @default("")
-  lastName  String  @default("")
+  firstName String        @default("")
+  lastName  String        @default("")
   role      Role
+  status    AccountStatus @default(ACTIVE)
   avatar    String?
   phone     String?
 
@@ -32,9 +33,11 @@ model User {
   applications Application[]
   savedJobs    SavedJob[]
 
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  notifications Notification[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  notifications    Notification[]
+  submittedReports Report[]       @relation("ReportReporter")
+  receivedReports  Report[]       @relation("ReportedUser")
 }
 
 model CandidateProfile {
@@ -131,6 +134,7 @@ model Job {
   applications Application[]
 
   savedBy SavedJob[]
+  reports Report[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -210,6 +214,30 @@ model Notification {
   @@index([userId, readAt])
 }
 
+model Report {
+  id          String       @id @default(cuid())
+  reason      ReportReason
+  description String?      @db.Text
+  status      ReportStatus @default(PENDING)
+
+  reporterId     String
+  jobId          String?
+  reportedUserId String?
+
+  reviewedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  reporter     User  @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Restrict)
+  job          Job?  @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  reportedUser User? @relation("ReportedUser", fields: [reportedUserId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([reporterId])
+  @@index([jobId])
+  @@index([reportedUserId])
+}
+
 enum Role {
   ADMIN
   RECRUITER
@@ -258,4 +286,23 @@ enum NotificationType {
   INTERVIEW_SCHEDULED
   NEW_MESSAGE
   SYSTEM
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum ReportReason {
+  SCAM
+  MISLEADING_INFORMATION
+  INAPPROPRIATE_CONTENT
+  SPAM
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+  DISMISSED
 }

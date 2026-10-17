@@ -124,6 +124,13 @@ export const loginService = async (data: LoginInput) => {
     throw new AppError("Please verify your email before logging in", 403);
   }
 
+  if (existingUser.status === "SUSPENDED") {
+    throw new AppError(
+      "Your account has been suspended. Please contact support.",
+      403,
+    );
+  }
+
   return toUserResponse(existingUser);
 };
 export const forgotPasswordService = async (data: ForgotPasswordInput) => {
@@ -235,13 +242,22 @@ export const googleLoginService = async (
   const existingGoogleUser = await prisma.user.findUnique({
     where: { googleId: googleUser.id },
   });
+
   if (existingGoogleUser) {
-    return existingGoogleUser; // role ignored — login case
+    if (existingGoogleUser.status === "SUSPENDED") {
+      throw new AppError(
+        "Your account has been suspended. Please contact support.",
+        403,
+      );
+    }
+
+    return existingGoogleUser;
   }
 
   const existingEmailUser = await prisma.user.findUnique({
     where: { email: googleUser.email },
   });
+
   if (existingEmailUser) {
     throw new AppError(
       "An account with this email already exists. Please log in with your password first.",

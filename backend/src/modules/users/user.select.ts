@@ -6,6 +6,7 @@ export const userResponseSelect = {
   lastName: true,
   email: true,
   role: true,
+  status:true,
 
   avatar: true,
   phone: true,

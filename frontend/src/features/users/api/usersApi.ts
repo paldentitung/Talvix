@@ -6,6 +6,7 @@ import type {
   ChangePasswordRequest,
   AddCandidateEducationInput,
   AddCandidateExperienceInput,
+  AccountStatus,
 } from "../types/user.types";
 import type { User } from "../types/user.types";
 import type { ApiResponse } from "../../../shared/types/api.types";
@@ -192,4 +193,19 @@ export const deleteCandidateExperience = async (experienceId: string) => {
 
 export const getUser = async (): Promise<ApiResponse<User>> => {
   return request("/users/me", {}, true);
+};
+
+export const updateUserStatus = async (
+  userId: string,
+  status: AccountStatus,
+) => {
+  return request(
+    `/users/${userId}/status`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    },
+    true,
+  );
 };

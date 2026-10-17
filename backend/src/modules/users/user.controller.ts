@@ -16,6 +16,7 @@ import {
   updateCandidateExperienceService,
   deleteCandidateExperienceService,
   getUserInformationService,
+  updateUserStatusService,
 } from "./user.service.js";
 import { Request, Response } from "express";
 import AppError from "../../utils/AppError.js";
@@ -251,6 +252,22 @@ export const getUserInformationController = async (
   res.status(200).json({
     success: true,
     message: "User data fetched successfully",
+    data: result,
+  });
+};
+
+export const updateUserStatusController = async (
+  req: Request<{ id: string }>,
+  res: Response,
+) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  const result = await updateUserStatusService(id, status);
+
+  res.status(200).json({
+    success: true,
+    message: "User status changed successfully",
     data: result,
   });
 };

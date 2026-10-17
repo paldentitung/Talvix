@@ -111,6 +111,11 @@ export const addCandidateExperienceSchema = z
     message: "End date cannot be before start date",
     path: ["endDate"],
   });
+export const updateUserStatusSchema = z
+  .object({
+    status: z.enum(["ACTIVE", "SUSPENDED"]),
+  })
+  .strict();
 
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 export type UpdateCandidateProfileInput = z.infer<

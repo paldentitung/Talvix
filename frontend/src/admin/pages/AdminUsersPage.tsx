@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Search, MoreHorizontal, UserPlus, ChevronDown } from "lucide-react";
+import { Search, ChevronDown } from "lucide-react";
 import { useUsers } from "../../features/users/hooks/useUsers";
 import Pagination from "../../shared/components/Pagination";
 import type { UserRole } from "../../shared/types/user.types";
@@ -9,7 +9,11 @@ import { tintFor } from "../../shared/utils/avatarTint";
 import initials from "../../shared/utils/getInitials";
 import { fullName } from "../../shared/utils/getFullname";
 import RowMenu from "../../shared/components/RowMenu";
-import type { AdminUser } from "../../features/users/types/user.types";
+import type {
+  AdminUser,
+  AccountStatus,
+} from "../../features/users/types/user.types";
+import { useUpdateUserStatus } from "../../features/users/hooks/useUpdateUserStatus";
 
 const FILTERS = ["All", "Candidates", "Recruiters", "Admins"] as const;
 type Filter = (typeof FILTERS)[number];
@@ -18,6 +22,19 @@ const ROLE_LABELS: Record<UserRole, string> = {
   CANDIDATE: "Candidate",
   RECRUITER: "Recruiter",
   ADMIN: "Admin",
+};
+
+const STATUS_STYLES: Record<
+  AccountStatus,
+  { label: string; bg: string; fg: string; dot: string }
+> = {
+  ACTIVE: { label: "Active", bg: "#ECFDF5", fg: "#047857", dot: "#10B981" },
+  SUSPENDED: {
+    label: "Suspended",
+    bg: "#FEF2F2",
+    fg: "#B91C1C",
+    dot: "#EF4444",
+  },
 };
 
 function RoleBadge({ role }: { role: UserRole }) {
@@ -30,10 +47,24 @@ function RoleBadge({ role }: { role: UserRole }) {
     </span>
   );
 }
-// TODO: add a proper status/suspension field to the User model and show that here instead of isVerified
-// NOTE: your User model has no status/suspension field yet — this just
-// shows Verified/Unverified from `isVerified` as a placeholder. If you want
-// Active/Pending/Suspended, that needs a real `status` column on the backend.
+
+function StatusBadge({ status }: { status: AccountStatus }) {
+  const s = STATUS_STYLES[status];
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
+      style={{ background: s.bg, color: s.fg }}
+    >
+      <span
+        className="h-1.5 w-1.5 rounded-full"
+        style={{ background: s.dot }}
+      />
+      {s.label}
+    </span>
+  );
+}
+
+const COLUMN_COUNT = 6;
 
 const AdminUsersPage = () => {
   const [query, setQuery] = useState("");
@@ -47,6 +78,24 @@ const AdminUsersPage = () => {
   const users: AdminUser[] = data?.data?.users ?? [];
   const totalUsers = data?.data?.pagination?.totalUsers ?? 0;
   const totalPages = data?.data?.pagination?.totalPages ?? 1;
+
+  const updateStatusMutation = useUpdateUserStatus();
+
+  const handleUpdateStatus = (user: AdminUser) => {
+    if (updateStatusMutation.isPending) return;
+
+    const nextStatus: AccountStatus =
+      user.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
+
+    const action = nextStatus === "SUSPENDED" ? "suspend" : "reactivate";
+    const confirmed = window.confirm(
+      `Are you sure you want to ${action} ${fullName(user)} (${user.email})?`,
+    );
+    if (!confirmed) return;
+
+    updateStatusMutation.mutate({ userId: user.id, status: nextStatus });
+    setOpenMenuId(null);
+  };
 
   const filtered = useMemo(() => {
     return users.filter((u) => {
@@ -129,7 +178,7 @@ const AdminUsersPage = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] border-collapse text-left">
+          <table className="w-full min-w-[820px] border-collapse text-left">
             <thead>
               <tr
                 className="text-xs font-semibold uppercase tracking-wide"
@@ -138,6 +187,7 @@ const AdminUsersPage = () => {
                 <th className="px-6 py-3.5 font-semibold">User</th>
                 <th className="px-6 py-3.5 font-semibold">Role</th>
                 <th className="px-6 py-3.5 font-semibold">Verified</th>
+                <th className="px-6 py-3.5 font-semibold">Status</th>
                 <th className="px-6 py-3.5 font-semibold">
                   <span className="inline-flex items-center gap-1">
                     Joined
@@ -151,7 +201,7 @@ const AdminUsersPage = () => {
               {isLoading && (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={COLUMN_COUNT}
                     className="px-6 py-16 text-center text-sm"
                     style={{ color: "var(--text-muted)" }}
                   >
@@ -163,7 +213,7 @@ const AdminUsersPage = () => {
               {isError && (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={COLUMN_COUNT}
                     className="px-6 py-16 text-center text-sm"
                     style={{ color: "var(--danger)" }}
                   >
@@ -213,6 +263,9 @@ const AdminUsersPage = () => {
                       <td className="px-6 py-3.5">
                         <VerifiedBadge verified={u.isVerified} />
                       </td>
+                      <td className="px-6 py-3.5">
+                        <StatusBadge status={u.status} />
+                      </td>
                       <td
                         className="px-6 py-3.5 text-sm"
                         style={{ color: "var(--text-secondary)" }}
@@ -238,9 +291,12 @@ const AdminUsersPage = () => {
                                 onClick: () => console.log("edit role", u.id),
                               },
                               {
-                                label: "Suspend user",
-                                onClick: () => console.log("suspend", u.id),
-                                danger: true,
+                                label:
+                                  u.status === "ACTIVE"
+                                    ? "Suspend user"
+                                    : "Reactivate user",
+                                onClick: () => handleUpdateStatus(u),
+                                danger: u.status === "ACTIVE",
                               },
                             ]}
                           />
@@ -252,7 +308,7 @@ const AdminUsersPage = () => {
 
               {!isLoading && !isError && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-16 text-center">
+                  <td colSpan={COLUMN_COUNT} className="px-6 py-16 text-center">
                     <p
                       className="text-sm font-medium"
                       style={{ color: "var(--text-primary)" }}
