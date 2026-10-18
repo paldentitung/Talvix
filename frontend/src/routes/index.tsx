@@ -67,6 +67,11 @@ const AdminCompaniesPage = lazy(
 const AdminSettingsPage = lazy(
   () => import("../admin/pages/AdminSettingsPage"),
 );
+const AdminReportsPage = lazy(() => import("../admin/pages/AdminReportsPage"));
+const AdminReportDetailPage = lazy(
+  () => import("../admin/pages/AdminReportDetailPage"),
+);
+
 // Wraps a layout with the auth + role guards, so each role is one call
 const guarded = (
   role: UserRole,
@@ -130,6 +135,8 @@ const routes: RouteObject[] = [
     { path: "jobs", element: <AdminJobsPage /> },
     { path: "companies", element: <AdminCompaniesPage /> },
     { path: "settings", element: <AdminSettingsPage /> },
+    { path: "reports", element: <AdminReportsPage /> },
+    { path: "reports/:reportId", element: <AdminReportDetailPage /> },
   ]),
 
   // Unknown URL: replace with a real NotFoundPage when you have one
