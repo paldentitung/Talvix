@@ -27,6 +27,7 @@ import relativeTime from "../../shared/utils/relativeTime";
 import { useCompanies } from "../../features/company/hooks/useCompanies";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import type { AdminUser } from "../../features/users/types/user.types";
+import { useReportStats } from "../../features/reports/hooks/useReportStats";
 const growthData = [
   { month: "Jan", users: 1200 },
   { month: "Feb", users: 1900 },
@@ -135,6 +136,8 @@ const AdminDashboardPage = () => {
   const totalCompanies = companiesData?.data?.total ?? 0;
   const totalJobs = jobsData?.data?.total ?? 0;
 
+  const { data: reportStats, isLoading, isError } = useReportStats();
+
   const stats: Stat[] = [
     {
       label: "Total users",
@@ -165,15 +168,14 @@ const AdminDashboardPage = () => {
     },
     {
       label: "Reports open",
-      value: "12", // TODO: no reports/moderation model exists yet
-      change: "-4",
+      value: (reportStats?.pending ?? 0).toLocaleString(),
+      change: "—",
       changeTone: "down",
       icon: ShieldAlert,
       iconBg: "bg-(--warning-bg)",
       iconColor: "text-(--warning)",
     },
   ];
-
   return (
     <div className="flex flex-col gap-6">
       {/* Stat cards */}

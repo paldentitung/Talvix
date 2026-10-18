@@ -4,6 +4,7 @@ import {
   createReportService,
   getReportByIdService,
   getReportStatsService,
+  updateReportStatusService,
 } from "./report.service.js";
 import { ReportStatus } from "@prisma/client";
 
@@ -45,16 +46,17 @@ export const createReportController = async (req: Request, res: Response) => {
 };
 
 export const updateReportStatusController = async (
-  req: Request,
+  req: Request<{ id: string }>,
   res: Response,
 ) => {
-  const reporterId = req.user!.id;
-  const status = req.body;
-  const report = await createReportService(reporterId, status);
+  const { id } = req.params;
+  const { status } = req.body;
 
-  res.status(201).json({
+  const report = await updateReportStatusService(id, status);
+
+  res.status(200).json({
     success: true,
-    message: "Report updated successfully",
+    message: "Report status updated successfully",
     data: report,
   });
 };

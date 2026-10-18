@@ -16,8 +16,17 @@ export const getReportsService = async (
       where,
       skip,
       take: limit,
-      orderBy: {
-        createdAt: "desc",
+      orderBy: { createdAt: "desc" },
+      include: {
+        reporter: {
+          select: { id: true, firstName: true, lastName: true, email: true },
+        },
+        job: {
+          select: { id: true, title: true },
+        },
+        reportedUser: {
+          select: { id: true, firstName: true, lastName: true, email: true },
+        },
       },
     }),
     prisma.report.count({ where }),

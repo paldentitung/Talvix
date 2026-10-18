@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Briefcase, User as UserIcon } from "lucide-react";
 import Pagination from "../../shared/components/Pagination";
 import RowMenu from "../../shared/components/RowMenu";
@@ -8,8 +8,11 @@ import type {
   Report,
   ReportReason,
   ReportStatus,
+  UpdateReportStatusInput,
 } from "../../features/reports/types/report.types";
 import { useNavigate } from "react-router-dom";
+import { useReports } from "../../features/reports/hooks/useReports";
+import { useUpdateReportStatus } from "../../features/reports/hooks/useUpdateReportStatus";
 
 const FILTERS = ["All", "PENDING", "RESOLVED", "DISMISSED"] as const;
 type Filter = (typeof FILTERS)[number];
@@ -43,83 +46,7 @@ const STATUS_STYLES: Record<
 };
 
 const COLUMN_COUNT = 6;
-
-// ---- Placeholder data (UI only) — remove when the API is wired up ----
-const ago = (hours: number) =>
-  new Date(Date.now() - hours * 3600 * 1000).toISOString();
-
-const MOCK_REPORTS: Report[] = [
-  {
-    id: "1",
-    reason: "SCAM",
-    description:
-      "Asks candidates to pay a registration fee before the interview.",
-    status: "PENDING",
-    createdAt: ago(3),
-    reviewedAt: null,
-    reporter: {
-      id: "u1",
-      firstName: "Aarav",
-      lastName: "Sharma",
-      email: "aarav@example.com",
-    },
-    job: { id: "j1", title: "Remote Data Entry Clerk" },
-    reportedUser: null,
-  },
-  {
-    id: "2",
-    reason: "INAPPROPRIATE_CONTENT",
-    description: "Profile bio contains offensive language.",
-    status: "PENDING",
-    createdAt: ago(26),
-    reviewedAt: null,
-    reporter: {
-      id: "u2",
-      firstName: "Sita",
-      lastName: "Thapa",
-      email: "sita@example.com",
-    },
-    job: null,
-    reportedUser: {
-      id: "u9",
-      firstName: "Rohan",
-      lastName: "Karki",
-      email: "rohan@example.com",
-    },
-  },
-  {
-    id: "3",
-    reason: "MISLEADING_INFORMATION",
-    description: null,
-    status: "RESOLVED",
-    createdAt: ago(80),
-    reviewedAt: ago(70),
-    reporter: {
-      id: "u3",
-      firstName: "Maya",
-      lastName: "Gurung",
-      email: "maya@example.com",
-    },
-    job: { id: "j2", title: "Senior Frontend Engineer" },
-    reportedUser: null,
-  },
-  {
-    id: "4",
-    reason: "SPAM",
-    description: "Same listing posted many times.",
-    status: "DISMISSED",
-    createdAt: ago(200),
-    reviewedAt: ago(190),
-    reporter: {
-      id: "u4",
-      firstName: "Bikash",
-      lastName: "Rai",
-      email: "bikash@example.com",
-    },
-    job: null,
-    reportedUser: null,
-  },
-];
+const PAGE_SIZE = 10;
 
 function StatusBadge({ status }: { status: ReportStatus }) {
   const s = STATUS_STYLES[status];
@@ -201,20 +128,43 @@ function TargetCell({ report }: { report: Report }) {
 
   return (
     <span className="text-sm" style={{ color: "var(--text-muted)" }}>
-      Deleted
+      Target unavailable
     </span>
   );
 }
 
 const AdminReportsPage = () => {
   const [filter, setFilter] = useState<Filter>("All");
+  const [page, setPage] = useState(1);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
-  const reports = MOCK_REPORTS.filter(
-    (r) => filter === "All" || r.status === filter,
-  );
-
   const navigate = useNavigate();
+
+  const { data, isLoading, isFetching, isError, error } = useReports(
+    page,
+    PAGE_SIZE,
+    filter === "All" ? undefined : filter,
+  );
+  console.log("reports", data);
+  const { mutate: updateStatus, isPending } = useUpdateReportStatus();
+
+  const handleStatusChange = (
+    reportId: string,
+    status: UpdateReportStatusInput["status"],
+  ) => {
+    if (isPending) return;
+    updateStatus({ reportId, status });
+    setOpenMenuId(null);
+  };
+
+  const reports: Report[] = data?.reports ?? [];
+  const total = data?.pagination?.totalReports ?? 0;
+  const totalPages = Math.max(1, data?.pagination?.totalPages ?? 1);
+
+  // If the last item on a page is actioned under a filter, step back.
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   return (
     <div onClick={() => openMenuId && setOpenMenuId(null)}>
@@ -249,7 +199,10 @@ const AdminReportsPage = () => {
               return (
                 <button
                   key={f}
-                  onClick={() => setFilter(f)}
+                  onClick={() => {
+                    setFilter(f);
+                    setPage(1);
+                  }}
                   aria-pressed={active}
                   className="rounded-full px-4 py-1.5 text-sm font-medium transition-colors"
                   style={
@@ -285,83 +238,120 @@ const AdminReportsPage = () => {
               </tr>
             </thead>
             <tbody>
-              {reports.map((r) => (
-                <tr
-                  key={r.id}
-                  className="border-t transition-colors hover:bg-slate-50/70"
-                  style={{ borderColor: "var(--border)" }}
-                >
-                  <td className="px-6 py-3.5">
-                    <TargetCell report={r} />
-                  </td>
-                  <td className="max-w-[260px] px-6 py-3.5">
-                    <ReasonBadge reason={r.reason} />
-                    {r.description && (
-                      <p
-                        className="mt-1.5 line-clamp-2 text-xs"
-                        style={{ color: "var(--text-secondary)" }}
-                        title={r.description}
-                      >
-                        {r.description}
-                      </p>
-                    )}
-                  </td>
-                  <td className="px-6 py-3.5">
-                    <p
-                      className="truncate text-sm font-medium"
-                      style={{ color: "var(--text-primary)" }}
-                    >
-                      {fullName(r.reporter)}
-                    </p>
-                    <p
-                      className="truncate text-xs"
-                      style={{ color: "var(--text-muted)" }}
-                    >
-                      {r.reporter.email}
-                    </p>
-                  </td>
-                  <td className="px-6 py-3.5">
-                    <StatusBadge status={r.status} />
-                  </td>
+              {isLoading && (
+                <tr>
                   <td
-                    className="px-6 py-3.5 text-sm"
-                    style={{ color: "var(--text-secondary)" }}
+                    colSpan={COLUMN_COUNT}
+                    className="px-6 py-16 text-center text-sm"
+                    style={{ color: "var(--text-muted)" }}
                   >
-                    {relativeTime(r.createdAt)}
-                  </td>
-                  <td
-                    className="px-6 py-3.5 text-right"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="flex justify-end">
-                      <RowMenu
-                        id={r.id}
-                        open={openMenuId === r.id}
-                        onToggle={setOpenMenuId}
-                        items={[
-                          {
-                            label: "View details",
-                            onClick: () => navigate(`/admin/reports/${r.id}`),
-                          },
-                          {
-                            label: "Resolve",
-                            onClick: () => console.log("resolve", r.id),
-                            disabled: r.status !== "PENDING",
-                          },
-                          {
-                            label: "Dismiss",
-                            onClick: () => console.log("dismiss", r.id),
-                            danger: true,
-                            disabled: r.status !== "PENDING",
-                          },
-                        ]}
-                      />
-                    </div>
+                    Loading reports…
                   </td>
                 </tr>
-              ))}
+              )}
 
-              {reports.length === 0 && (
+              {isError && (
+                <tr>
+                  <td
+                    colSpan={COLUMN_COUNT}
+                    className="px-6 py-16 text-center text-sm"
+                    style={{ color: "var(--danger)" }}
+                  >
+                    {error?.message ??
+                      "Couldn't load reports. Please try again."}
+                  </td>
+                </tr>
+              )}
+
+              {!isLoading &&
+                !isError &&
+                reports.map((r) => (
+                  <tr
+                    key={r.id}
+                    className="border-t transition-colors hover:bg-slate-50/70"
+                    style={{ borderColor: "var(--border)" }}
+                  >
+                    <td className="px-6 py-3.5">
+                      <TargetCell report={r} />
+                    </td>
+                    <td className="max-w-[260px] px-6 py-3.5">
+                      <ReasonBadge reason={r.reason} />
+                      {r.description && (
+                        <p
+                          className="mt-1.5 line-clamp-2 text-xs"
+                          style={{ color: "var(--text-secondary)" }}
+                          title={r.description}
+                        >
+                          {r.description}
+                        </p>
+                      )}
+                    </td>
+                    <td className="px-6 py-3.5">
+                      <p
+                        className="truncate text-sm font-medium"
+                        style={{ color: "var(--text-primary)" }}
+                      >
+                        {r.reporter ? fullName(r.reporter) : "Unknown reporter"}
+                      </p>
+                      <p
+                        className="truncate text-xs"
+                        style={{ color: "var(--text-muted)" }}
+                      >
+                        {r.reporter?.email || ""}
+                      </p>
+                    </td>
+                    <td className="px-6 py-3.5">
+                      <StatusBadge status={r.status} />
+                    </td>
+                    <td
+                      className="px-6 py-3.5 text-sm"
+                      style={{ color: "var(--text-secondary)" }}
+                    >
+                      {relativeTime(r.createdAt)}
+                    </td>
+                    <td
+                      className="px-6 py-3.5 text-right"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex justify-end">
+                        <RowMenu
+                          id={r.id}
+                          open={openMenuId === r.id}
+                          onToggle={setOpenMenuId}
+                          items={[
+                            {
+                              label: "View details",
+                              onClick: () => navigate(`/admin/reports/${r.id}`),
+                            },
+                            ...(r.status === "PENDING"
+                              ? [
+                                  {
+                                    label: "Resolve",
+                                    onClick: () =>
+                                      handleStatusChange(r.id, "RESOLVED"),
+                                  },
+                                  {
+                                    label: "Dismiss",
+                                    onClick: () =>
+                                      handleStatusChange(r.id, "DISMISSED"),
+                                    danger: true,
+                                  },
+                                ]
+                              : [
+                                  {
+                                    label: "Reopen",
+                                    onClick: () =>
+                                      handleStatusChange(r.id, "PENDING"),
+                                  },
+                                ]),
+                          ]}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+
+              {!isLoading && !isError && reports.length === 0 && (
                 <tr>
                   <td colSpan={COLUMN_COUNT} className="px-6 py-16 text-center">
                     <p
@@ -384,12 +374,12 @@ const AdminReportsPage = () => {
         </div>
 
         <Pagination
-          page={1}
-          totalPages={1}
-          onPageChange={() => {}}
-          total={reports.length}
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          total={total}
           itemLabel="reports"
-          isFetching={false}
+          isFetching={isFetching}
         />
       </div>
     </div>

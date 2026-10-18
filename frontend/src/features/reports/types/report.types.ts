@@ -25,3 +25,13 @@ export type Report = {
   job: { id: string; title: string } | null;
   reportedUser: ReportUser | null;
 };
+export type UpdateReportStatusInput = {
+  reportId: string;
+  status: "RESOLVED" | "DISMISSED" | "PENDING";
+};
+export type CreateReportPayload = {
+  reason: string;
+  description: string;
+  jobId?: string;
+  reportedUserId?: string;
+};

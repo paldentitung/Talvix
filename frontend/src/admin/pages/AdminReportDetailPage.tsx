@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   Briefcase,
@@ -8,6 +8,7 @@ import {
   Mail,
   User as UserIcon,
   XCircle,
+  RotateCcw,
 } from "lucide-react";
 import { fullName } from "../../shared/utils/getFullname";
 import { tintFor } from "../../shared/utils/avatarTint";
@@ -16,29 +17,9 @@ import {
   ReasonBadge,
   StatusBadge,
 } from "../../features/reports/components/ReportBadges";
-import type { Report } from "../../features/reports/types/report.types";
-
-// ---- Placeholder data (UI only) — replace with the API result later ----
-const hoursAgo = (h: number) =>
-  new Date(Date.now() - h * 3600 * 1000).toISOString();
-
-const MOCK_REPORT: Report = {
-  id: "1",
-  reason: "SCAM",
-  description:
-    "This listing asks candidates to pay a registration fee before the interview, and the recruiter stops replying once the payment is made. Several other applicants in a community group reported the same thing.",
-  status: "PENDING",
-  createdAt: hoursAgo(3),
-  reviewedAt: null,
-  reporter: {
-    id: "u1",
-    firstName: "Aarav",
-    lastName: "Sharma",
-    email: "aarav@example.com",
-  },
-  job: { id: "j1", title: "Remote Data Entry Clerk" },
-  reportedUser: null,
-};
+import type { UpdateReportStatusInput } from "../../features/reports/types/report.types";
+import { useUpdateReportStatus } from "../../features/reports/hooks/useUpdateReportStatus";
+import { useReportById } from "../../features/reports/hooks/useReportById";
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleString(undefined, {
@@ -141,9 +122,21 @@ function TimelineItem({
 }
 
 const AdminReportDetailPage = () => {
-  const report = MOCK_REPORT;
-  const isPending = report.status === "PENDING";
+  const { reportId } = useParams();
+  const { data: report, isLoading, isError } = useReportById(reportId);
 
+  const { mutate: updateStatus } = useUpdateReportStatus();
+  const handleStatusChange = (
+    reportId: string,
+    status: UpdateReportStatusInput["status"],
+  ) => {
+    updateStatus({ reportId, status });
+  };
+  if (isLoading) return <p>Loading report...</p>;
+
+  if (isError) return <p>Failed to load report.</p>;
+
+  if (!report) return <p>Report not found.</p>;
   return (
     <div className="space-y-5">
       {/* Back link */}
@@ -171,10 +164,10 @@ const AdminReportDetailPage = () => {
               className="font-display text-lg font-semibold"
               style={{ color: "var(--text-primary)" }}
             >
-              Report #{report.id.slice(0, 8)}
+              Report #{report?.id.slice(0, 8)}
             </h2>
-            <StatusBadge status={report.status} />
-            <ReasonBadge reason={report.reason} />
+            <StatusBadge status={report?.status} />
+            <ReasonBadge reason={report?.reason} />
           </div>
           <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
             Submitted {formatDate(report.createdAt)}
@@ -182,28 +175,44 @@ const AdminReportDetailPage = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={() => console.log("dismiss", report.id)}
-            disabled={!isPending}
-            className="inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-            style={{
-              borderColor: "var(--border)",
-              background: "var(--card)",
-              color: "var(--danger)",
-            }}
-          >
-            <XCircle size={16} />
-            Dismiss
-          </button>
-          <button
-            onClick={() => console.log("resolve", report.id)}
-            disabled={!isPending}
-            className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-            style={{ background: "var(--primary)", color: "#fff" }}
-          >
-            <CheckCircle2 size={16} />
-            Resolve
-          </button>
+          {report.status === "PENDING" ? (
+            <>
+              <button
+                onClick={() => handleStatusChange(report.id, "DISMISSED")}
+                className="inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                style={{
+                  borderColor: "var(--border)",
+                  background: "var(--card)",
+                  color: "var(--danger)",
+                }}
+              >
+                <XCircle size={16} />
+                Dismiss
+              </button>
+
+              <button
+                onClick={() => handleStatusChange(report.id, "RESOLVED")}
+                className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                style={{ background: "var(--primary)", color: "#fff" }}
+              >
+                <CheckCircle2 size={16} />
+                Resolve
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => handleStatusChange(report.id, "PENDING")}
+              className="inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              style={{
+                borderColor: "var(--border)",
+                background: "var(--card)",
+                color: "var(--text)",
+              }}
+            >
+              <RotateCcw size={16} />
+              Reopen report
+            </button>
+          )}
         </div>
       </div>
 
