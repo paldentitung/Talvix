@@ -7,6 +7,7 @@ import jobRoutes from "./modules/jobs/job.routes.js";
 import applicationRoutes from "./modules/application/application.route.js";
 import companyRoutes from "./modules/company/company.route.js";
 import notificationRoutes from "./modules/notification/notification.route.js";
+import reportRoutes from "./modules/reports/report.routes.js";
 import cookieParser from "cookie-parser";
 import path from "path";
 const app = express();
@@ -26,6 +27,7 @@ app.use("/api/applications", applicationRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/companies", companyRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/reports", reportRoutes);
 
 app.get("/", (req, res) => {
   res.send("hello from server");
