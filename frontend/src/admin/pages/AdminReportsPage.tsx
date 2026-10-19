@@ -204,7 +204,7 @@ const AdminReportsPage = () => {
                     setPage(1);
                   }}
                   aria-pressed={active}
-                  className="rounded-full px-4 py-1.5 text-sm font-medium transition-colors"
+                  className="rounded-full px-4 py-1.5 text-sm font-medium transition-colors cursor-pointer"
                   style={
                     active
                       ? { background: "var(--primary)", color: "#fff" }
@@ -268,8 +268,9 @@ const AdminReportsPage = () => {
                 reports.map((r) => (
                   <tr
                     key={r.id}
-                    className="border-t transition-colors hover:bg-slate-50/70"
+                    className="border-t transition-colors hover:bg-slate-50/70 cursor-pointer"
                     style={{ borderColor: "var(--border)" }}
+                    onClick={() => navigate(`/admin/reports/${r.id}`)}
                   >
                     <td className="px-6 py-3.5">
                       <TargetCell report={r} />

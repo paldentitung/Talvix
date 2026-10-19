@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -20,13 +20,39 @@ import {
 import type { UpdateReportStatusInput } from "../../features/reports/types/report.types";
 import { useUpdateReportStatus } from "../../features/reports/hooks/useUpdateReportStatus";
 import { useReportById } from "../../features/reports/hooks/useReportById";
-
+import Button from "../../components/ui/Button";
+import Modal from "../../components/ui/Modal";
+import toast from "react-hot-toast";
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleString(undefined, {
     dateStyle: "medium",
     timeStyle: "short",
   });
+type PendingStatus = UpdateReportStatusInput["status"];
 
+const CONFIRM_COPY: Record<
+  PendingStatus,
+  { title: string; description: string; confirmLabel: string; danger?: boolean }
+> = {
+  DISMISSED: {
+    title: "Dismiss this report?",
+    description:
+      "The report will be closed without action. You can reopen it later if needed.",
+    confirmLabel: "Dismiss",
+    danger: true,
+  },
+  RESOLVED: {
+    title: "Mark as resolved?",
+    description:
+      "This confirms the report was reviewed and handled. You can reopen it later if needed.",
+    confirmLabel: "Resolve",
+  },
+  PENDING: {
+    title: "Reopen this report?",
+    description: "The report will go back to pending and need review again.",
+    confirmLabel: "Reopen",
+  },
+};
 function Card({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div
@@ -125,13 +151,29 @@ const AdminReportDetailPage = () => {
   const { reportId } = useParams();
   const { data: report, isLoading, isError } = useReportById(reportId);
 
-  const { mutate: updateStatus } = useUpdateReportStatus();
-  const handleStatusChange = (
-    reportId: string,
-    status: UpdateReportStatusInput["status"],
-  ) => {
-    updateStatus({ reportId, status });
+  const { mutate: updateStatus, isPending } = useUpdateReportStatus();
+  const [pendingStatus, setPendingStatus] = useState<PendingStatus | null>(
+    null,
+  );
+  const handleConfirm = () => {
+    if (!report || !pendingStatus) return;
+    updateStatus(
+      { reportId: report.id, status: pendingStatus },
+      {
+        onSuccess: () => {
+          setPendingStatus(null);
+          toast.success("Report updated");
+        },
+        onError: () =>
+          toast.error("Failed to update report. Please try again."),
+      },
+    );
   };
+  const handleCloseConfirm = () => {
+    if (isPending) return;
+    setPendingStatus(null);
+  };
+
   if (isLoading) return <p>Loading report...</p>;
 
   if (isError) return <p>Failed to load report.</p>;
@@ -178,7 +220,7 @@ const AdminReportDetailPage = () => {
           {report.status === "PENDING" ? (
             <>
               <button
-                onClick={() => handleStatusChange(report.id, "DISMISSED")}
+                onClick={() => setPendingStatus("DISMISSED")}
                 className="inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 style={{
                   borderColor: "var(--border)",
@@ -191,7 +233,7 @@ const AdminReportDetailPage = () => {
               </button>
 
               <button
-                onClick={() => handleStatusChange(report.id, "RESOLVED")}
+                onClick={() => setPendingStatus("RESOLVED")}
                 className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 style={{ background: "var(--primary)", color: "#fff" }}
               >
@@ -200,18 +242,10 @@ const AdminReportDetailPage = () => {
               </button>
             </>
           ) : (
-            <button
-              onClick={() => handleStatusChange(report.id, "PENDING")}
-              className="inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-              style={{
-                borderColor: "var(--border)",
-                background: "var(--card)",
-                color: "var(--text)",
-              }}
-            >
-              <RotateCcw size={16} />
+            <Button onClick={() => setPendingStatus("PENDING")}>
+              <RotateCcw size={14} />
               Reopen report
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -340,6 +374,41 @@ const AdminReportDetailPage = () => {
           </Card>
         </div>
       </div>
+      {pendingStatus && (
+        <Modal
+          isOpen
+          onClose={handleCloseConfirm}
+          title={CONFIRM_COPY[pendingStatus].title}
+          description={CONFIRM_COPY[pendingStatus].description}
+          maxWidth="max-w-sm"
+          footer={
+            <>
+              <Button
+                size="sm"
+                onClick={handleCloseConfirm}
+                disabled={isPending}
+                variant="ghost"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                className={
+                  CONFIRM_COPY[pendingStatus].danger
+                    ? "bg-red-500 hover:bg-red-700"
+                    : undefined
+                }
+                onClick={handleConfirm}
+                disabled={isPending}
+              >
+                {isPending
+                  ? "Saving..."
+                  : CONFIRM_COPY[pendingStatus].confirmLabel}
+              </Button>
+            </>
+          }
+        />
+      )}
     </div>
   );
 };
