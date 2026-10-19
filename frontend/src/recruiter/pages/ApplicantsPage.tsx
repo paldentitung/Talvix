@@ -6,6 +6,7 @@ import {
   FileText,
   ChevronLeft,
   ChevronRight,
+  Flag,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useJobApplications } from "../../features/applications/hooks/useJobApplications";
@@ -15,12 +16,13 @@ import type {
   ApplicationStatus,
 } from "../../features/applications/types/application.types";
 import { useUpdateApplicationStatus } from "../../features/applications/hooks/useUpdateApplicationStatus";
+import ReportModal from "../../features/reports/components/ReportModal";
 
 const API_BASE_URL = import.meta.env.VITE_API_BACKEND_URL;
 
 const getResumeUrl = (resumeUrl: string | null): string | null => {
   if (!resumeUrl) return null;
-  if (resumeUrl.startsWith("http")) return resumeUrl; // already absolute
+  if (resumeUrl.startsWith("http")) return resumeUrl;
   return `${API_BASE_URL}${resumeUrl}`;
 };
 const getInitials = (first: string, last: string): string => {
@@ -30,6 +32,7 @@ const getInitials = (first: string, last: string): string => {
 const toApplicant = (raw: RawApplication): Applicant => {
   return {
     id: raw.id,
+    userId: raw.user.id,
     initials: getInitials(raw.user.firstName, raw.user.lastName),
     name: `${raw.user.firstName} ${raw.user.lastName}`.trim(),
     jobTitle: raw.job.title,
@@ -80,7 +83,7 @@ const ApplicantsPage = () => {
   const { id } = useParams();
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
-
+  const [reportOpen, setReportOpen] = useState(false);
   const { data, error, isLoading, isFetching } = useJobApplications(
     id,
     page,
@@ -391,6 +394,14 @@ const ApplicantsPage = () => {
                 Message candidate
               </a>
 
+              <button
+                onClick={() => setReportOpen(true)}
+                className="flex items-center gap-2 rounded-md border border-(--border) bg-(--card) px-4 py-2 text-sm font-semibold text-(--danger) hover:bg-(--danger-bg)"
+              >
+                <Flag size={16} />
+                Report
+              </button>
+
               {selected.resumeUrl && (
                 <a
                   href={selected.resumeUrl}
@@ -461,6 +472,15 @@ const ApplicantsPage = () => {
           </div>
         </div>
       </div>
+      <ReportModal
+        isOpen={reportOpen}
+        onClose={() => setReportOpen(false)}
+        target={{
+          type: "user",
+          reportedUserId: selected.userId,
+          label: selected.name,
+        }}
+      />
     </div>
   );
 };
