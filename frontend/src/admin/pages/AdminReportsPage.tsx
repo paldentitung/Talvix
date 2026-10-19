@@ -4,16 +4,18 @@ import Pagination from "../../shared/components/Pagination";
 import RowMenu from "../../shared/components/RowMenu";
 import relativeTime from "../../shared/utils/relativeTime";
 import { fullName } from "../../shared/utils/getFullname";
-import type {
-  Report,
-  ReportReason,
-  ReportStatus,
-  UpdateReportStatusInput,
-} from "../../features/reports/types/report.types";
+import type { Report } from "../../features/reports/types/report.types";
+import {
+  ReasonBadge,
+  StatusBadge,
+} from "../../features/reports/components/ReportBadges";
 import { useNavigate } from "react-router-dom";
 import { useReports } from "../../features/reports/hooks/useReports";
 import { useUpdateReportStatus } from "../../features/reports/hooks/useUpdateReportStatus";
-
+import ReportStatusConfirmModal, {
+  type PendingStatus,
+} from "../../features/reports/components/ReportStatusConfirmModal";
+import toast from "react-hot-toast";
 const FILTERS = ["All", "PENDING", "RESOLVED", "DISMISSED"] as const;
 type Filter = (typeof FILTERS)[number];
 
@@ -24,52 +26,8 @@ const FILTER_LABELS: Record<Filter, string> = {
   DISMISSED: "Dismissed",
 };
 
-const REASON_LABELS: Record<ReportReason, string> = {
-  SCAM: "Scam",
-  MISLEADING_INFORMATION: "Misleading information",
-  INAPPROPRIATE_CONTENT: "Inappropriate content",
-  SPAM: "Spam",
-  OTHER: "Other",
-};
-
-const STATUS_STYLES: Record<
-  ReportStatus,
-  { bg: string; fg: string; label: string }
-> = {
-  PENDING: { bg: "var(--warning-bg)", fg: "var(--warning)", label: "Pending" },
-  RESOLVED: {
-    bg: "var(--success-bg)",
-    fg: "var(--success)",
-    label: "Resolved",
-  },
-  DISMISSED: { bg: "#F1F5F9", fg: "var(--text-secondary)", label: "Dismissed" },
-};
-
 const COLUMN_COUNT = 6;
 const PAGE_SIZE = 10;
-
-function StatusBadge({ status }: { status: ReportStatus }) {
-  const s = STATUS_STYLES[status];
-  return (
-    <span
-      className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
-      style={{ background: s.bg, color: s.fg }}
-    >
-      {s.label}
-    </span>
-  );
-}
-
-function ReasonBadge({ reason }: { reason: ReportReason }) {
-  return (
-    <span
-      className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
-      style={{ background: "var(--danger-bg)", color: "var(--danger)" }}
-    >
-      {REASON_LABELS[reason]}
-    </span>
-  );
-}
 
 function TargetCell({ report }: { report: Report }) {
   if (report.job) {
@@ -134,32 +92,42 @@ function TargetCell({ report }: { report: Report }) {
 }
 
 const AdminReportsPage = () => {
+  const navigate = useNavigate();
+
   const [filter, setFilter] = useState<Filter>("All");
   const [page, setPage] = useState(1);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-
-  const navigate = useNavigate();
+  const [pending, setPending] = useState<{
+    reportId: string;
+    status: PendingStatus;
+  } | null>(null);
 
   const { data, isLoading, isFetching, isError, error } = useReports(
     page,
     PAGE_SIZE,
     filter === "All" ? undefined : filter,
   );
-  console.log("reports", data);
   const { mutate: updateStatus, isPending } = useUpdateReportStatus();
-
-  const handleStatusChange = (
-    reportId: string,
-    status: UpdateReportStatusInput["status"],
-  ) => {
-    if (isPending) return;
-    updateStatus({ reportId, status });
-    setOpenMenuId(null);
-  };
 
   const reports: Report[] = data?.reports ?? [];
   const total = data?.pagination?.totalReports ?? 0;
   const totalPages = Math.max(1, data?.pagination?.totalPages ?? 1);
+
+  const requestStatusChange = (reportId: string, status: PendingStatus) => {
+    setPending({ reportId, status });
+    setOpenMenuId(null);
+  };
+
+  const handleConfirm = () => {
+    if (!pending) return;
+    updateStatus(pending, {
+      onSuccess: () => {
+        setPending(null);
+        toast.success("Report updated");
+      },
+      onError: () => toast.error("Failed to update report. Please try again."),
+    });
+  };
 
   // If the last item on a page is actioned under a filter, step back.
   useEffect(() => {
@@ -329,12 +297,12 @@ const AdminReportsPage = () => {
                                   {
                                     label: "Resolve",
                                     onClick: () =>
-                                      handleStatusChange(r.id, "RESOLVED"),
+                                      requestStatusChange(r.id, "RESOLVED"),
                                   },
                                   {
                                     label: "Dismiss",
                                     onClick: () =>
-                                      handleStatusChange(r.id, "DISMISSED"),
+                                      requestStatusChange(r.id, "DISMISSED"),
                                     danger: true,
                                   },
                                 ]
@@ -342,7 +310,7 @@ const AdminReportsPage = () => {
                                   {
                                     label: "Reopen",
                                     onClick: () =>
-                                      handleStatusChange(r.id, "PENDING"),
+                                      requestStatusChange(r.id, "PENDING"),
                                   },
                                 ]),
                           ]}
@@ -383,6 +351,12 @@ const AdminReportsPage = () => {
           isFetching={isFetching}
         />
       </div>
+      <ReportStatusConfirmModal
+        status={pending?.status ?? null}
+        isPending={isPending}
+        onConfirm={handleConfirm}
+        onClose={() => setPending(null)}
+      />
     </div>
   );
 };

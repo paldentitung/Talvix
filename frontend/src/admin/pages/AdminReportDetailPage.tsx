@@ -17,42 +17,18 @@ import {
   ReasonBadge,
   StatusBadge,
 } from "../../features/reports/components/ReportBadges";
-import type { UpdateReportStatusInput } from "../../features/reports/types/report.types";
 import { useUpdateReportStatus } from "../../features/reports/hooks/useUpdateReportStatus";
 import { useReportById } from "../../features/reports/hooks/useReportById";
 import Button from "../../components/ui/Button";
-import Modal from "../../components/ui/Modal";
 import toast from "react-hot-toast";
+import ReportStatusConfirmModal, {
+  type PendingStatus,
+} from "../../features/reports/components/ReportStatusConfirmModal";
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleString(undefined, {
     dateStyle: "medium",
     timeStyle: "short",
   });
-type PendingStatus = UpdateReportStatusInput["status"];
-
-const CONFIRM_COPY: Record<
-  PendingStatus,
-  { title: string; description: string; confirmLabel: string; danger?: boolean }
-> = {
-  DISMISSED: {
-    title: "Dismiss this report?",
-    description:
-      "The report will be closed without action. You can reopen it later if needed.",
-    confirmLabel: "Dismiss",
-    danger: true,
-  },
-  RESOLVED: {
-    title: "Mark as resolved?",
-    description:
-      "This confirms the report was reviewed and handled. You can reopen it later if needed.",
-    confirmLabel: "Resolve",
-  },
-  PENDING: {
-    title: "Reopen this report?",
-    description: "The report will go back to pending and need review again.",
-    confirmLabel: "Reopen",
-  },
-};
 function Card({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div
@@ -155,6 +131,7 @@ const AdminReportDetailPage = () => {
   const [pendingStatus, setPendingStatus] = useState<PendingStatus | null>(
     null,
   );
+
   const handleConfirm = () => {
     if (!report || !pendingStatus) return;
     updateStatus(
@@ -374,41 +351,12 @@ const AdminReportDetailPage = () => {
           </Card>
         </div>
       </div>
-      {pendingStatus && (
-        <Modal
-          isOpen
-          onClose={handleCloseConfirm}
-          title={CONFIRM_COPY[pendingStatus].title}
-          description={CONFIRM_COPY[pendingStatus].description}
-          maxWidth="max-w-sm"
-          footer={
-            <>
-              <Button
-                size="sm"
-                onClick={handleCloseConfirm}
-                disabled={isPending}
-                variant="ghost"
-              >
-                Cancel
-              </Button>
-              <Button
-                size="sm"
-                className={
-                  CONFIRM_COPY[pendingStatus].danger
-                    ? "bg-red-500 hover:bg-red-700"
-                    : undefined
-                }
-                onClick={handleConfirm}
-                disabled={isPending}
-              >
-                {isPending
-                  ? "Saving..."
-                  : CONFIRM_COPY[pendingStatus].confirmLabel}
-              </Button>
-            </>
-          }
-        />
-      )}
+      <ReportStatusConfirmModal
+        status={pendingStatus}
+        isPending={isPending}
+        onConfirm={handleConfirm}
+        onClose={handleCloseConfirm}
+      />
     </div>
   );
 };
