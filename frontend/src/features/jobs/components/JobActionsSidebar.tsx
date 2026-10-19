@@ -11,6 +11,7 @@ import { useApplyJob } from "../../applications/hooks/useApplyJob";
 import ApplyJobModal from "../../applications/components/ApplyJobModal";
 import Modal from "../../../components/ui/Modal";
 import { useJobSaveActions } from "../hooks/useJobSaveActions";
+import ReportModal from "../../reports/components/ReportModal";
 
 type Props = {
   variant: "public" | "candidate" | "recruiter";
@@ -148,9 +149,9 @@ const RecruiterActions = ({ job }: { job: Job }) => {
 
 const CandidateActions = ({ job }: { job: Job }) => {
   const [isApplyOpen, setIsApplyOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const applyJobMutation = useApplyJob();
   const { isJobSaved, isSavingJob, toggleSave } = useJobSaveActions();
-
   const handleApply = async ({
     coverLetter,
     resume,
@@ -197,11 +198,25 @@ const CandidateActions = ({ job }: { job: Job }) => {
           </>
         )}
       </Button>
+
+      <Button
+        onClick={() => setReportOpen(true)}
+        className="bg-rose-500 hover:bg-rose-400 hover:cursor-pointer"
+      >
+        Report
+      </Button>
+
       <ApplyJobModal
         isOpen={isApplyOpen}
         onClose={() => setIsApplyOpen(false)}
         jobTitle={job.title}
         onSubmit={handleApply}
+      />
+
+      <ReportModal
+        isOpen={reportOpen}
+        onClose={() => setReportOpen(false)}
+        target={{ type: "job", jobId: job.id, label: job.title }}
       />
     </div>
   );

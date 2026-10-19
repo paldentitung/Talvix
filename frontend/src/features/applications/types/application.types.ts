@@ -5,6 +5,7 @@ export type ApplyJobData = {
 };
 export type Applicant = {
   id: string;
+  userId: string;
   initials: string;
   name: string;
   jobTitle: string;

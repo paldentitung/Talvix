@@ -17,7 +17,7 @@ type ReportUser = {
 export type Report = {
   id: string;
   reason: ReportReason;
-  description: string | null;
+  description?: string | null;
   status: ReportStatus;
   createdAt: string;
   reviewedAt: string | null;

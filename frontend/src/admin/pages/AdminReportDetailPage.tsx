@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -17,16 +17,18 @@ import {
   ReasonBadge,
   StatusBadge,
 } from "../../features/reports/components/ReportBadges";
-import type { UpdateReportStatusInput } from "../../features/reports/types/report.types";
 import { useUpdateReportStatus } from "../../features/reports/hooks/useUpdateReportStatus";
 import { useReportById } from "../../features/reports/hooks/useReportById";
-
+import Button from "../../components/ui/Button";
+import toast from "react-hot-toast";
+import ReportStatusConfirmModal, {
+  type PendingStatus,
+} from "../../features/reports/components/ReportStatusConfirmModal";
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleString(undefined, {
     dateStyle: "medium",
     timeStyle: "short",
   });
-
 function Card({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div
@@ -125,13 +127,30 @@ const AdminReportDetailPage = () => {
   const { reportId } = useParams();
   const { data: report, isLoading, isError } = useReportById(reportId);
 
-  const { mutate: updateStatus } = useUpdateReportStatus();
-  const handleStatusChange = (
-    reportId: string,
-    status: UpdateReportStatusInput["status"],
-  ) => {
-    updateStatus({ reportId, status });
+  const { mutate: updateStatus, isPending } = useUpdateReportStatus();
+  const [pendingStatus, setPendingStatus] = useState<PendingStatus | null>(
+    null,
+  );
+
+  const handleConfirm = () => {
+    if (!report || !pendingStatus) return;
+    updateStatus(
+      { reportId: report.id, status: pendingStatus },
+      {
+        onSuccess: () => {
+          setPendingStatus(null);
+          toast.success("Report updated");
+        },
+        onError: () =>
+          toast.error("Failed to update report. Please try again."),
+      },
+    );
   };
+  const handleCloseConfirm = () => {
+    if (isPending) return;
+    setPendingStatus(null);
+  };
+
   if (isLoading) return <p>Loading report...</p>;
 
   if (isError) return <p>Failed to load report.</p>;
@@ -178,7 +197,7 @@ const AdminReportDetailPage = () => {
           {report.status === "PENDING" ? (
             <>
               <button
-                onClick={() => handleStatusChange(report.id, "DISMISSED")}
+                onClick={() => setPendingStatus("DISMISSED")}
                 className="inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 style={{
                   borderColor: "var(--border)",
@@ -191,7 +210,7 @@ const AdminReportDetailPage = () => {
               </button>
 
               <button
-                onClick={() => handleStatusChange(report.id, "RESOLVED")}
+                onClick={() => setPendingStatus("RESOLVED")}
                 className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 style={{ background: "var(--primary)", color: "#fff" }}
               >
@@ -200,18 +219,10 @@ const AdminReportDetailPage = () => {
               </button>
             </>
           ) : (
-            <button
-              onClick={() => handleStatusChange(report.id, "PENDING")}
-              className="inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-              style={{
-                borderColor: "var(--border)",
-                background: "var(--card)",
-                color: "var(--text)",
-              }}
-            >
-              <RotateCcw size={16} />
+            <Button onClick={() => setPendingStatus("PENDING")}>
+              <RotateCcw size={14} />
               Reopen report
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -340,6 +351,12 @@ const AdminReportDetailPage = () => {
           </Card>
         </div>
       </div>
+      <ReportStatusConfirmModal
+        status={pendingStatus}
+        isPending={isPending}
+        onConfirm={handleConfirm}
+        onClose={handleCloseConfirm}
+      />
     </div>
   );
 };
