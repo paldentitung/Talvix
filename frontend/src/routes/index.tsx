@@ -72,6 +72,10 @@ const AdminReportDetailPage = lazy(
   () => import("../admin/pages/AdminReportDetailPage"),
 );
 
+const NotificationPage = lazy(
+  () => import("../features/notification/pages/NotificationPage"),
+);
+
 // Wraps a layout with the auth + role guards, so each role is one call
 const guarded = (
   role: UserRole,
@@ -117,6 +121,7 @@ const routes: RouteObject[] = [
     { path: "applications", element: <CandidateApplicationsPage /> },
     { path: "profile", element: <CandidateProfilePage /> },
     { path: "settings", element: <CandidateSettingsPage /> },
+    { path: "notifications", element: <NotificationPage /> },
   ]),
 
   guarded(USER_ROLE.RECRUITER, "/recruiter", <RecruiterLayout />, [
@@ -127,6 +132,7 @@ const routes: RouteObject[] = [
     { path: "jobs", element: <ManageJobsPage /> },
     { path: "jobs/:jobId", element: <JobDetailPage /> },
     { path: "settings", element: <RecruiterSettingsPage /> },
+    { path: "notifications", element: <NotificationPage /> },
   ]),
 
   guarded(USER_ROLE.ADMIN, "/admin", <AdminLayout />, [
@@ -137,6 +143,7 @@ const routes: RouteObject[] = [
     { path: "settings", element: <AdminSettingsPage /> },
     { path: "reports", element: <AdminReportsPage /> },
     { path: "reports/:reportId", element: <AdminReportDetailPage /> },
+    { path: "notifications", element: <NotificationPage /> },
   ]),
 
   // Unknown URL: replace with a real NotFoundPage when you have one

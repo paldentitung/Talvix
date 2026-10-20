@@ -278,8 +278,8 @@ export const createApplicationService = async (
     type: NotificationType.APPLICATION_SUBMITTED,
     title: "New application received",
     message: `You received a new application for ${job.title}.`,
-    entityId: application.id,
-    entityType: "APPLICATION",
+    entityId: job.id,
+    entityType: "JOB",
   });
 
   return application;

@@ -1,12 +1,16 @@
 import { Bell, CheckCheck } from "lucide-react";
 
 import type { Notification } from "../../features/notification/types/notification.types";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../features/auth/contexts/AuthContext";
+import { getNotificationLink } from "../../features/notification/utils/notificationRoutes";
 
 type NotificationDropdownProps = {
   notifications: Notification[];
   onMarkAsRead?: (notificationId: string) => void;
   onMarkAllAsRead?: () => void;
   onNotificationClick?: (notification: Notification) => void;
+  onClose?: () => void;
 };
 
 const NotificationDropdown = ({
@@ -14,11 +18,34 @@ const NotificationDropdown = ({
   onMarkAsRead,
   onMarkAllAsRead,
   onNotificationClick,
+  onClose,
 }: NotificationDropdownProps) => {
   const hasUnread = notifications?.some(
     (notification) => notification.readAt === null,
   );
 
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const role = user?.role;
+
+  const handleClick = (notification: Notification) => {
+    if (notification.readAt === null) {
+      onMarkAsRead?.(notification.id);
+    }
+
+    onNotificationClick?.(notification);
+
+    const link = getNotificationLink(role, notification);
+
+    if (link) navigate(link);
+
+    onClose?.();
+  };
+
+  const handleViewAll = () => {
+    navigate(`/${role?.toLowerCase()}/notifications`);
+    onClose?.();
+  };
   return (
     <div className="absolute -right-12 md:right-0 top-12 z-50 w-80 max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl border border-(--border) bg-(--card) shadow-(--shadow-lg)">
       {/* Header */}
@@ -64,21 +91,16 @@ const NotificationDropdown = ({
         ) : (
           notifications.map((notification) => {
             const isUnread = notification.readAt === null;
+            const hasLink = getNotificationLink(role, notification) !== null;
 
             return (
               <button
                 key={notification.id}
                 type="button"
-                onClick={() => {
-                  if (isUnread) {
-                    onMarkAsRead?.(notification.id);
-                  }
-
-                  onNotificationClick?.(notification);
-                }}
+                onClick={() => handleClick(notification)}
                 className={`flex w-full gap-3 border-b border-(--border) px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-(--background) ${
                   isUnread ? "bg-(--primary)/5" : ""
-                }`}
+                } ${hasLink ? "cursor-pointer" : "cursor-default"}`}
               >
                 <div className="pt-1.5">
                   <span
@@ -112,6 +134,7 @@ const NotificationDropdown = ({
         <div className="border-t border-(--border) px-4 py-3">
           <button
             type="button"
+            onClick={handleViewAll}
             className="w-full text-center text-xs font-medium text-(--primary) transition-colors hover:opacity-80"
           >
             View all notifications

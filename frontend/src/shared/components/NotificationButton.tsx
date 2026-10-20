@@ -48,6 +48,7 @@ const NotificationButton = ({
           onMarkAsRead={onMarkAsRead}
           onMarkAllAsRead={onMarkAllAsRead}
           onNotificationClick={onNotificationClick}
+          onClose={() => setIsOpen(false)}
         />
       )}
     </div>
