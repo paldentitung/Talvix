@@ -19,6 +19,7 @@ export type Applicant = {
   resumeUrl: string | null;
   coverLetter: string | null;
   email: string;
+  avatar: string | null;
 };
 export type ApplicationStatus =
   | "PENDING"
