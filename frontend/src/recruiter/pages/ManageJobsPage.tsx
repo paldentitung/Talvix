@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Search,
   Star,
   Lock,
   Unlock,
   RotateCcw,
+  Users,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -16,6 +17,9 @@ import { useUpdateJobStatus } from "../../features/jobs/hooks/useUpdateJobStatus
 import Modal from "../../components/ui/Modal";
 import Button from "../../components/ui/Button";
 import formatSalary from "../../shared/utils/formatSalary";
+import RowMenu from "../../shared/components/RowMenu";
+import type { RowMenuItem } from "../../shared/components/RowMenu";
+
 const statusStyles: Record<JobStatus, string> = {
   OPEN: "bg-(--success-bg) text-(--success)",
   DRAFT: "bg-(--border) text-(--text-secondary)",
@@ -47,11 +51,13 @@ const formatDeadline = (deadline: string | null) => {
 const statusFilters: (JobStatus | "ALL")[] = ["ALL", "OPEN", "DRAFT", "CLOSED"];
 
 const ManageJobsPage = () => {
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<JobStatus | "ALL">("ALL");
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [isOpen, setIsOpen] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [pendingStatus, setPendingStatus] = useState<{
     jobId: string;
     status: JobStatus;
@@ -63,6 +69,7 @@ const ManageJobsPage = () => {
   const totalPages = data?.pagination?.totalPages ?? 1;
   const { mutate: updateStatus, isPending } = useUpdateJobStatus();
 
+  // todo add backend for filter and search
   const filteredJobs = useMemo(() => {
     return jobs.filter((job: Job) => {
       const matchesStatus = status === "ALL" || job.status === status;
@@ -88,6 +95,7 @@ const ManageJobsPage = () => {
       (p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1,
     );
   }, [totalPages, page]);
+
   const handleConfirmStatusUpdate = () => {
     if (!pendingStatus) return;
 
@@ -95,8 +103,38 @@ const ManageJobsPage = () => {
     setIsOpen(false);
     setPendingStatus(null);
   };
+
+  const getMenuItems = (job: Job): RowMenuItem[] => {
+    const action = statusActions[job.status];
+    const items: RowMenuItem[] = [
+      {
+        label: "View applicants",
+        icon: Users,
+        onClick: () => navigate(`/recruiter/applicants/${job.id}`),
+      },
+    ];
+
+    if (action) {
+      items.push({
+        label: action.label,
+        icon: statusActionIcons[job.status],
+        danger: action.next === "CLOSED",
+        disabled: isPending,
+        onClick: () => {
+          setPendingStatus({ jobId: job.id, status: action.next });
+          setIsOpen(true);
+        },
+      });
+    }
+
+    return items;
+  };
+
   return (
-    <div className="flex flex-col gap-4">
+    <div
+      className="flex flex-col gap-4"
+      onClick={() => openMenuId && setOpenMenuId(null)}
+    >
       {/* Filters */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative w-full sm:max-w-xs">
@@ -135,13 +173,14 @@ const ManageJobsPage = () => {
         </div>
       )}
 
-      {/* Table — desktop / tablet */}
+      {/* Table — desktop / tablet.
+          No overflow-hidden here: it would clip the RowMenu dropdown. */}
       {filteredJobs.length > 0 && (
-        <div className="hidden overflow-hidden rounded-(--radius-lg) border border-(--border) bg-(--card) shadow-(--shadow-sm) sm:block">
+        <div className="hidden rounded-(--radius-lg) border border-(--border) bg-(--card) shadow-(--shadow-sm) sm:block">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-(--border) bg-(--bg)">
-                <th className="px-4 py-3 text-left font-medium text-(--text-secondary)">
+                <th className="rounded-tl-(--radius-lg) px-4 py-3 text-left font-medium text-(--text-secondary)">
                   Job
                 </th>
                 <th className="px-4 py-3 text-left font-medium text-(--text-secondary)">
@@ -159,96 +198,73 @@ const ManageJobsPage = () => {
                 <th className="px-4 py-3 text-left font-medium text-(--text-secondary)">
                   Openings
                 </th>
-                <th className="px-4 py-3 text-right font-medium text-(--text-secondary)">
+                <th className="rounded-tr-(--radius-lg) px-4 py-3 text-right font-medium text-(--text-secondary)">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-(--border)">
-              {filteredJobs.map((job: Job) => {
-                const action = statusActions[job.status];
-                const ActionIcon = statusActionIcons[job.status];
-
-                return (
-                  <tr
-                    key={job.id}
-                    className="transition-colors hover:bg-(--bg)"
-                  >
-                    <td className="max-w-[220px] px-4 py-3">
-                      <div className="flex items-center gap-1.5">
-                        <span className="truncate font-semibold text-(--text-primary)">
-                          {job.title}
-                        </span>
-                        {job.featured && (
-                          <Star
-                            size={13}
-                            className="shrink-0 fill-(--warning) text-(--warning)"
-                          />
-                        )}
-                      </div>
-                    </td>
-
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${statusStyles[job.status]}`}
-                      >
-                        {job.status.charAt(0) +
-                          job.status.slice(1).toLowerCase()}
+              {filteredJobs.map((job: Job) => (
+                <tr key={job.id} className="transition-colors hover:bg-(--bg)">
+                  <td className="max-w-[220px] px-4 py-3">
+                    <div className="flex items-center gap-1.5">
+                      <span className="truncate font-semibold text-(--text-primary)">
+                        {job.title}
                       </span>
-                    </td>
+                      {job.featured && (
+                        <Star
+                          size={13}
+                          className="shrink-0 fill-(--warning) text-(--warning)"
+                        />
+                      )}
+                    </div>
+                  </td>
 
-                    <td className="px-4 py-3 text-(--text-primary)">
-                      {job.applicationsCount ?? 0}
-                    </td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${statusStyles[job.status]}`}
+                    >
+                      {job.status.charAt(0) + job.status.slice(1).toLowerCase()}
+                    </span>
+                  </td>
 
-                    <td className="px-4 py-3 text-(--text-secondary)">
-                      {formatDeadline(job.deadline)}
-                    </td>
+                  <td className="px-4 py-3 text-(--text-primary)">
+                    {job.applicationsCount ?? 0}
+                  </td>
 
-                    <td className="px-4 py-3 text-(--text-secondary)">
-                      {formatSalary(job)}
-                    </td>
+                  <td className="px-4 py-3 text-(--text-secondary)">
+                    {formatDeadline(job.deadline)}
+                  </td>
 
-                    <td className="px-4 py-3 text-(--text-secondary)">
-                      {job.openings ?? "—"}
-                    </td>
+                  <td className="px-4 py-3 text-(--text-secondary)">
+                    {formatSalary(job)}
+                  </td>
 
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link
-                          to={`${job.id}`}
-                          className="rounded-(--radius-md) bg-(--primary) px-3 py-1.5 text-xs font-semibold text-white hover:bg-(--primary-dark)"
-                        >
-                          Manage
-                        </Link>
-                        <Link
-                          to={`/recruiter/applicants/${job.id}`}
-                          className="rounded-(--radius-md) border border-(--border) px-3 py-1.5 text-xs font-semibold text-(--text-secondary) hover:bg-(--bg) hover:text-(--text-primary)"
-                        >
-                          Applicants
-                        </Link>
-                        {action && (
-                          <button
-                            disabled={isPending}
-                            onClick={() => {
-                              setPendingStatus({
-                                jobId: job.id,
-                                status: action.next,
-                              });
-                              setIsOpen(true);
-                            }}
-                            aria-label={action.label}
-                            title={action.label}
-                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-(--radius-md) border border-(--border) text-(--text-secondary) hover:bg-(--bg) hover:text-(--text-primary) disabled:opacity-50"
-                          >
-                            <ActionIcon size={14} />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+                  <td className="px-4 py-3 text-(--text-secondary)">
+                    {job.openings ?? "—"}
+                  </td>
+
+                  <td
+                    className="px-4 py-3"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-end gap-2">
+                      <Link
+                        to={`${job.id}`}
+                        className="rounded-(--radius-md) bg-(--primary) px-3 py-1.5 text-xs font-semibold text-white hover:bg-(--primary-dark)"
+                      >
+                        Manage
+                      </Link>
+                      <RowMenu
+                        id={job.id}
+                        open={openMenuId === job.id}
+                        onToggle={setOpenMenuId}
+                        items={getMenuItems(job)}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -257,80 +273,61 @@ const ManageJobsPage = () => {
       {/* Stacked cards — mobile only */}
       {filteredJobs.length > 0 && (
         <div className="flex flex-col gap-3 sm:hidden">
-          {filteredJobs.map((job: Job) => {
-            const action = statusActions[job.status];
-            const ActionIcon = statusActionIcons[job.status];
-
-            return (
-              <div
-                key={job.id}
-                className="rounded-(--radius-lg) border border-(--border) bg-(--card) p-4 shadow-(--shadow-sm)"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-1.5">
-                    <h3 className="truncate text-sm font-semibold text-(--text-primary)">
-                      {job.title}
-                    </h3>
-                    {job.featured && (
-                      <Star
-                        size={14}
-                        className="shrink-0 fill-(--warning) text-(--warning)"
-                      />
-                    )}
-                  </div>
-                  <span
-                    className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[job.status]}`}
-                  >
-                    {job.status.charAt(0) + job.status.slice(1).toLowerCase()}
-                  </span>
-                </div>
-
-                <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-(--text-secondary)">
-                  <div>
-                    <span className="font-medium text-(--text-primary)">
-                      {job.applicationsCount ?? 0}
-                    </span>{" "}
-                    applicants
-                  </div>
-                  <div>{formatDeadline(job.deadline)}</div>
-                  <div>{formatSalary(job)}</div>
-                  <div>{job.openings ?? "—"} openings</div>
-                </div>
-
-                <div className="mt-3 flex items-center gap-2">
-                  <Link
-                    to={`${job.id}`}
-                    className="flex-1 rounded-(--radius-md) bg-(--primary) py-2 text-center text-sm font-semibold text-white hover:bg-(--primary-dark)"
-                  >
-                    Manage
-                  </Link>
-                  <Link
-                    to={`/recruiter/applicants/${job.id}`}
-                    className="flex-1 rounded-(--radius-md) border border-(--border) py-2 text-center text-sm font-semibold text-(--text-secondary) hover:bg-(--bg) hover:text-(--text-primary)"
-                  >
-                    View applicants
-                  </Link>
-                  {action && (
-                    <button
-                      disabled={isPending}
-                      onClick={() => {
-                        setPendingStatus({
-                          jobId: job.id,
-                          status: action.next,
-                        });
-                        setIsOpen(true);
-                      }}
-                      aria-label={action.label}
-                      title={action.label}
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-(--radius-md) border border-(--border) text-(--text-secondary) hover:bg-(--bg) hover:text-(--text-primary) disabled:opacity-50"
-                    >
-                      <ActionIcon size={16} />
-                    </button>
+          {filteredJobs.map((job: Job) => (
+            <div
+              key={job.id}
+              className="rounded-(--radius-lg) border border-(--border) bg-(--card) p-4 shadow-(--shadow-sm)"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <h3 className="truncate text-sm font-semibold text-(--text-primary)">
+                    {job.title}
+                  </h3>
+                  {job.featured && (
+                    <Star
+                      size={14}
+                      className="shrink-0 fill-(--warning) text-(--warning)"
+                    />
                   )}
                 </div>
+                <span
+                  className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[job.status]}`}
+                >
+                  {job.status.charAt(0) + job.status.slice(1).toLowerCase()}
+                </span>
               </div>
-            );
-          })}
+
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-(--text-secondary)">
+                <div>
+                  <span className="font-medium text-(--text-primary)">
+                    {job.applicationsCount ?? 0}
+                  </span>{" "}
+                  applicants
+                </div>
+                <div>{formatDeadline(job.deadline)}</div>
+                <div>{formatSalary(job)}</div>
+                <div>{job.openings ?? "—"} openings</div>
+              </div>
+
+              <div
+                className="mt-3 flex items-center gap-2"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Link
+                  to={`${job.id}`}
+                  className="flex-1 rounded-(--radius-md) bg-(--primary) py-2 text-center text-sm font-semibold text-white hover:bg-(--primary-dark)"
+                >
+                  Manage
+                </Link>
+                <RowMenu
+                  id={job.id}
+                  open={openMenuId === job.id}
+                  onToggle={setOpenMenuId}
+                  items={getMenuItems(job)}
+                />
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
