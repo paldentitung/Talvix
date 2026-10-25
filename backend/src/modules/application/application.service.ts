@@ -4,7 +4,7 @@ import {
   CreateApplicationInput,
   UpdateApplicationInput,
 } from "./application.types.js";
-import { ApplicationStatus } from "@prisma/client";
+import { ApplicationStatus, Prisma } from "@prisma/client";
 import { createNotificationService } from "../notification/notification.service.js";
 import { NotificationType } from "@prisma/client";
 
@@ -159,11 +159,14 @@ export const getMyApplicationsService = async (
     },
   };
 };
+
 export const getJobApplicationsService = async (
   jobId: string,
   recruiterId: string,
   page = 1,
   limit = 10,
+  search = "",
+  status?: ApplicationStatus,
 ) => {
   const skip = (page - 1) * limit;
 
@@ -172,17 +175,47 @@ export const getJobApplicationsService = async (
       id: jobId,
       recruiterId,
     },
+    select: {
+      id: true,
+    },
   });
 
   if (!job) {
     throw new AppError("Job not found", 404);
   }
 
+  const where: Prisma.ApplicationWhereInput = {
+    jobId,
+    ...(status && { status }),
+    ...(search && {
+      user: {
+        OR: [
+          {
+            firstName: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            lastName: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            email: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+        ],
+      },
+    }),
+  };
+
   const [applications, total] = await Promise.all([
     prisma.application.findMany({
-      where: {
-        jobId,
-      },
+      where,
       include: {
         user: true,
         job: true,
@@ -199,11 +232,7 @@ export const getJobApplicationsService = async (
       take: limit,
     }),
 
-    prisma.application.count({
-      where: {
-        jobId,
-      },
-    }),
+    prisma.application.count({ where }),
   ]);
 
   return {
@@ -213,9 +242,12 @@ export const getJobApplicationsService = async (
       limit,
       total,
       totalPages: Math.ceil(total / limit),
+      hasNextPage: page < Math.ceil(total / limit),
+      hasPreviousPage: page > 1,
     },
   };
 };
+
 export const createApplicationService = async (
   userId: string,
   data: CreateApplicationInput,

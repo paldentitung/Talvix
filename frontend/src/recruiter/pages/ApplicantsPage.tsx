@@ -23,6 +23,7 @@ import type {
 import { useUpdateApplicationStatus } from "../../features/applications/hooks/useUpdateApplicationStatus";
 import ReportModal from "../../features/reports/components/ReportModal";
 import Avatar from "../../shared/components/Avatar";
+import { useDebouncedValue } from "../../shared/hooks/useDebouncedValue";
 
 const API_BASE_URL = import.meta.env.VITE_API_BACKEND_URL;
 
@@ -100,42 +101,44 @@ const formatHistoryDate = (date: string): string => {
 };
 
 const ApplicantsPage = () => {
-  const { id } = useParams();
+  const { id: jobId } = useParams();
+  const navigate = useNavigate();
+
+  // Filter / pagination state (must be declared before the query hook)
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const limit = 10;
+  const [query, setQuery] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "ALL">(
+    "ALL",
+  );
+  const debouncedQuery = useDebouncedValue(query, 350);
+
+  // UI state
   const [reportOpen, setReportOpen] = useState(false);
-  const { data, error, isLoading, isFetching } = useJobApplications(
-    id,
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [localStatus, setLocalStatus] = useState<
+    Record<string, ApplicationStatus>
+  >({});
+
+  // Server-side search + filter + pagination
+  const { data, isLoading, isError, isFetching } = useJobApplications(
+    jobId,
     page,
     limit,
+    debouncedQuery.trim(),
+    statusFilter === "ALL" ? undefined : statusFilter,
   );
-  const applicants = useMemo(
+
+  const updateStatusMutation = useUpdateApplicationStatus();
+
+  const applicants: Applicant[] = useMemo(
     () => (data?.applications ?? []).map(toApplicant),
     [data?.applications],
   );
   const total = data?.total ?? 0;
   const totalPages = data?.totalPages ?? 1;
 
-  const navigate = useNavigate();
-
-  const [query, setQuery] = useState<string>("");
-  const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "ALL">(
-    "ALL",
-  );
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [localStatus, setLocalStatus] = useState<
-    Record<string, ApplicationStatus>
-  >({});
-  const updateStatusMutation = useUpdateApplicationStatus();
-
-  const filtered: Applicant[] = useMemo(() => {
-    return applicants.filter((a: Applicant) => {
-      const status: ApplicationStatus = localStatus[a.id] ?? a.status;
-      const matchesStatus = statusFilter === "ALL" || status === statusFilter;
-      const matchesQuery = a.name.toLowerCase().includes(query.toLowerCase());
-      return matchesStatus && matchesQuery;
-    });
-  }, [applicants, query, statusFilter, localStatus]);
+  const hasActiveFilters = query.trim() !== "" || statusFilter !== "ALL";
 
   const handleQueryChange = (value: string) => {
     setQuery(value);
@@ -170,6 +173,8 @@ const ApplicantsPage = () => {
     );
   };
 
+  // Only the very first load replaces the page. After that, the toolbar stays
+  // mounted so typing in search never loses focus.
   if (isLoading) {
     return (
       <div className="flex items-center justify-center gap-3 rounded-xl border border-(--border) bg-(--card) px-6 py-16 text-sm text-(--text-secondary)">
@@ -179,15 +184,7 @@ const ApplicantsPage = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="rounded-xl border border-(--border) bg-(--card) px-6 py-16 text-center text-sm text-(--danger)">
-        Couldn't load applicants. Please try again.
-      </div>
-    );
-  }
-
-  if (applicants.length === 0) {
+  if (isError) {
     return (
       <div className="space-y-4">
         <button
@@ -197,20 +194,24 @@ const ApplicantsPage = () => {
           <ArrowLeft size={16} />
           Back
         </button>
-        <div className="rounded-xl border border-(--border) bg-(--card) px-6 py-16 text-center text-sm text-(--text-secondary)">
-          No applicants yet for this job.
+        <div className="rounded-xl border border-(--border) bg-(--card) px-6 py-16 text-center text-sm text-(--danger)">
+          Couldn't load applicants. Please try again.
         </div>
       </div>
     );
   }
 
-  const selected: Applicant =
-    applicants.find((a: Applicant) => a.id === selectedId) ?? applicants[0];
-  const selectedStatus: ApplicationStatus =
-    localStatus[selected.id] ?? selected.status;
-  const history = [...(selected.statusHistory ?? [])].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  );
+  const selected: Applicant | null =
+    applicants.find((a) => a.id === selectedId) ?? applicants[0] ?? null;
+  const selectedStatus: ApplicationStatus | null = selected
+    ? (localStatus[selected.id] ?? selected.status)
+    : null;
+  const history = selected
+    ? [...(selected.statusHistory ?? [])].sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      )
+    : [];
 
   return (
     <div className="space-y-5">
@@ -278,68 +279,74 @@ const ApplicantsPage = () => {
               <span />
             </div>
 
-            {filtered.length === 0 && (
-              <div className="p-10 text-center text-sm text-(--text-secondary)">
-                No applicants match your search.
-              </div>
-            )}
-
-            {filtered.map((a) => {
-              const status: ApplicationStatus = localStatus[a.id] ?? a.status;
-              const isActive = a.id === selected.id;
-              return (
-                <div
-                  key={a.id}
-                  className={`relative grid grid-cols-[minmax(0,1fr)_auto_40px] items-center gap-3.5 border-b border-(--border) px-4 py-3 last:border-b-0 sm:grid-cols-[minmax(0,2.2fr)_1fr_1.1fr_40px] ${
-                    isActive ? "bg-(--primary-light)" : "hover:bg-(--bg)"
-                  }`}
-                >
-                  {isActive && (
-                    <span className="absolute inset-y-0 left-0 w-[3px] bg-(--primary)" />
-                  )}
-                  <button
-                    onClick={() => setSelectedId(a.id)}
-                    aria-label={`View ${a.name}`}
-                    className="absolute inset-0 cursor-pointer"
-                  />
-
-                  <div className="flex min-w-0 items-center gap-3">
-                    <Avatar
-                      src={a.avatar}
-                      initials={a.initials}
-                      name={a.name}
-                      size="sm"
-                    />
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-(--text-primary)">
-                        {a.name}
-                      </p>
-                      <p className="truncate text-xs text-(--text-secondary)">
-                        {a.currentCompany}
-                      </p>
-                    </div>
-                  </div>
-
-                  <span className="hidden text-sm text-(--text-secondary) sm:block">
-                    {formatAppliedAt(a.appliedAt)}
-                  </span>
-
-                  <span
-                    className={`justify-self-start rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyles[status]}`}
-                  >
-                    {statusLabel(status)}
-                  </span>
-
-                  <a
-                    href={`mailto:${a.email}`}
-                    aria-label={`Message ${a.name}`}
-                    className="relative z-10 flex h-8 w-8 items-center justify-center justify-self-end rounded-lg border border-(--border) bg-(--card) text-(--text-secondary) hover:bg-(--bg) hover:text-(--text-primary)"
-                  >
-                    <Mail size={15} />
-                  </a>
+            <div
+              className={`transition-opacity ${isFetching ? "opacity-60" : ""}`}
+            >
+              {applicants.length === 0 && (
+                <div className="p-10 text-center text-sm text-(--text-secondary)">
+                  {hasActiveFilters
+                    ? "No applicants match your search."
+                    : "No applicants yet for this job."}
                 </div>
-              );
-            })}
+              )}
+
+              {applicants.map((a) => {
+                const status: ApplicationStatus = localStatus[a.id] ?? a.status;
+                const isActive = a.id === selected?.id;
+                return (
+                  <div
+                    key={a.id}
+                    className={`relative grid grid-cols-[minmax(0,1fr)_auto_40px] items-center gap-3.5 border-b border-(--border) px-4 py-3 last:border-b-0 sm:grid-cols-[minmax(0,2.2fr)_1fr_1.1fr_40px] ${
+                      isActive ? "bg-(--primary-light)" : "hover:bg-(--bg)"
+                    }`}
+                  >
+                    {isActive && (
+                      <span className="absolute inset-y-0 left-0 w-[3px] bg-(--primary)" />
+                    )}
+                    <button
+                      onClick={() => setSelectedId(a.id)}
+                      aria-label={`View ${a.name}`}
+                      className="absolute inset-0 cursor-pointer"
+                    />
+
+                    <div className="flex min-w-0 items-center gap-3">
+                      <Avatar
+                        src={a.avatar}
+                        initials={a.initials}
+                        name={a.name}
+                        size="sm"
+                      />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-(--text-primary)">
+                          {a.name}
+                        </p>
+                        <p className="truncate text-xs text-(--text-secondary)">
+                          {a.currentCompany}
+                        </p>
+                      </div>
+                    </div>
+
+                    <span className="hidden text-sm text-(--text-secondary) sm:block">
+                      {formatAppliedAt(a.appliedAt)}
+                    </span>
+
+                    <span
+                      className={`justify-self-start rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyles[status]}`}
+                    >
+                      {statusLabel(status)}
+                    </span>
+
+                    <a
+                      href={`mailto:${a.email}`}
+                      aria-label={`Message ${a.name}`}
+                      className="relative z-10 flex h-8 w-8 items-center justify-center justify-self-end rounded-lg border border-(--border) bg-(--card) text-(--text-secondary) hover:bg-(--bg) hover:text-(--text-primary)"
+                    >
+                      <Mail size={15} />
+                    </a>
+                  </div>
+                );
+              })}
+            </div>
 
             {/* Pagination */}
             {totalPages > 1 && (
@@ -394,225 +401,237 @@ const ApplicantsPage = () => {
 
         {/* Right: detail panel */}
         <aside className="lg:sticky lg:top-4">
-          <div className="rounded-[14px] border border-(--border) bg-(--card) p-5 shadow-(--shadow-sm) sm:p-6">
-            <div className="flex items-center gap-3.5">
-              <div className="flex h-13 w-13 shrink-0 items-center justify-center rounded-full bg-(--primary) text-base font-bold text-white">
-                <Avatar
-                  src={selected.avatar}
-                  initials={selected.initials}
-                  className="h-13 w-13 bg-(--primary) text-base text-white"
-                />
-              </div>
-              <div className="min-w-0">
-                <h2 className="truncate font-display text-lg font-bold tracking-tight text-(--text-primary)">
-                  {selected.name}
-                </h2>
-                <p className="truncate text-sm text-(--text-secondary)">
-                  {selected.jobTitle}
-                </p>
-                <span
-                  className={`mt-1.5 inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyles[selectedStatus]}`}
-                >
-                  {statusLabel(selectedStatus)}
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-4 grid gap-2 text-sm text-(--text-secondary)">
-              <div className="flex items-center gap-2.5">
-                <Briefcase size={15} className="shrink-0 text-(--text-muted)" />
-                <span className="font-medium text-(--text-primary)">
-                  {selected.currentCompany}
-                </span>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <MapPin size={15} className="shrink-0 text-(--text-muted)" />
-                <span className="font-medium text-(--text-primary)">
-                  {selected.location}
-                </span>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <CalendarDays
-                  size={15}
-                  className="shrink-0 text-(--text-muted)"
-                />
-                <span>
-                  Applied{" "}
-                  <span className="font-medium text-(--text-primary)">
-                    {formatAppliedAt(selected.appliedAt)}
+          {selected && selectedStatus ? (
+            <div className="rounded-[14px] border border-(--border) bg-(--card) p-5 shadow-(--shadow-sm) sm:p-6">
+              <div className="flex items-center gap-3.5">
+                <div className="flex h-13 w-13 shrink-0 items-center justify-center rounded-full bg-(--primary) text-base font-bold text-white">
+                  <Avatar
+                    src={selected.avatar}
+                    initials={selected.initials}
+                    className="h-13 w-13 bg-(--primary) text-base text-white"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="truncate font-display text-lg font-bold tracking-tight text-(--text-primary)">
+                    {selected.name}
+                  </h2>
+                  <p className="truncate text-sm text-(--text-secondary)">
+                    {selected.jobTitle}
+                  </p>
+                  <span
+                    className={`mt-1.5 inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyles[selectedStatus]}`}
+                  >
+                    {statusLabel(selectedStatus)}
                   </span>
-                </span>
-              </div>
-            </div>
-
-            {selected.resumeUrl && (
-              <a
-                href={selected.resumeUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-4 flex items-center gap-2.5 rounded-[10px] border border-(--border) px-3 py-2.5 text-sm font-semibold text-(--primary) hover:bg-(--primary-light)"
-              >
-                <FileText size={16} />
-                View resume
-                <ExternalLink
-                  size={14}
-                  className="ml-auto text-(--text-muted)"
-                />
-              </a>
-            )}
-
-            <div className="mt-6">
-              <h3 className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
-                About
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-(--text-secondary)">
-                {selected.about}
-              </p>
-            </div>
-
-            {selected.coverLetter && (
-              <div className="mt-6">
-                <h3 className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
-                  Cover Letter
-                </h3>
-                <p className="mt-2 whitespace-pre-wrap rounded-r-[10px] border-l-[3px] border-(--primary) bg-(--bg) px-3.5 py-3 text-sm leading-relaxed text-(--text-secondary)">
-                  {selected.coverLetter}
-                </p>
-              </div>
-            )}
-
-            {selected.skills.length > 0 && (
-              <div className="mt-6">
-                <h3 className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
-                  Required Skills
-                </h3>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {selected.skills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="rounded-full border border-(--border) bg-(--bg) px-2.5 py-0.5 text-xs font-medium text-(--text-secondary)"
-                    >
-                      {skill}
-                    </span>
-                  ))}
                 </div>
               </div>
-            )}
 
-            {history.length > 0 && (
+              <div className="mt-4 grid gap-2 text-sm text-(--text-secondary)">
+                <div className="flex items-center gap-2.5">
+                  <Briefcase
+                    size={15}
+                    className="shrink-0 text-(--text-muted)"
+                  />
+                  <span className="font-medium text-(--text-primary)">
+                    {selected.currentCompany}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <MapPin size={15} className="shrink-0 text-(--text-muted)" />
+                  <span className="font-medium text-(--text-primary)">
+                    {selected.location}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <CalendarDays
+                    size={15}
+                    className="shrink-0 text-(--text-muted)"
+                  />
+                  <span>
+                    Applied{" "}
+                    <span className="font-medium text-(--text-primary)">
+                      {formatAppliedAt(selected.appliedAt)}
+                    </span>
+                  </span>
+                </div>
+              </div>
+
+              {selected.resumeUrl && (
+                <a
+                  href={selected.resumeUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-4 flex items-center gap-2.5 rounded-[10px] border border-(--border) px-3 py-2.5 text-sm font-semibold text-(--primary) hover:bg-(--primary-light)"
+                >
+                  <FileText size={16} />
+                  View resume
+                  <ExternalLink
+                    size={14}
+                    className="ml-auto text-(--text-muted)"
+                  />
+                </a>
+              )}
+
               <div className="mt-6">
                 <h3 className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
-                  Application History
+                  About
                 </h3>
-                <ul className="mt-3">
-                  {history.map((h, idx) => (
-                    <li
-                      key={`${h.status}-${h.createdAt}`}
-                      className="relative pb-4 pl-5 text-sm last:pb-0"
-                    >
-                      <span
-                        className={`absolute left-0 top-1.5 h-2 w-2 rounded-full ${
-                          idx === 0 ? "bg-(--primary)" : "bg-(--text-muted)"
-                        }`}
-                      />
-                      {idx < history.length - 1 && (
-                        <span className="absolute bottom-0 left-[3.5px] top-4 w-px bg-(--border)" />
-                      )}
-                      <p className="font-medium text-(--text-primary)">
-                        {statusLabel(h.status)}
-                      </p>
-                      <p className="text-xs text-(--text-muted)">
-                        {formatHistoryDate(h.createdAt)}
-                      </p>
-                      {h.note && (
-                        <p className="mt-0.5 text-xs text-(--text-secondary)">
-                          {h.note}
-                        </p>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+                <p className="mt-2 text-sm leading-relaxed text-(--text-secondary)">
+                  {selected.about}
+                </p>
               </div>
-            )}
 
-            {/* Actions */}
-            <div className="mt-6 flex flex-wrap gap-2 border-t border-(--border) pt-5">
-              {selectedStatus === "PENDING" && (
-                <button
-                  onClick={() => setStatusFor(selected.id, "REVIEWING")}
-                  disabled={updateStatusMutation.isPending}
-                  className="rounded-[10px] bg-(--primary) px-4 py-2 text-sm font-semibold text-white hover:bg-(--primary-dark) disabled:opacity-50"
-                >
-                  Start reviewing
-                </button>
+              {selected.coverLetter && (
+                <div className="mt-6">
+                  <h3 className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
+                    Cover Letter
+                  </h3>
+                  <p className="mt-2 whitespace-pre-wrap rounded-r-[10px] border-l-[3px] border-(--primary) bg-(--bg) px-3.5 py-3 text-sm leading-relaxed text-(--text-secondary)">
+                    {selected.coverLetter}
+                  </p>
+                </div>
               )}
 
-              {selectedStatus === "REVIEWING" && (
-                <button
-                  onClick={() => setStatusFor(selected.id, "SHORTLISTED")}
-                  disabled={updateStatusMutation.isPending}
-                  className="rounded-[10px] bg-(--primary) px-4 py-2 text-sm font-semibold text-white hover:bg-(--primary-dark) disabled:opacity-50"
-                >
-                  Shortlist
-                </button>
+              {selected.skills.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
+                    Required Skills
+                  </h3>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {selected.skills.map((skill) => (
+                      <span
+                        key={skill}
+                        className="rounded-full border border-(--border) bg-(--bg) px-2.5 py-0.5 text-xs font-medium text-(--text-secondary)"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               )}
 
-              {selectedStatus === "SHORTLISTED" && (
-                <button
-                  onClick={() => setStatusFor(selected.id, "ACCEPTED")}
-                  disabled={updateStatusMutation.isPending}
-                  className="rounded-[10px] bg-(--success) px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
-                >
-                  Accept
-                </button>
+              {history.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
+                    Application History
+                  </h3>
+                  <ul className="mt-3">
+                    {history.map((h, idx) => (
+                      <li
+                        key={`${h.status}-${h.createdAt}`}
+                        className="relative pb-4 pl-5 text-sm last:pb-0"
+                      >
+                        <span
+                          className={`absolute left-0 top-1.5 h-2 w-2 rounded-full ${
+                            idx === 0 ? "bg-(--primary)" : "bg-(--text-muted)"
+                          }`}
+                        />
+                        {idx < history.length - 1 && (
+                          <span className="absolute bottom-0 left-[3.5px] top-4 w-px bg-(--border)" />
+                        )}
+                        <p className="font-medium text-(--text-primary)">
+                          {statusLabel(h.status)}
+                        </p>
+                        <p className="text-xs text-(--text-muted)">
+                          {formatHistoryDate(h.createdAt)}
+                        </p>
+                        {h.note && (
+                          <p className="mt-0.5 text-xs text-(--text-secondary)">
+                            {h.note}
+                          </p>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
 
-              {selectedStatus !== "REJECTED" &&
-                selectedStatus !== "ACCEPTED" &&
-                selectedStatus !== "WITHDRAWN" && (
+              {/* Actions */}
+              <div className="mt-6 flex flex-wrap gap-2 border-t border-(--border) pt-5">
+                {selectedStatus === "PENDING" && (
                   <button
-                    onClick={() => setStatusFor(selected.id, "REJECTED")}
+                    onClick={() => setStatusFor(selected.id, "REVIEWING")}
                     disabled={updateStatusMutation.isPending}
-                    className="rounded-[10px] border border-(--border) bg-(--card) px-4 py-2 text-sm font-semibold text-(--danger) hover:bg-(--danger-bg) disabled:opacity-50"
+                    className="rounded-[10px] bg-(--primary) px-4 py-2 text-sm font-semibold text-white hover:bg-(--primary-dark) disabled:opacity-50"
                   >
-                    Reject
+                    Start reviewing
                   </button>
                 )}
 
-              <a
-                href={`mailto:${selected.email}`}
-                className="flex items-center gap-2 rounded-[10px] border border-(--border) bg-(--card) px-4 py-2 text-sm font-semibold text-(--text-secondary) hover:bg-(--bg)"
-              >
-                <Mail size={16} />
-                Message
-              </a>
+                {selectedStatus === "REVIEWING" && (
+                  <button
+                    onClick={() => setStatusFor(selected.id, "SHORTLISTED")}
+                    disabled={updateStatusMutation.isPending}
+                    className="rounded-[10px] bg-(--primary) px-4 py-2 text-sm font-semibold text-white hover:bg-(--primary-dark) disabled:opacity-50"
+                  >
+                    Shortlist
+                  </button>
+                )}
 
-              <button
-                onClick={() => setReportOpen(true)}
-                className="flex items-center gap-2 rounded-[10px] border border-(--border) bg-(--card) px-4 py-2 text-sm font-semibold text-(--danger) hover:bg-(--danger-bg) sm:ml-auto"
-              >
-                <Flag size={16} />
-                Report
-              </button>
+                {selectedStatus === "SHORTLISTED" && (
+                  <button
+                    onClick={() => setStatusFor(selected.id, "ACCEPTED")}
+                    disabled={updateStatusMutation.isPending}
+                    className="rounded-[10px] bg-(--success) px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
+                  >
+                    Accept
+                  </button>
+                )}
+
+                {selectedStatus !== "REJECTED" &&
+                  selectedStatus !== "ACCEPTED" &&
+                  selectedStatus !== "WITHDRAWN" && (
+                    <button
+                      onClick={() => setStatusFor(selected.id, "REJECTED")}
+                      disabled={updateStatusMutation.isPending}
+                      className="rounded-[10px] border border-(--border) bg-(--card) px-4 py-2 text-sm font-semibold text-(--danger) hover:bg-(--danger-bg) disabled:opacity-50"
+                    >
+                      Reject
+                    </button>
+                  )}
+
+                <a
+                  href={`mailto:${selected.email}`}
+                  className="flex items-center gap-2 rounded-[10px] border border-(--border) bg-(--card) px-4 py-2 text-sm font-semibold text-(--text-secondary) hover:bg-(--bg)"
+                >
+                  <Mail size={16} />
+                  Message
+                </a>
+
+                <button
+                  onClick={() => setReportOpen(true)}
+                  className="flex items-center gap-2 rounded-[10px] border border-(--border) bg-(--card) px-4 py-2 text-sm font-semibold text-(--danger) hover:bg-(--danger-bg) sm:ml-auto"
+                >
+                  <Flag size={16} />
+                  Report
+                </button>
+              </div>
+
+              {updateStatusMutation.isError && (
+                <p className="mt-2 text-xs text-(--danger)">
+                  Couldn't update status. Please try again.
+                </p>
+              )}
             </div>
-
-            {updateStatusMutation.isError && (
-              <p className="mt-2 text-xs text-(--danger)">
-                Couldn't update status. Please try again.
-              </p>
-            )}
-          </div>
+          ) : (
+            <div className="rounded-[14px] border border-(--border) bg-(--card) p-8 text-center text-sm text-(--text-secondary) shadow-(--shadow-sm)">
+              No applicant selected.
+            </div>
+          )}
         </aside>
       </div>
-      <ReportModal
-        isOpen={reportOpen}
-        onClose={() => setReportOpen(false)}
-        target={{
-          type: "user",
-          reportedUserId: selected.userId,
-          label: selected.name,
-        }}
-      />
+
+      {selected && (
+        <ReportModal
+          isOpen={reportOpen}
+          onClose={() => setReportOpen(false)}
+          target={{
+            type: "user",
+            reportedUserId: selected.userId,
+            label: selected.name,
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -1,5 +1,8 @@
 import request from "../../../shared/services/api";
-import type { ApplyJobData } from "../types/application.types";
+import type {
+  ApplicationStatus,
+  ApplyJobData,
+} from "../types/application.types";
 
 export const applyJob = (applicationData: ApplyJobData) => {
   const formData = new FormData();
@@ -22,13 +25,25 @@ export const getJobApplications = async (
   jobId: string,
   page = 1,
   limit = 10,
+  search = "",
+  status?: ApplicationStatus,
 ) => {
-  return await request(
-    `/applications/job/${jobId}?page=${page}&limit=${limit}`,
-    {},
-    true,
-  );
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  });
+
+  if (search.trim()) {
+    params.set("search", search.trim());
+  }
+
+  if (status) {
+    params.set("status", status);
+  }
+
+  return request(`/applications/job/${jobId}?${params.toString()}`, {}, true);
 };
+
 export const getMyApplications = async (page = 1, limit = 10) => {
   return await request(
     `/applications/me?page=${page}&limit=${limit}`,
