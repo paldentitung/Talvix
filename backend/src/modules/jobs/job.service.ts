@@ -29,10 +29,29 @@ export const getRecruiterJobsService = async (
   userRole: string | undefined,
   page = 1,
   limit = 10,
+  search = "",
+  status?: string,
+  employmentType?: string,
 ) => {
   const skip = (page - 1) * limit;
 
-  const where = userRole === "ADMIN" ? {} : { recruiterId: userId };
+  const where: Prisma.JobWhereInput = {
+    ...(userRole === "ADMIN" ? {} : { recruiterId: userId }),
+
+    ...(search && {
+      title: {
+        contains: search,
+        mode: "insensitive",
+      },
+    }),
+
+    ...(status && { status: status as Prisma.EnumJobStatusFilter["equals"] }),
+
+    ...(employmentType && {
+      employmentType:
+        employmentType as Prisma.EnumEmploymentTypeFilter["equals"],
+    }),
+  };
 
   const [jobs, total] = await Promise.all([
     prisma.job.findMany({
@@ -45,22 +64,20 @@ export const getRecruiterJobsService = async (
       },
     }),
 
-    prisma.job.count({
-      where,
-    }),
+    prisma.job.count({ where }),
   ]);
 
   const counts = await prisma.application.groupBy({
     by: ["jobId"],
     where: {
       jobId: {
-        in: jobs.map((j) => j.id),
+        in: jobs.map((job) => job.id),
       },
     },
     _count: true,
   });
 
-  const countMap = new Map(counts.map((c) => [c.jobId, c._count]));
+  const countMap = new Map(counts.map((count) => [count.jobId, count._count]));
 
   const jobsWithApplications = jobs.map((job) => ({
     ...job,
@@ -74,6 +91,8 @@ export const getRecruiterJobsService = async (
       limit,
       total,
       totalPages: Math.ceil(total / limit),
+      hasNextPage: page < Math.ceil(total / limit),
+      hasPreviousPage: page > 1,
     },
   };
 };

@@ -49,8 +49,23 @@ export const getPublicJobs = async (
   return await request(`/jobs?${params.toString()}`, {});
 };
 
-export const getRecruiterJobs = async (page = 1, limit = 10) => {
-  return await request(`/jobs/me?page=${page}&limit=${limit}`, {}, true);
+export const getRecruiterJobs = async (
+  page = 1,
+  limit = 10,
+  search = "",
+  status?: string,
+  employmentType?: string,
+) => {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  });
+
+  if (search.trim()) params.set("search", search.trim());
+  if (status) params.set("status", status);
+  if (employmentType) params.set("employmentType", employmentType);
+
+  return request(`/jobs/me?${params.toString()}`, {}, true);
 };
 export const createJob = async (
   jobData: Omit<JobFormValues, "deadline"> & { deadline: string | null },

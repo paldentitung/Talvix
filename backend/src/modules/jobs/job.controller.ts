@@ -63,13 +63,27 @@ export const getRecruiterJobsController = async (
 ) => {
   const userId = req.user?.id;
   const userRole = req.user?.role;
-  const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 10;
-  const result = await getRecruiterJobsService(userId, userRole, page, limit);
+
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 10));
+
+  const search = (req.query.search as string | undefined)?.trim() ?? "";
+  const status = req.query.status as string | undefined;
+  const employmentType = req.query.employmentType as string | undefined;
+
+  const result = await getRecruiterJobsService(
+    userId,
+    userRole,
+    page,
+    limit,
+    search,
+    status,
+    employmentType,
+  );
 
   res.status(200).json({
     success: true,
-    message: "Recruiter Jobs fetch sucessfully",
+    message: "Recruiter jobs fetched successfully",
     data: result,
   });
 };

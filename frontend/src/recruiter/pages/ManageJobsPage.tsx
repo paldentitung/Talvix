@@ -19,6 +19,7 @@ import Button from "../../components/ui/Button";
 import formatSalary from "../../shared/utils/formatSalary";
 import RowMenu from "../../shared/components/RowMenu";
 import type { RowMenuItem } from "../../shared/components/RowMenu";
+import { useDebouncedValue } from "../../shared/hooks/useDebouncedValue";
 
 const statusStyles: Record<JobStatus, string> = {
   OPEN: "bg-(--success-bg) text-(--success)",
@@ -62,23 +63,20 @@ const ManageJobsPage = () => {
     jobId: string;
     status: JobStatus;
   } | null>(null);
-  const { data, isFetching } = useRecruiterJobs(page, limit);
+
+  const debouncedQuery = useDebouncedValue(query, 350);
+
+  const { data, isLoading, isError, isFetching } = useRecruiterJobs(
+    page,
+    limit,
+    debouncedQuery.trim(),
+    status === "ALL" ? undefined : status,
+  );
 
   const jobs = data?.jobs ?? [];
   const total = data?.pagination?.total ?? 0;
   const totalPages = data?.pagination?.totalPages ?? 1;
   const { mutate: updateStatus, isPending } = useUpdateJobStatus();
-
-  // todo add backend for filter and search
-  const filteredJobs = useMemo(() => {
-    return jobs.filter((job: Job) => {
-      const matchesStatus = status === "ALL" || job.status === status;
-      const matchesQuery = job.title
-        .toLowerCase()
-        .includes(query.toLowerCase());
-      return matchesStatus && matchesQuery;
-    });
-  }, [jobs, query, status]);
 
   const handleQueryChange = (value: string) => {
     setQuery(value);
@@ -129,7 +127,29 @@ const ManageJobsPage = () => {
 
     return items;
   };
+  {
+    isLoading && (
+      <div className="rounded-(--radius-lg) border border-(--border) bg-(--card) p-8 text-center text-sm text-(--text-muted)">
+        Loading jobs…
+      </div>
+    );
+  }
 
+  {
+    isError && (
+      <div className="rounded-(--radius-lg) border border-(--border) bg-(--card) p-8 text-center text-sm text-(--danger)">
+        Failed to load jobs.
+      </div>
+    );
+  }
+
+  {
+    !isLoading && !isError && jobs.length === 0 && (
+      <div className="rounded-(--radius-lg) border border-(--border) bg-(--card) p-8 text-center text-sm text-(--text-secondary)">
+        No jobs match your search.
+      </div>
+    );
+  }
   return (
     <div
       className="flex flex-col gap-4"
@@ -167,7 +187,7 @@ const ManageJobsPage = () => {
         </div>
       </div>
 
-      {filteredJobs.length === 0 && (
+      {jobs.length === 0 && (
         <div className="rounded-(--radius-lg) border border-(--border) bg-(--card) p-8 text-center text-sm text-(--text-secondary)">
           No jobs match your search.
         </div>
@@ -175,7 +195,7 @@ const ManageJobsPage = () => {
 
       {/* Table — desktop / tablet.
           No overflow-hidden here: it would clip the RowMenu dropdown. */}
-      {filteredJobs.length > 0 && (
+      {jobs.length > 0 && (
         <div className="hidden rounded-(--radius-lg) border border-(--border) bg-(--card) shadow-(--shadow-sm) sm:block">
           <table className="w-full text-sm">
             <thead>
@@ -204,7 +224,7 @@ const ManageJobsPage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-(--border)">
-              {filteredJobs.map((job: Job) => (
+              {jobs.map((job: Job) => (
                 <tr key={job.id} className="transition-colors hover:bg-(--bg)">
                   <td className="max-w-[220px] px-4 py-3">
                     <div className="flex items-center gap-1.5">
@@ -271,9 +291,9 @@ const ManageJobsPage = () => {
       )}
 
       {/* Stacked cards — mobile only */}
-      {filteredJobs.length > 0 && (
+      {jobs.length > 0 && (
         <div className="flex flex-col gap-3 sm:hidden">
-          {filteredJobs.map((job: Job) => (
+          {jobs.map((job: Job) => (
             <div
               key={job.id}
               className="rounded-(--radius-lg) border border-(--border) bg-(--card) p-4 shadow-(--shadow-sm)"
