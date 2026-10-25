@@ -14,14 +14,16 @@ import type {
   AccountStatus,
 } from "../../features/users/types/user.types";
 import { useUpdateUserStatus } from "../../features/users/hooks/useUpdateUserStatus";
-
+import { useDebouncedValue } from "../../shared/hooks/useDebouncedValue";
+import Button from "../../components/ui/Button";
 const FILTERS = ["All", "Candidates", "Recruiters", "Admins"] as const;
 type Filter = (typeof FILTERS)[number];
 
-const ROLE_LABELS: Record<UserRole, string> = {
-  CANDIDATE: "Candidate",
-  RECRUITER: "Recruiter",
-  ADMIN: "Admin",
+const FILTER_TO_ROLE: Record<Filter, UserRole | ""> = {
+  All: "",
+  Candidates: "CANDIDATE",
+  Recruiters: "RECRUITER",
+  Admins: "ADMIN",
 };
 
 const STATUS_STYLES: Record<
@@ -36,7 +38,11 @@ const STATUS_STYLES: Record<
     dot: "#EF4444",
   },
 };
-
+const ROLE_LABELS: Record<UserRole, string> = {
+  CANDIDATE: "Candidate",
+  RECRUITER: "Recruiter",
+  ADMIN: "Admin",
+};
 function RoleBadge({ role }: { role: UserRole }) {
   return (
     <span
@@ -72,8 +78,14 @@ const AdminUsersPage = () => {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const limit = 10;
+  const debouncedQuery = useDebouncedValue(query, 350);
 
-  const { data, isLoading, isError } = useUsers(page, limit);
+  const { data, isLoading, isError } = useUsers(
+    page,
+    limit,
+    debouncedQuery.trim(),
+    FILTER_TO_ROLE[filter],
+  );
 
   const users: AdminUser[] = data?.data?.users ?? [];
   const totalUsers = data?.data?.pagination?.totalUsers ?? 0;
@@ -96,23 +108,6 @@ const AdminUsersPage = () => {
     updateStatusMutation.mutate({ userId: user.id, status: nextStatus });
     setOpenMenuId(null);
   };
-
-  const filtered = useMemo(() => {
-    return users.filter((u) => {
-      const matchesFilter =
-        filter === "All" ||
-        (filter === "Candidates" && u.role === "CANDIDATE") ||
-        (filter === "Recruiters" && u.role === "RECRUITER") ||
-        (filter === "Admins" && u.role === "ADMIN");
-
-      const q = query.trim().toLowerCase();
-      const name = fullName(u).toLowerCase();
-      const matchesQuery =
-        q === "" || name.includes(q) || u.email.toLowerCase().includes(q);
-
-      return matchesFilter && matchesQuery;
-    });
-  }, [users, query, filter]);
 
   return (
     <div onClick={() => openMenuId && setOpenMenuId(null)}>
@@ -194,7 +189,7 @@ const AdminUsersPage = () => {
                     <ChevronDown size={12} />
                   </span>
                 </th>
-                <th className="px-6 py-3.5" />
+                <th className="px-6 py-3.5 text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -224,7 +219,7 @@ const AdminUsersPage = () => {
 
               {!isLoading &&
                 !isError &&
-                filtered.map((u) => {
+                users.map((u) => {
                   const name = fullName(u);
                   const tint = tintFor(name);
                   return (
@@ -273,10 +268,33 @@ const AdminUsersPage = () => {
                         {relativeTime(u.createdAt)}
                       </td>
                       <td
-                        className="px-6 py-3.5 text-right"
+                        className="px-6 py-3.5 "
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <div className="flex justify-end">
+                        <div className="flex items-center justify-center gap-2">
+                          <Button
+                            type="button"
+                            onClick={() => handleUpdateStatus(u)}
+                            disabled={updateStatusMutation.isPending}
+                            size="sm"
+                            className="rounded-full border text-xs  disabled:cursor-not-allowed disabled:opacity-50"
+                            style={
+                              u.status === "ACTIVE"
+                                ? {
+                                    background: "#FEF2F2",
+                                    color: "#B91C1C",
+                                    borderColor: "#FECACA",
+                                  }
+                                : {
+                                    background: "#ECFDF5",
+                                    color: "#047857",
+                                    borderColor: "#A7F3D0",
+                                  }
+                            }
+                          >
+                            {u.status === "ACTIVE" ? "Suspend" : "Reactivate"}
+                          </Button>
+
                           <RowMenu
                             id={u.id}
                             open={openMenuId === u.id}
@@ -290,14 +308,6 @@ const AdminUsersPage = () => {
                                 label: "Edit role",
                                 onClick: () => console.log("edit role", u.id),
                               },
-                              {
-                                label:
-                                  u.status === "ACTIVE"
-                                    ? "Suspend user"
-                                    : "Reactivate user",
-                                onClick: () => handleUpdateStatus(u),
-                                danger: u.status === "ACTIVE",
-                              },
                             ]}
                           />
                         </div>
@@ -306,7 +316,7 @@ const AdminUsersPage = () => {
                   );
                 })}
 
-              {!isLoading && !isError && filtered.length === 0 && (
+              {!isLoading && !isError && users.length === 0 && (
                 <tr>
                   <td colSpan={COLUMN_COUNT} className="px-6 py-16 text-center">
                     <p

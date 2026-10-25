@@ -13,17 +13,37 @@ import {
 } from "./user.validation.js";
 import fs from "fs/promises";
 import path from "path";
-import { AccountStatus } from "@prisma/client";
+import { AccountStatus, Prisma, Role } from "@prisma/client";
 
-export const getUsersService = async (page: number, limit: number) => {
+export const getUsersService = async (
+  page: number,
+  limit: number,
+  search: string,
+  role?: string,
+) => {
+  const where: Prisma.UserWhereInput = {
+    ...(search && {
+      OR: [
+        { firstName: { contains: search, mode: "insensitive" } },
+        { lastName: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+      ],
+    }),
+    ...(role && {
+      role: role as Role,
+    }),
+  };
+
   const [users, totalUsers] = await Promise.all([
     prisma.user.findMany({
+      where,
       select: userResponseSelect,
       skip: (page - 1) * limit,
       take: limit,
+      orderBy: { createdAt: "desc" },
     }),
 
-    prisma.user.count(),
+    prisma.user.count({ where }),
   ]);
 
   const totalPages = Math.ceil(totalUsers / limit);

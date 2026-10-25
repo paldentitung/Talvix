@@ -11,10 +11,22 @@ import type {
 import type { User } from "../types/user.types";
 import type { ApiResponse } from "../../../shared/types/api.types";
 
-export const getUsers = (page: number, limit: number) => {
-  return request(`/users/all?page=${page}&limit=${limit}`, {}, true);
-};
+export const getUsers = (
+  page: number,
+  limit: number,
+  search?: string,
+  role?: string,
+) => {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  });
 
+  if (search) params.set("search", search);
+  if (role) params.set("role", role);
+
+  return request(`/users/all?${params.toString()}`, {}, true);
+};
 export const updateUserProfile = (data: UpdateUserRequest) => {
   return request("/users/profile", {
     method: "PATCH",

@@ -27,15 +27,24 @@ export const changePasswordController = async (req: Request, res: Response) => {
 };
 
 export const getUsersController = async (req: Request, res: Response) => {
-  const page = parseInt(req.query.page as string) || 1;
-  const limit = parseInt(req.query.limit as string) || 10;
-  const result = await getUsersService(page, limit);
+  const page = Math.max(1, parseInt(req.query.page as string) || 1);
+  const limit = Math.min(
+    100,
+    Math.max(1, parseInt(req.query.limit as string) || 10),
+  );
+
+  const search = (req.query.search as string)?.trim() || "";
+  const role = req.query.role as string | undefined;
+
+  const result = await getUsersService(page, limit, search, role);
+
   res.status(200).json({
     success: true,
     message: "Users fetched successfully",
     data: result,
   });
 };
+
 export const updateUserController = async (req: Request, res: Response) => {
   const result = await updateUserService(req.user!.id, req.body);
   res.status(200).json({
