@@ -9,6 +9,7 @@ import {
   getReportStatsController,
 } from "./report.controller.js";
 import { requireRole } from "../../middleware/role.middleware.js";
+import { reportLimiter } from "../../middleware/rateLimit.middleware.js";
 
 const router = express.Router();
 
@@ -33,7 +34,12 @@ router.get(
   asyncHandler(getReportByIdController),
 );
 
-router.post("/", requireAuth, asyncHandler(createReportController));
+router.post(
+  "/",
+  requireAuth,
+  reportLimiter,
+  asyncHandler(createReportController),
+);
 
 router.patch(
   "/:id/status",

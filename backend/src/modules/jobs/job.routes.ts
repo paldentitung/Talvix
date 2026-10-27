@@ -17,6 +17,7 @@ import {
 import { requireRole } from "../../middleware/role.middleware.js";
 import { validate } from "../../middleware/validate.middleware.js";
 import { createJobSchema, updateJobSchema } from "./job.types.js";
+import { jobWriteLimiter } from "../../middleware/rateLimit.middleware.js";
 
 const router = express.Router();
 
@@ -38,6 +39,8 @@ router.get(
 router.patch(
   "/:id/status",
   requireAuth,
+  requireRole("RECRUITER", "ADMIN"),
+  jobWriteLimiter,
   asyncHandler(updateJobStatusController),
 );
 router.get("/:id", asyncHandler(getJobController));
@@ -45,6 +48,7 @@ router.post(
   "/",
   requireAuth,
   requireRole("RECRUITER", "ADMIN"),
+  jobWriteLimiter,
   validate(createJobSchema),
   asyncHandler(createJobController),
 );
@@ -52,6 +56,7 @@ router.patch(
   "/:id",
   requireAuth,
   requireRole("RECRUITER", "ADMIN"),
+  jobWriteLimiter,
   validate(updateJobSchema),
   asyncHandler(updateJobController),
 );
@@ -59,6 +64,7 @@ router.delete(
   "/:id",
   requireAuth,
   requireRole("RECRUITER", "ADMIN"),
+  jobWriteLimiter,
   asyncHandler(deleteJobController),
 );
 

@@ -37,6 +37,11 @@ import {
   uploadCompanyLogo,
 } from "../../middleware/upload.middleware.js";
 import { uploadResume } from "../../middleware/upload.middleware.js";
+import {
+  changePasswordLimiter,
+  updateProfileLimiter,
+  uploadLimiter,
+} from "../../middleware/rateLimit.middleware.js";
 
 const router = express.Router();
 
@@ -51,6 +56,7 @@ router.get("/me", requireAuth, asyncHandler(getUserInformationController));
 router.patch(
   "/profile",
   requireAuth,
+  updateProfileLimiter,
   validate(updateUserSchema),
   updateUserController,
 );
@@ -58,6 +64,7 @@ router.patch(
   "/profile/candidate",
   requireAuth,
   requireRole("CANDIDATE"),
+  updateProfileLimiter,
   validate(updateCandidateProfileSchema),
   updateCandidateProfileController,
 );
@@ -65,12 +72,14 @@ router.patch(
   "/profile/recruiter",
   requireAuth,
   requireRole("RECRUITER"),
+  updateProfileLimiter,
   validate(updateRecruiterProfileSchema),
   updateRecruiterProfileController,
 );
 router.patch(
   "/change-password",
   requireAuth,
+  changePasswordLimiter,
   validate(changePasswordSchema),
   asyncHandler(changePasswordController),
 );
@@ -78,6 +87,7 @@ router.patch(
   "/profile/recruiter/logo",
   requireAuth,
   requireRole("RECRUITER"),
+  uploadLimiter,
   uploadCompanyLogo,
   asyncHandler(updateRecruiterLogoController),
 );
@@ -85,6 +95,7 @@ router.patch(
 router.patch(
   "/profile/avatar",
   requireAuth,
+  uploadLimiter,
   uploadAvatar,
   asyncHandler(updateUserAvatarController),
 );
@@ -98,6 +109,7 @@ router.patch(
   "/resume",
   requireAuth,
   requireRole("CANDIDATE"),
+  uploadLimiter,
   uploadResume,
   asyncHandler(uploadCandidateResumeController),
 );

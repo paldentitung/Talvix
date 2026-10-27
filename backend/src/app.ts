@@ -11,6 +11,7 @@ import reportRoutes from "./modules/reports/report.routes.js";
 import dashboardRoutes from "./modules/dashboard/dashboard.route.js";
 import cookieParser from "cookie-parser";
 import path from "path";
+import { globalLimiter } from "./middleware/rateLimit.middleware.js";
 const app = express();
 app.use(
   cors({
@@ -21,6 +22,7 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+app.use("/api", globalLimiter);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
