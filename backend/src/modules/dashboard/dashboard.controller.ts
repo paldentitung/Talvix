@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import {
   getAdminDashboardService,
+  getCandidateDashboardService,
   getRecruiterDashboardService,
 } from "./dashboard.service.js";
 
@@ -25,6 +26,18 @@ export const getRecruiterDashboardController = async (
   res.status(200).json({
     success: true,
     message: "Recruiter dashboard fetched successfully",
+    data: result,
+  });
+};
+export const getCandidateDashboardController = async (
+  req: Request,
+  res: Response,
+) => {
+  const result = await getCandidateDashboardService(req.user!.id);
+
+  res.status(200).json({
+    success: true,
+    message: "Candidate dashboard fetched successfully",
     data: result,
   });
 };

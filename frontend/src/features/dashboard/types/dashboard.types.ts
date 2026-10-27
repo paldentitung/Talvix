@@ -1,6 +1,7 @@
 import type { User } from "../../users/types/user.types";
 import type { UserRole } from "../../../shared/types/user.types";
 import type { JobStatus } from "../../jobs/types/job.types";
+import type { ApplicationStatus } from "../../applications/types/application.types";
 
 export type DashboardOverview = {
   totalUsers: number;
@@ -90,4 +91,41 @@ export type RecruiterDashboard = {
   pipeline: PipelineItem[];
   jobs: DashboardJob[];
   needsReview: NeedsReviewItem[];
+};
+
+export type CandidateOverview = {
+  totalApplications: number;
+  appliedThisWeek: number;
+  savedJobs: number;
+  savedClosingSoon: number;
+  inReview: number; // PENDING + REVIEWING
+  shortlisted: number;
+  accepted: number;
+};
+
+export type CandidateRecentApplication = {
+  id: string;
+  status: ApplicationStatus;
+  appliedAt: string; // ISO string
+  jobId: string;
+  jobTitle: string;
+  companyName: string | null;
+};
+
+export type CandidateUpdate = {
+  id: string;
+  title: string;
+  message: string;
+  entityId: string | null;
+  entityType: string | null;
+  createdAt: string; // ISO string
+};
+
+// The shape of `data` inside the /candidate/dashboard response
+export type CandidateDashboard = {
+  overview: CandidateOverview;
+  statusCounts: Record<ApplicationStatus, number>;
+  recentApplications: CandidateRecentApplication[];
+  updates: CandidateUpdate[];
+  unreadUpdates: number;
 };

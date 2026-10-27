@@ -1,6 +1,5 @@
 import prisma from "../../lib/prisma.js";
 import AppError from "../../utils/AppError.js";
-
 const DAYS = 30;
 export const getAdminDashboardService = async () => {
   // Start of the window, in UTC, so day buckets are consistent
@@ -274,5 +273,129 @@ export const getRecruiterDashboardService = async (recruiterId: string) => {
       jobTitle: a.job.title,
       candidateName: `${a.user.firstName} ${a.user.lastName}`.trim(),
     })),
+  };
+};
+
+const STATUSES = [
+  "PENDING",
+  "REVIEWING",
+  "SHORTLISTED",
+  "ACCEPTED",
+  "REJECTED",
+  "WITHDRAWN",
+] as const;
+
+export const getCandidateDashboardService = async (userId: string) => {
+  if (!userId) throw new Error("userId is required");
+
+  const now = new Date();
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const in3Days = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+
+  const [
+    totalApplications,
+    appliedThisWeek,
+    statusGroups,
+    savedJobs,
+    savedClosingSoon,
+    recentApplications,
+    updates,
+    unreadUpdates,
+  ] = await Promise.all([
+    prisma.application.count({ where: { userId } }),
+
+    prisma.application.count({
+      where: { userId, appliedAt: { gte: weekAgo } },
+    }),
+
+    // Exact counts per status, straight from the database
+    prisma.application.groupBy({
+      by: ["status"],
+      where: { userId },
+      _count: { _all: true },
+    }),
+
+    prisma.savedJob.count({ where: { userId } }),
+
+    // Saved jobs that are still open and close within 3 days (banner)
+    prisma.savedJob.count({
+      where: {
+        userId,
+        job: { status: "OPEN", deadline: { gte: now, lte: in3Days } },
+      },
+    }),
+
+    // Recent applications list
+    prisma.application.findMany({
+      where: { userId },
+      orderBy: { appliedAt: "desc" },
+      take: 5,
+      select: {
+        id: true,
+        status: true,
+        appliedAt: true,
+        job: {
+          select: {
+            id: true,
+            title: true,
+            recruiter: {
+              select: { recruiterProfile: { select: { companyName: true } } },
+            },
+          },
+        },
+      },
+    }),
+
+    // Unread "your application status changed" notifications (banner)
+    prisma.notification.findMany({
+      where: {
+        userId,
+        type: "APPLICATION_STATUS_CHANGED",
+        readAt: null,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 3,
+      select: {
+        id: true,
+        title: true,
+        message: true,
+        entityId: true,
+        entityType: true,
+        createdAt: true,
+      },
+    }),
+
+    prisma.notification.count({
+      where: { userId, type: "APPLICATION_STATUS_CHANGED", readAt: null },
+    }),
+  ]);
+
+  // Zero-filled counts for every status
+  const statusCounts = Object.fromEntries(
+    STATUSES.map((s) => [s, 0]),
+  ) as Record<(typeof STATUSES)[number], number>;
+  for (const g of statusGroups) statusCounts[g.status] = g._count._all;
+
+  return {
+    overview: {
+      totalApplications,
+      appliedThisWeek,
+      savedJobs,
+      savedClosingSoon,
+      inReview: statusCounts.PENDING + statusCounts.REVIEWING,
+      shortlisted: statusCounts.SHORTLISTED,
+      accepted: statusCounts.ACCEPTED,
+    },
+    statusCounts,
+    recentApplications: recentApplications.map((a) => ({
+      id: a.id,
+      status: a.status,
+      appliedAt: a.appliedAt,
+      jobId: a.job.id,
+      jobTitle: a.job.title,
+      companyName: a.job.recruiter.recruiterProfile?.companyName ?? null,
+    })),
+    updates,
+    unreadUpdates,
   };
 };

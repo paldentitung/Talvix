@@ -24,16 +24,12 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import CandidateJobCard from "../components/CandidateJobCard";
-import type {
-  Application,
-  ApplicationStatus,
-} from "../../features/applications/types/application.types";
+import type { ApplicationStatus } from "../../features/applications/types/application.types";
 import { useJobSaveActions } from "../../features/jobs/hooks/useJobSaveActions";
 import { useJobs } from "../../features/jobs/hooks/useJobs";
-import { useCandidateApplication } from "../../features/applications/hooks/useCandidateApplication";
 import { getProfileCompleteness } from "../../features/users/utils/profileCompleteness";
 import { useGetCurrentUser } from "../../features/users/hooks/useGetCurrentUser";
-import { useSavedJobs } from "../../features/jobs/hooks/useSavedJobs";
+import { useCandidateDashboard } from "../../features/dashboard/hooks/useCandidateDashboard";
 
 /* ------------------------------------------------------------------ */
 /*  Constants & helpers                                                */
@@ -352,11 +348,21 @@ const ProfileNextSteps = ({
 const CandidateDashboardPage = () => {
   const JOBS_PAGE_SIZE = 4;
   const APPLICATIONS_DISPLAY_LIMIT = 5;
-  // Fetch more than we display so status counts are accurate for most users.
-  // Check that your API allows this limit; lower it if it is capped.
-  const APPLICATIONS_FETCH_LIMIT = 50;
 
   /* ---------- data ---------- */
+
+  // One request gives us overview counts and recent applications.
+  const {
+    data: dashboard,
+    isPending: isDashboardPending,
+    isError: isDashboardError,
+  } = useCandidateDashboard();
+
+  const overview = dashboard?.overview;
+  const recentApplications = (dashboard?.recentApplications ?? []).slice(
+    0,
+    APPLICATIONS_DISPLAY_LIMIT,
+  );
 
   const {
     data: jobsData,
@@ -368,42 +374,14 @@ const CandidateDashboardPage = () => {
   const { data: user, isLoading: isUserLoading } = useGetCurrentUser();
   const profileCompletion = user ? getProfileCompleteness(user) : null;
 
-  const {
-    data: applicationsData,
-    isPending: isApplicationsPending,
-    isError: isApplicationsError,
-  } = useCandidateApplication(1, APPLICATIONS_FETCH_LIMIT);
-
-  const allLoadedApplications: Application[] =
-    applicationsData?.data?.applications ?? [];
-  const totalApplications = applicationsData?.data?.pagination?.total ?? 0;
-  const recentApplications = allLoadedApplications.slice(
-    0,
-    APPLICATIONS_DISPLAY_LIMIT,
-  );
-
-  // True when we hold every application, so derived counts are exact.
-  const hasAllApplications = allLoadedApplications.length >= totalApplications;
-
   const { isJobSaved, isSavingJob, toggleSave } = useJobSaveActions();
-  const { data: savedJobs, isPending: isSavedPending } = useSavedJobs();
-  const savedCount = savedJobs?.length ?? 0;
 
   /* ---------- derived ---------- */
 
   const now = new Date();
 
-  const interviewCount = allLoadedApplications.filter(
-    (a) => a.status === "SHORTLISTED",
-  ).length;
-  const inReviewCount = allLoadedApplications.filter(
-    (a) => a.status === "REVIEWING",
-  ).length;
-
-  const weekAgo = now.getTime() - 7 * 86_400_000;
-  const appliedThisWeek = allLoadedApplications.filter(
-    (a) => new Date(a.appliedAt).getTime() >= weekAgo,
-  ).length;
+  const totalApplications = overview?.totalApplications ?? 0;
+  const savedCount = overview?.savedJobs ?? 0;
 
   // Same ordering as the "Up next" card so the tip and the card agree.
   const nextStep = profileCompletion?.checks
@@ -417,7 +395,7 @@ const CandidateDashboardPage = () => {
     if (nextStep) {
       return `Add your ${nextStep.label.toLowerCase()} to strengthen your profile.`;
     }
-    if (!isApplicationsPending && totalApplications === 0) {
+    if (!isDashboardPending && !isDashboardError && totalApplications === 0) {
       return savedCount > 0
         ? `You've saved ${savedCount} ${savedCount === 1 ? "job" : "jobs"}. Pick one and send your first application.`
         : "Start by saving a few roles that interest you, then apply to your favourite.";
@@ -428,10 +406,10 @@ const CandidateDashboardPage = () => {
   const stats: Stat[] = [
     {
       label: "Jobs applied",
-      value: String(totalApplications),
+      value: overview ? String(overview.totalApplications) : "—",
       hint:
-        hasAllApplications && totalApplications > 0
-          ? `${appliedThisWeek} in the last 7 days`
+        overview && overview.totalApplications > 0
+          ? `${overview.appliedThisWeek} in the last 7 days`
           : undefined,
       icon: Send,
       iconBg: "bg-(--primary-light)",
@@ -439,16 +417,25 @@ const CandidateDashboardPage = () => {
     },
     {
       label: "Saved jobs",
-      value: isSavedPending ? "—" : String(savedCount),
-      hint: !isSavedPending && savedCount > 0 ? "Ready to apply" : undefined,
+      value: overview ? String(overview.savedJobs) : "—",
+      hint: overview
+        ? overview.savedClosingSoon > 0
+          ? `${overview.savedClosingSoon} closing soon`
+          : overview.savedJobs > 0
+            ? "Ready to apply"
+            : undefined
+        : undefined,
       icon: Bookmark,
       iconBg: "bg-(--accent-light)",
       iconColor: "text-(--accent)",
     },
     {
       label: "Interview invitations",
-      value: `${interviewCount}${hasAllApplications ? "" : "+"}`,
-      hint: inReviewCount > 0 ? `${inReviewCount} in review` : undefined,
+      value: overview ? String(overview.shortlisted) : "—",
+      hint:
+        overview && overview.inReview > 0
+          ? `${overview.inReview} in review`
+          : undefined,
       icon: CalendarClock,
       iconBg: "bg-(--warning-bg)",
       iconColor: "text-(--warning)",
@@ -489,10 +476,14 @@ const CandidateDashboardPage = () => {
   return (
     <div className="flex flex-col gap-6">
       {/* Tip */}
-      <p className="flex items-start gap-2 text-sm text-(--text-secondary)">
-        <Lightbulb size={16} className="mt-0.5 shrink-0 text-(--warning)" />
-        <span>{tip}</span>
-      </p>
+      <div className="flex items-center gap-3 rounded-(--radius-lg) border border-(--primary)/20 bg-(--primary-light) px-4 py-3">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-(--card) text-(--primary)">
+          <Lightbulb size={14} />
+        </span>
+        <p className="text-sm leading-snug text-(--text-primary)">
+          <span className="font-semibold">Tip:</span> {tip}
+        </p>
+      </div>
 
       {/* Statistics */}
       <div className="grid grid-cols-1 gap-x-6 gap-y-2 rounded-(--radius-lg) border border-(--border) bg-(--card) p-2 sm:grid-cols-2 lg:grid-cols-4 lg:gap-x-0 lg:gap-y-0 lg:p-0">
@@ -526,11 +517,11 @@ const CandidateDashboardPage = () => {
               </Link>
             </div>
 
-            {isApplicationsPending ? (
+            {isDashboardPending ? (
               <p className="px-6 py-10 text-sm text-(--text-muted)">
                 Loading applications…
               </p>
-            ) : isApplicationsError ? (
+            ) : isDashboardError ? (
               <p className="px-6 py-10 text-sm text-(--danger)">
                 Couldn't load your applications. Please try again.
               </p>
@@ -560,12 +551,10 @@ const CandidateDashboardPage = () => {
 
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-(--text-primary)">
-                        {app.job.title}
+                        {app.jobTitle}
                       </p>
                       <p className="mt-0.5 truncate text-sm text-(--text-secondary)">
-                        {app.job.recruiter.companyName ??
-                          app.job.recruiter.recruiterProfile?.companyName ??
-                          "Unknown company"}
+                        {app.companyName ?? "Unknown company"}
                         <span className="text-(--text-muted)">
                           {" "}
                           · Applied {formatDate(app.appliedAt)}
