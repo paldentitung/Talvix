@@ -1,7 +1,7 @@
 import prisma from "../../lib/prisma.js";
+import AppError from "../../utils/AppError.js";
 
 const DAYS = 30;
-
 export const getAdminDashboardService = async () => {
   // Start of the window, in UTC, so day buckets are consistent
   const since = new Date();
@@ -99,6 +99,180 @@ export const getAdminDashboardService = async () => {
       reason: r.reason,
       createdAt: r.createdAt,
       type: r.jobId ? "JOB" : "USER",
+    })),
+  };
+};
+
+const PIPELINE_STAGES = [
+  "PENDING",
+  "REVIEWING",
+  "SHORTLISTED",
+  "ACCEPTED",
+] as const;
+
+export const getRecruiterDashboardService = async (recruiterId: string) => {
+  const now = new Date();
+
+  if (!recruiterId) {
+    throw new AppError("RecruiterId is required", 400);
+  }
+
+  // 30-day window in UTC so the day buckets are consistent
+  const since = new Date(now);
+  since.setUTCDate(since.getUTCDate() - (DAYS - 1));
+  since.setUTCHours(0, 0, 0, 0);
+
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const in3Days = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+  const monthStart = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+  );
+
+  // Only this recruiter's applications, without withdrawn ones
+  const live = {
+    job: { recruiterId },
+    status: { not: "WITHDRAWN" as const },
+  };
+
+  const [
+    activeJobs,
+    jobsClosingSoon,
+    totalApplicants,
+    newApplicantsThisWeek,
+    awaitingReview,
+    hiredThisMonth,
+    applicationsInWindow,
+    statusGroups,
+    jobs,
+    newPerJob,
+    needsReview,
+  ] = await Promise.all([
+    prisma.job.count({ where: { recruiterId, status: "OPEN" } }),
+
+    // Open jobs whose deadline is within the next 3 days (banner)
+    prisma.job.count({
+      where: {
+        recruiterId,
+        status: "OPEN",
+        deadline: { gte: now, lte: in3Days },
+      },
+    }),
+
+    prisma.application.count({ where: live }),
+    prisma.application.count({
+      where: { ...live, appliedAt: { gte: weekAgo } },
+    }),
+    prisma.application.count({ where: { ...live, status: "PENDING" } }),
+
+    // "Hired this month" = applications moved to ACCEPTED this month,
+    // read from the status history so the date is accurate
+    prisma.applicationStatusHistory.count({
+      where: {
+        status: "ACCEPTED",
+        createdAt: { gte: monthStart },
+        application: { job: { recruiterId } },
+      },
+    }),
+
+    // For the "Applications over time" chart
+    prisma.application.findMany({
+      where: { ...live, appliedAt: { gte: since } },
+      select: { appliedAt: true },
+    }),
+
+    // For the pipeline donut
+    prisma.application.groupBy({
+      by: ["status"],
+      where: live,
+      _count: { _all: true },
+    }),
+
+    // Active jobs list (open + draft, newest first)
+    prisma.job.findMany({
+      where: { recruiterId, status: { in: ["OPEN", "DRAFT"] } },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      select: {
+        id: true,
+        title: true,
+        location: true,
+        employmentType: true,
+        status: true,
+        _count: { select: { applications: true } },
+      },
+    }),
+
+    // "+N new" badge per job (applications in the last 7 days)
+    prisma.application.groupBy({
+      by: ["jobId"],
+      where: { ...live, appliedAt: { gte: weekAgo } },
+      _count: { _all: true },
+    }),
+
+    // "Needs review" list
+    prisma.application.findMany({
+      where: { ...live, status: "PENDING" },
+      orderBy: { appliedAt: "desc" },
+      take: 5,
+      select: {
+        id: true,
+        appliedAt: true,
+        job: { select: { id: true, title: true } },
+        user: { select: { firstName: true, lastName: true } },
+      },
+    }),
+  ]);
+
+  // Applications per day (30 buckets, zero-filled)
+  const perDay = new Map<string, number>();
+  for (const a of applicationsInWindow) {
+    const key = a.appliedAt.toISOString().slice(0, 10);
+    perDay.set(key, (perDay.get(key) ?? 0) + 1);
+  }
+  const trend = Array.from({ length: DAYS }, (_, i) => {
+    const d = new Date(since);
+    d.setUTCDate(since.getUTCDate() + i);
+    const key = d.toISOString().slice(0, 10);
+    return { date: key, count: perDay.get(key) ?? 0 };
+  });
+
+  // Pipeline in a fixed stage order, zero-filled
+  const byStatus = new Map<string, number>(
+    statusGroups.map((g) => [g.status as string, g._count._all]),
+  );
+  const pipeline = PIPELINE_STAGES.map((stage) => ({
+    stage,
+    count: byStatus.get(stage) ?? 0,
+  }));
+
+  const newByJob = new Map(newPerJob.map((g) => [g.jobId, g._count._all]));
+
+  return {
+    overview: {
+      activeJobs,
+      jobsClosingSoon,
+      totalApplicants,
+      newApplicantsThisWeek,
+      awaitingReview,
+      hiredThisMonth,
+    },
+    trend,
+    pipeline,
+    jobs: jobs.map((j) => ({
+      id: j.id,
+      title: j.title,
+      location: j.location,
+      employmentType: j.employmentType,
+      status: j.status,
+      applicantsCount: j._count.applications,
+      newApplicantsCount: newByJob.get(j.id) ?? 0,
+    })),
+    needsReview: needsReview.map((a) => ({
+      id: a.id,
+      appliedAt: a.appliedAt,
+      jobId: a.job.id,
+      jobTitle: a.job.title,
+      candidateName: `${a.user.firstName} ${a.user.lastName}`.trim(),
     })),
   };
 };
