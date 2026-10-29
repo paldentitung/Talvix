@@ -8,6 +8,7 @@ const flatten = (raw: CompanyDetailRaw): CompanyDetail => {
     id: raw.id,
     firstName: raw.firstName,
     lastName: raw.lastName,
+    avatar: raw.avatar ?? null,
     isVerified: raw.isVerified,
     createdAt: raw.createdAt,
     jobs: raw.jobs,
@@ -16,6 +17,8 @@ const flatten = (raw: CompanyDetailRaw): CompanyDetail => {
     companyWebsite: p?.companyWebsite ?? null,
     companyDescription: p?.companyDescription ?? null,
     location: p?.companyLocation ?? null,
+    status: raw.status,
+    tagline: p?.companyTagline ?? null,
   };
 };
 

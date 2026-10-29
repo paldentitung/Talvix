@@ -14,17 +14,13 @@ import relativeTime from "../../../shared/utils/relativeTime";
 import { tintFor } from "../../../shared/utils/avatarTint";
 import { useCompanyById } from "../hooks/useCompanyById";
 import { assetUrl } from "../../../shared/utils/assetUrl";
-
-/* ---------- helpers ---------- */
+import initials from "../../../shared/utils/getInitials";
 
 const label = (v: string) =>
   v
     .replace(/_/g, " ")
     .toLowerCase()
     .replace(/^\w/, (c) => c.toUpperCase());
-
-const initialsOf = (first: string, last: string) =>
-  `${first?.[0] ?? ""}${last?.[0] ?? ""}`.toUpperCase() || "?";
 
 const chipTone: Record<string, string> = {
   REMOTE: "bg-emerald-50 text-emerald-700",
@@ -45,8 +41,6 @@ const Chip = ({
     {children}
   </span>
 );
-
-/* ---------- building blocks ---------- */
 
 const SectionCard = ({
   icon: Icon,
@@ -170,10 +164,7 @@ const CompanyDetailView = ({ id }: { id: string }) => {
   const tint = tintFor(name);
 
   const logoSrc = assetUrl(c.companyLogo);
-  console.log(c);
-  console.log(c.companyLogo);
-
-  console.log(logoSrc);
+  const avatarSrc = assetUrl(c.avatar);
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-5">
@@ -277,9 +268,17 @@ const CompanyDetailView = ({ id }: { id: string }) => {
       {/* Account */}
       <SectionCard icon={User} title="Account">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-(--primary) text-sm font-bold text-white">
-            {initialsOf(c.firstName, c.lastName)}
-          </div>
+          {avatarSrc ? (
+            <img
+              src={avatarSrc}
+              alt={recruiterName}
+              className="h-11 w-11 shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-(--primary) text-sm font-bold text-white">
+              {initials(recruiterName)}
+            </div>
+          )}
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-(--text-primary)">
               {recruiterName || "—"}
@@ -290,11 +289,10 @@ const CompanyDetailView = ({ id }: { id: string }) => {
           </div>
         </div>
       </SectionCard>
-
       {/* Jobs */}
       <SectionCard
         icon={Briefcase}
-        title="Jobs"
+        title="Open Jobs"
         badge={
           <Chip className="bg-(--bg) text-(--text-secondary)">
             {c.jobs.length}

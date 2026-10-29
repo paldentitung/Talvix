@@ -1,5 +1,7 @@
 // features/companies/types/company.types.ts
 
+import type { AccountStatus } from "../../users/types/user.types";
+
 export interface CompanyJobSummary {
   id: string;
   title: string;
@@ -14,6 +16,7 @@ export interface CompanyListItem {
   id: string;
   firstName: string;
   lastName: string;
+  status: AccountStatus;
   companyName: string | null;
   companyLogo: string | null;
   companyWebsite: string | null;
@@ -45,7 +48,8 @@ export interface RecruiterProfile {
   companyLogo: string | null;
   companyWebsite: string | null;
   companyDescription: string | null;
-  companyLocation?: string | null;
+  companyLocation: string | null;
+  companyTagline: string | null;
 }
 // raw shape returned by GET /companies/:id
 export interface CompanyDetailRaw {
@@ -57,6 +61,8 @@ export interface CompanyDetailRaw {
   recruiterProfile: RecruiterProfile | null;
   jobs: CompanyJobSummary[];
   _count: { jobs: number };
+  status: AccountStatus;
+  avatar: string | null;
 }
 
 // what the UI uses (flat)
@@ -72,4 +78,7 @@ export interface CompanyDetail {
   companyDescription: string | null;
   location: string | null;
   jobs: CompanyJobSummary[];
+  status: AccountStatus;
+  tagline: string | null;
+  avatar: string | null;
 }

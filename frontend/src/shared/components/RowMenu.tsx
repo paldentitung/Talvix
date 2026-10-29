@@ -1,14 +1,23 @@
 import { MoreHorizontal } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
+type Tone = "default" | "danger" | "success";
 export interface RowMenuItem {
   label: string;
   onClick: () => void;
   icon?: LucideIcon;
+  tone?: Tone;
   danger?: boolean; // renders in --danger color with red hover, e.g. "Suspend", "Take down", "Delete"
   disabled?: boolean;
 }
-
+const TONES: Record<Tone, { color: string; hoverBg: string }> = {
+  default: { color: "var(--text-secondary)", hoverBg: "#F8FAFC" },
+  danger: { color: "var(--danger)", hoverBg: "var(--danger-bg)" },
+  success: {
+    color: "var(--success, #059669)",
+    hoverBg: "var(--success-bg, #ECFDF5)",
+  },
+};
 interface RowMenuProps {
   id: string;
   open: boolean;
@@ -39,6 +48,8 @@ export default function RowMenu({ id, open, onToggle, items }: RowMenuProps) {
         >
           {items.map((item) => {
             const Icon = item.icon;
+            const tone =
+              TONES[item.tone ?? (item.danger ? "danger" : "default")];
             return (
               <button
                 key={item.label}
@@ -48,15 +59,9 @@ export default function RowMenu({ id, open, onToggle, items }: RowMenuProps) {
                 }}
                 disabled={item.disabled}
                 className="flex w-full items-center gap-2 px-3.5 py-2 text-left text-sm transition-colors disabled:opacity-50"
-                style={
-                  item.danger
-                    ? { color: "var(--danger)" }
-                    : { color: "var(--text-secondary)" }
-                }
+                style={{ color: tone.color }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = item.danger
-                    ? "var(--danger-bg)"
-                    : "#F8FAFC";
+                  e.currentTarget.style.background = tone.hoverBg;
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = "transparent";
