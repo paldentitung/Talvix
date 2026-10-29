@@ -19,11 +19,7 @@ import SectionCard from "../../../shared/components/SectionCard";
 import { EmptyState, DetailError, DetailHeader, Chip, Count } from "./detail";
 import DetailSkeleton from "../../../shared/components/DetailSkeleton";
 import type { IconType } from "../../../shared/types/ui.types";
-const label = (v: string) =>
-  v
-    .replace(/_/g, " ")
-    .toLowerCase()
-    .replace(/^\w/, (c) => c.toUpperCase());
+import { formatLabel as label } from "../../../shared/utils/formatLabel";
 
 const chipTone: Record<string, string> = {
   REMOTE: "bg-emerald-50 text-emerald-700",

@@ -1,32 +1,51 @@
 import type { AccountStatus } from "../../features/users/types/user.types";
+import type { JobStatus } from "../../features/jobs/types/job.types";
 
-const STYLES: Record<
-  AccountStatus,
-  { label: string; bg: string; fg: string; dot: string }
-> = {
-  ACTIVE: { label: "Active", bg: "#ECFDF5", fg: "#047857", dot: "#10B981" },
-  SUSPENDED: {
-    label: "Suspended",
-    bg: "#FEF2F2",
-    fg: "#B91C1C",
-    dot: "#EF4444",
-  },
-};
+type Status = AccountStatus | JobStatus;
 
-const StatusBadge = ({ status }: { status: AccountStatus }) => {
-  const s = STYLES[status];
+const STATUS_STYLES: Record<Status, { bg: string; fg: string; label: string }> =
+  {
+    // Account statuses
+    ACTIVE: {
+      bg: "var(--success-bg)",
+      fg: "var(--success)",
+      label: "Active",
+    },
+    SUSPENDED: {
+      bg: "var(--danger-bg)",
+      fg: "var(--danger)",
+      label: "Suspended",
+    },
+
+    // Job statuses
+    OPEN: {
+      bg: "var(--success-bg)",
+      fg: "var(--success)",
+      label: "Live",
+    },
+    DRAFT: {
+      bg: "var(--warning-bg)",
+      fg: "var(--warning)",
+      label: "Draft",
+    },
+    CLOSED: {
+      bg: "var(--danger-bg)",
+      fg: "var(--danger)",
+      label: "Closed",
+    },
+  };
+
+function StatusBadge({ status }: { status: Status }) {
+  const s = STATUS_STYLES[status];
+
   return (
     <span
-      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
+      className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
       style={{ background: s.bg, color: s.fg }}
     >
-      <span
-        className="h-1.5 w-1.5 rounded-full"
-        style={{ background: s.dot }}
-      />
       {s.label}
     </span>
   );
-};
+}
 
 export default StatusBadge;
