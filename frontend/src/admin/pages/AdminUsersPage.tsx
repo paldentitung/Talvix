@@ -16,6 +16,10 @@ import type {
 import { useUpdateUserStatus } from "../../features/users/hooks/useUpdateUserStatus";
 import { useDebouncedValue } from "../../shared/hooks/useDebouncedValue";
 import Button from "../../components/ui/Button";
+import BottomSheet from "../../components/ui/BottomSheet";
+import CandidateDetailView from "../../features/users/components/CandidateDetailView";
+import CompanyDetailView from "../../features/company/components/CompanyDetailView";
+import AdminDetailView from "../../features/users/components/AdminDetailView";
 const FILTERS = ["All", "Candidates", "Recruiters", "Admins"] as const;
 type Filter = (typeof FILTERS)[number];
 
@@ -79,7 +83,7 @@ const AdminUsersPage = () => {
   const [page, setPage] = useState(1);
   const limit = 10;
   const debouncedQuery = useDebouncedValue(query, 350);
-
+  const [viewUser, setViewUser] = useState<AdminUser | null>(null);
   const { data, isLoading, isError } = useUsers(
     page,
     limit,
@@ -302,11 +306,7 @@ const AdminUsersPage = () => {
                             items={[
                               {
                                 label: "View profile",
-                                onClick: () => console.log("view", u.id),
-                              },
-                              {
-                                label: "Edit role",
-                                onClick: () => console.log("edit role", u.id),
+                                onClick: () => setViewUser(u),
                               },
                             ]}
                           />
@@ -345,6 +345,21 @@ const AdminUsersPage = () => {
           itemLabel="users"
           isFetching={isLoading}
         />
+        <BottomSheet
+          isOpen={!!viewUser}
+          onClose={() => setViewUser(null)}
+          title="User profile"
+        >
+          {viewUser?.role === "CANDIDATE" && (
+            <CandidateDetailView key={viewUser.id} id={viewUser.id} />
+          )}
+          {viewUser?.role === "RECRUITER" && (
+            <CompanyDetailView key={viewUser.id} id={viewUser.id} />
+          )}
+          {viewUser?.role === "ADMIN" && (
+            <AdminDetailView key={viewUser.id} id={viewUser.id} />
+          )}
+        </BottomSheet>
       </div>
     </div>
   );

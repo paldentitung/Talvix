@@ -60,6 +60,18 @@ export const getUsersService = async (
     },
   };
 };
+export const getUserByIdService = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: userResponseSelect,
+  });
+
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  return toUserResponse(user);
+};
 export const changePasswordService = async (
   userId: string,
   data: ChangePasswordInput,

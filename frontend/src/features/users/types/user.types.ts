@@ -8,7 +8,7 @@ export interface User {
   role: UserRole;
   avatar: string | null;
   phone: string | null;
-
+  status: AccountStatus;
   bio: string | null;
   location: string | null;
   title: string | null;
@@ -111,7 +111,7 @@ export interface AdminUser {
   role: UserRole;
   status: AccountStatus;
   companyName: string | null;
-  isVerified: boolean; 
+  isVerified: boolean;
   createdAt: string;
 }
 export type AccountStatus = "ACTIVE" | "SUSPENDED";

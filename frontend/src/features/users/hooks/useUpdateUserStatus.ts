@@ -19,6 +19,7 @@ export const useUpdateUserStatus = () => {
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
       queryClient.invalidateQueries({ queryKey: ["companies"] });
       queryClient.invalidateQueries({ queryKey: ["company", userId] });
+      queryClient.invalidateQueries({ queryKey: ["user", userId] });
     },
   });
 };
