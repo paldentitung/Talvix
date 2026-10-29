@@ -7,6 +7,8 @@ import relativeTime from "../../shared/utils/relativeTime";
 import VerifiedBadge from "../../features/company/components/VerifiedBadge";
 import { tintFor } from "../../shared/utils/avatarTint";
 import RowMenu from "../../shared/components/RowMenu";
+import BottomSheet from "../../components/ui/BottomSheet";
+import CompanyDetailView from "../../features/company/components/CompanyDetailView";
 const FILTERS = ["All", "Verified", "Unverified"] as const;
 type Filter = (typeof FILTERS)[number];
 
@@ -16,6 +18,7 @@ const AdminCompaniesPage = () => {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const limit = 10;
+  const [viewId, setViewId] = useState<string | null>(null);
 
   const { data, isLoading, isError } = useCompanies(page, limit, query);
 
@@ -216,7 +219,7 @@ const AdminCompaniesPage = () => {
                             items={[
                               {
                                 label: "View company",
-                                onClick: () => console.log("view", c.id),
+                                onClick: () => setViewId(c.id),
                               },
                               {
                                 label: "Edit details",
@@ -265,6 +268,14 @@ const AdminCompaniesPage = () => {
           itemLabel="companies"
           isFetching={isLoading}
         />
+
+        <BottomSheet
+          isOpen={!!viewId}
+          onClose={() => setViewId(null)}
+          title="Company details"
+        >
+          {viewId && <CompanyDetailView id={viewId} />}
+        </BottomSheet>
       </div>
     </div>
   );

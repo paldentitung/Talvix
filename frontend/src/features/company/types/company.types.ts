@@ -40,9 +40,36 @@ export interface CompaniesListResponse {
     totalPages: number;
   };
 }
+export interface RecruiterProfile {
+  companyName: string | null;
+  companyLogo: string | null;
+  companyWebsite: string | null;
+  companyDescription: string | null;
+  companyLocation?: string | null;
+}
+// raw shape returned by GET /companies/:id
+export interface CompanyDetailRaw {
+  id: string;
+  firstName: string;
+  lastName: string;
+  isVerified: boolean;
+  createdAt: string;
+  recruiterProfile: RecruiterProfile | null;
+  jobs: CompanyJobSummary[];
+  _count: { jobs: number };
+}
 
-export interface CompanyDetailResponse {
-  success: boolean;
-  message: string;
-  data: CompanyDetail;
+// what the UI uses (flat)
+export interface CompanyDetail {
+  id: string;
+  firstName: string;
+  lastName: string;
+  isVerified: boolean;
+  createdAt: string;
+  companyName: string | null;
+  companyLogo: string | null;
+  companyWebsite: string | null;
+  companyDescription: string | null;
+  location: string | null;
+  jobs: CompanyJobSummary[];
 }

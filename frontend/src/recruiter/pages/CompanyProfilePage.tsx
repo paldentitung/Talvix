@@ -11,7 +11,6 @@ import {
 import toast from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUpdateRecruiterProfile } from "../../features/users/hooks/useUpdateRecruiterProfile";
-import { useMe } from "../../features/auth/hooks/useMe";
 import { useRecruiterLogo } from "../../features/users/hooks/useRecruiterLogo";
 import Modal from "../../components/ui/Modal";
 import { useGetCurrentUser } from "../../features/users/hooks/useGetCurrentUser";
