@@ -1,5 +1,5 @@
 import { useLocation } from "react-router-dom";
-import { MessageSquare, Bell, Menu, User } from "lucide-react";
+import { MessageSquare, Menu, User } from "lucide-react";
 import { useGetCurrentUser } from "../../features/users/hooks/useGetCurrentUser";
 import initials from "../../shared/utils/getInitials";
 import { useState } from "react";
@@ -8,6 +8,8 @@ import { useUnreadNotificationCount } from "../../features/notification/hooks/us
 import { useMarkNotificationRead } from "../../features/notification/hooks/useMarkNotificationRead";
 import { useMarkAllNotificationsRead } from "../../features/notification/hooks/useMarkAllNotificationsRead";
 import NotificationButton from "../../shared/components/NotificationButton";
+
+import { Link } from "react-router-dom";
 const pageMeta: Record<string, { title: string; subtitle: string }> = {
   "/admin/overview": {
     title: "Platform overview",
@@ -98,7 +100,11 @@ const AdminHeader = ({ onMenuClick }: { onMenuClick?: () => void }) => {
           onMarkAllAsRead={markAllAsRead}
         />
 
-        <button className="flex items-center gap-2 rounded-(--radius-md) py-1 pl-1 pr-2 transition-colors hover:bg-(--card)">
+        <Link
+          to="/admin/settings"
+          aria-label="Open admin settings"
+          className="flex items-center gap-2 rounded-(--radius-md) py-1 pl-1 pr-2 transition-colors hover:bg-(--card)"
+        >
           {avatarUrl && !imageError ? (
             <img
               src={avatarUrl}
@@ -107,7 +113,7 @@ const AdminHeader = ({ onMenuClick }: { onMenuClick?: () => void }) => {
               onError={() => setImageError(true)}
             />
           ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded-full text-white bg-(--primary)">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-(--primary) text-white">
               {currentUser ? (
                 initials(
                   `${currentUser.firstName ?? ""} ${currentUser.lastName ?? ""}`.trim(),
@@ -117,7 +123,7 @@ const AdminHeader = ({ onMenuClick }: { onMenuClick?: () => void }) => {
               )}
             </div>
           )}
-        </button>
+        </Link>
       </div>
     </div>
   );
