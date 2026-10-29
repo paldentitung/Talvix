@@ -18,7 +18,7 @@ import { useDebouncedValue } from "../../shared/hooks/useDebouncedValue";
 import Button from "../../components/ui/Button";
 import BottomSheet from "../../components/ui/BottomSheet";
 import CandidateDetailView from "../../features/users/components/CandidateDetailView";
-import CompanyDetailView from "../../features/company/components/CompanyDetailView";
+import CompanyDetailView from "../../features/users/components/CompanyDetailView";
 import AdminDetailView from "../../features/users/components/AdminDetailView";
 const FILTERS = ["All", "Candidates", "Recruiters", "Admins"] as const;
 type Filter = (typeof FILTERS)[number];

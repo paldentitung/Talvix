@@ -15,7 +15,7 @@ import VerifiedBadge from "../../features/company/components/VerifiedBadge";
 import { tintFor } from "../../shared/utils/avatarTint";
 import RowMenu from "../../shared/components/RowMenu";
 import BottomSheet from "../../components/ui/BottomSheet";
-import CompanyDetailView from "../../features/company/components/CompanyDetailView";
+import CompanyDetailView from "../../features/users/components/CompanyDetailView";
 import Modal from "../../components/ui/Modal";
 import toast from "react-hot-toast";
 import { useUpdateUserStatus } from "../../features/users/hooks/useUpdateUserStatus";
