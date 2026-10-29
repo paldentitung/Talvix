@@ -1,13 +1,16 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateJobStatus } from "../api/jobApi";
 import { toast } from "react-hot-toast";
+
 export const useUpdateJobStatus = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: updateJobStatus,
+
     onSuccess: (_, variables) => {
       toast.success("Job status updated successfully!");
+
       queryClient.invalidateQueries({
         queryKey: ["recruiterJobs"],
       });
@@ -23,6 +26,12 @@ export const useUpdateJobStatus = () => {
       queryClient.invalidateQueries({
         queryKey: ["adminJobs"],
       });
+    },
+
+    onError: (error) => {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update job status.",
+      );
     },
   });
 };

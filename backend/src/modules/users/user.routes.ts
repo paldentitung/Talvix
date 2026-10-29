@@ -20,6 +20,7 @@ import {
   deleteCandidateExperienceController,
   getUserInformationController,
   updateUserStatusController,
+  getUserByIdController,
 } from "./user.controller.js";
 import { requireRole } from "../../middleware/role.middleware.js";
 import { validate } from "../../middleware/validate.middleware.js";
@@ -45,6 +46,8 @@ import {
 
 const router = express.Router();
 
+router.get("/me", requireAuth, asyncHandler(getUserInformationController));
+
 router.get(
   "/all",
   requireAuth,
@@ -52,7 +55,12 @@ router.get(
   asyncHandler(getUsersController),
 );
 
-router.get("/me", requireAuth, asyncHandler(getUserInformationController));
+router.get(
+  "/:id",
+  requireAuth,
+  requireRole("ADMIN"),
+  asyncHandler(getUserByIdController),
+);
 router.patch(
   "/profile",
   requireAuth,

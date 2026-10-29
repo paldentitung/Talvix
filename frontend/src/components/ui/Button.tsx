@@ -2,7 +2,13 @@ import type { ReactNode, ButtonHTMLAttributes } from "react";
 import { Link } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
-type ButtonVariant = "primary" | "ghost" | "accent" | "dark" | "white";
+type ButtonVariant =
+  | "primary"
+  | "ghost"
+  | "accent"
+  | "dark"
+  | "white"
+  | "danger";
 type ButtonSize = "sm" | "md";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -28,6 +34,7 @@ const variantClasses: Record<ButtonVariant, string> = {
   accent: "bg-[var(--accent)] text-white hover:opacity-90",
   dark: "bg-[var(--text-primary)] text-white hover:opacity-90",
   white: "bg-white text-[var(--text-primary)] hover:opacity-90",
+  danger: "bg-rose-500 text-white hover:opacity-90",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -55,7 +62,7 @@ export default function Button({
 }: ButtonProps) {
   const isDisabled = disabled || loading;
 
-  const classes = `inline-flex items-center justify-center gap-2 font-semibold whitespace-nowrap transition-all duration-150 hover:-translate-y-0.5 ${variantClasses[variant]} ${sizeClasses[size]} ${className} ${
+  const classes = `inline-flex items-center justify-center gap-2 font-semibold whitespace-nowrap transition-all duration-150 hover:-translate-y-0.5 cursor-pointer ${variantClasses[variant]} ${sizeClasses[size]} ${className} ${
     isDisabled
       ? "opacity-60 cursor-not-allowed hover:-translate-y-0 hover:opacity-60"
       : ""

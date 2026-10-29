@@ -7,7 +7,6 @@ import {
   ShieldAlert,
   Settings,
   LogOut,
-  ChevronDown,
 } from "lucide-react";
 import Logo from "../../components/layout/Logo";
 import { useLogout } from "../../features/auth/hooks/useLogout";

@@ -1,5 +1,12 @@
 import { useMemo, useState } from "react";
-import { Search, Building2, ChevronDown, ExternalLink } from "lucide-react";
+import {
+  Search,
+  Building2,
+  ChevronDown,
+  ExternalLink,
+  Ban,
+  RotateCcw,
+} from "lucide-react";
 import { useCompanies } from "../../features/company/hooks/useCompanies";
 import Pagination from "../../shared/components/Pagination";
 import type { CompanyListItem } from "../../features/company/types/company.types";
@@ -7,6 +14,12 @@ import relativeTime from "../../shared/utils/relativeTime";
 import VerifiedBadge from "../../features/company/components/VerifiedBadge";
 import { tintFor } from "../../shared/utils/avatarTint";
 import RowMenu from "../../shared/components/RowMenu";
+import BottomSheet from "../../components/ui/BottomSheet";
+import CompanyDetailView from "../../features/users/components/CompanyDetailView";
+import Modal from "../../components/ui/Modal";
+import toast from "react-hot-toast";
+import { useUpdateUserStatus } from "../../features/users/hooks/useUpdateUserStatus";
+import StatusBadge from "../../features/company/components/StatusBadge";
 const FILTERS = ["All", "Verified", "Unverified"] as const;
 type Filter = (typeof FILTERS)[number];
 
@@ -16,12 +29,32 @@ const AdminCompaniesPage = () => {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const limit = 10;
+  const [viewId, setViewId] = useState<string | null>(null);
 
   const { data, isLoading, isError } = useCompanies(page, limit, query);
 
   const companies: CompanyListItem[] = data?.data.companies ?? [];
   const total = data?.data.total ?? 0;
   const totalPages = data?.data.totalPages ?? 1;
+
+  const updateStatus = useUpdateUserStatus();
+  const [statusTarget, setStatusTarget] = useState<CompanyListItem | null>(
+    null,
+  );
+
+  const confirmStatusChange = async () => {
+    if (!statusTarget) return;
+    const next = statusTarget.status === "SUSPENDED" ? "ACTIVE" : "SUSPENDED";
+    try {
+      await updateStatus.mutateAsync({ userId: statusTarget.id, status: next });
+      toast.success(
+        next === "SUSPENDED" ? "Company suspended" : "Company reactivated",
+      );
+      setStatusTarget(null);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to update status");
+    }
+  };
 
   const filtered = useMemo(() => {
     return companies.filter((c) => {
@@ -104,6 +137,7 @@ const AdminCompaniesPage = () => {
                 <th className="px-6 py-3.5 font-semibold">Company</th>
                 <th className="px-6 py-3.5 font-semibold">Open jobs</th>
                 <th className="px-6 py-3.5 font-semibold">Verified</th>
+                <th className="px-6 py-3.5 font-semibold">Status</th>
                 <th className="px-6 py-3.5 font-semibold">
                   <span className="inline-flex items-center gap-1">
                     Joined
@@ -198,6 +232,9 @@ const AdminCompaniesPage = () => {
                       <td className="px-6 py-3.5">
                         <VerifiedBadge verified={c.isVerified} />
                       </td>
+                      <td className="px-6 py-3.5">
+                        <StatusBadge status={c.status} />
+                      </td>
                       <td
                         className="px-6 py-3.5 text-sm"
                         style={{ color: "var(--text-secondary)" }}
@@ -208,25 +245,31 @@ const AdminCompaniesPage = () => {
                         className="px-6 py-3.5 text-right"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <div className="flex justify-end">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => setViewId(c.id)}
+                            className="rounded-full border border-(--border) bg-(--card) px-3.5 py-1.5 text-xs font-semibold text-(--text-secondary) transition-colors hover:border-(--primary) hover:text-(--primary)"
+                          >
+                            View
+                          </button>
                           <RowMenu
                             id={c.id}
                             open={openMenuId === c.id}
                             onToggle={setOpenMenuId}
                             items={[
-                              {
-                                label: "View company",
-                                onClick: () => console.log("view", c.id),
-                              },
-                              {
-                                label: "Edit details",
-                                onClick: () => console.log("edit", c.id),
-                              },
-                              {
-                                label: "Suspend recruiter",
-                                onClick: () => console.log("suspend", c.id),
-                                danger: true,
-                              },
+                              c.status === "SUSPENDED"
+                                ? {
+                                    label: "Reactivate",
+                                    onClick: () => setStatusTarget(c),
+                                    tone: "success",
+                                    icon: RotateCcw,
+                                  }
+                                : {
+                                    label: "Suspend company",
+                                    onClick: () => setStatusTarget(c),
+                                    tone: "danger",
+                                    icon: Ban,
+                                  },
                             ]}
                           />
                         </div>
@@ -265,6 +308,58 @@ const AdminCompaniesPage = () => {
           itemLabel="companies"
           isFetching={isLoading}
         />
+
+        <BottomSheet
+          isOpen={!!viewId}
+          onClose={() => setViewId(null)}
+          title="Company details"
+        >
+          {viewId && <CompanyDetailView id={viewId} />}
+        </BottomSheet>
+
+        {(() => {
+          const suspending = statusTarget?.status !== "SUSPENDED";
+          const name = statusTarget?.companyName ?? "this company";
+          return (
+            <Modal
+              isOpen={!!statusTarget}
+              onClose={() => setStatusTarget(null)}
+              title={suspending ? "Suspend company?" : "Reactivate company?"}
+              maxWidth="max-w-sm"
+              footer={
+                <>
+                  <button
+                    onClick={() => setStatusTarget(null)}
+                    className="rounded-(--radius-md) border border-(--border) bg-(--card) px-4 py-2 text-sm font-semibold text-(--text-secondary) hover:bg-(--bg)"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmStatusChange}
+                    disabled={updateStatus.isPending}
+                    className={`rounded-(--radius-md) px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 ${
+                      suspending
+                        ? "bg-red-600 hover:bg-red-700"
+                        : "bg-(--primary) hover:bg-(--primary-dark)"
+                    }`}
+                  >
+                    {updateStatus.isPending
+                      ? "Saving..."
+                      : suspending
+                        ? "Suspend"
+                        : "Reactivate"}
+                  </button>
+                </>
+              }
+            >
+              <p className="text-sm text-(--text-secondary)">
+                {suspending
+                  ? `${name} and its recruiter will no longer be able to log in.`
+                  : `${name} will be able to log in again.`}
+              </p>
+            </Modal>
+          );
+        })()}
       </div>
     </div>
   );

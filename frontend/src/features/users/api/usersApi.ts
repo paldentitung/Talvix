@@ -27,6 +27,10 @@ export const getUsers = (
 
   return request(`/users/all?${params.toString()}`, {}, true);
 };
+
+export const getUserById = (id: string): Promise<ApiResponse<User>> =>
+  request(`/users/${id}`, {}, true);
+
 export const updateUserProfile = (data: UpdateUserRequest) => {
   return request("/users/profile", {
     method: "PATCH",

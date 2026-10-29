@@ -14,14 +14,12 @@ export const useUpdateUserStatus = () => {
       status: AccountStatus;
     }) => updateUserStatus(userId, status),
 
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["users"],
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ["currentUser"],
-      });
+    onSuccess: (_, { userId }) => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      queryClient.invalidateQueries({ queryKey: ["companies"] });
+      queryClient.invalidateQueries({ queryKey: ["company", userId] });
+      queryClient.invalidateQueries({ queryKey: ["user", userId] });
     },
   });
 };

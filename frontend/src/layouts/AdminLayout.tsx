@@ -22,10 +22,7 @@ const AdminLayout = () => {
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <AdminSidebar
-          onNavigate={() => setIsSidebarOpen(false)}
-          reportsCount={12}
-        />
+        <AdminSidebar onNavigate={() => setIsSidebarOpen(false)} />
       </div>
 
       {/* Content offset by the sidebar's width on large screens */}

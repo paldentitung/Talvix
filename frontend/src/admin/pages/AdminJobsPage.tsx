@@ -6,7 +6,12 @@ import { useDebouncedValue } from "../../shared/hooks/useDebouncedValue";
 import Pagination from "../../shared/components/Pagination";
 import RowMenu from "../../shared/components/RowMenu";
 import type { Job, JobStatus } from "../../features/jobs/types/job.types";
-
+import BottomSheet from "../../components/ui/BottomSheet";
+import JobDetailView from "../../features/jobs/components/JobDetailView";
+import StatusBadge from "../../shared/components/StatusBadge";
+import Modal from "../../components/ui/Modal";
+import Button from "../../components/ui/Button";
+import relativeTime from "../../shared/utils/relativeTime";
 const FILTERS = ["All", "OPEN", "DRAFT", "CLOSED"] as const;
 type Filter = (typeof FILTERS)[number];
 
@@ -19,45 +24,15 @@ const FILTER_LABELS: Record<Filter, string> = {
 
 const PAGE_SIZE = 10;
 
-const STATUS_STYLES: Record<
-  JobStatus,
-  { bg: string; fg: string; label: string }
-> = {
-  OPEN: { bg: "var(--success-bg)", fg: "var(--success)", label: "Live" },
-  DRAFT: { bg: "var(--warning-bg)", fg: "var(--warning)", label: "Draft" },
-  CLOSED: { bg: "var(--danger-bg)", fg: "var(--danger)", label: "Closed" },
-};
-
-function StatusBadge({ status }: { status: JobStatus }) {
-  const s = STATUS_STYLES[status];
-  return (
-    <span
-      className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
-      style={{ background: s.bg, color: s.fg }}
-    >
-      {s.label}
-    </span>
-  );
-}
-
 const AdminJobsPage = () => {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("All");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-
-  // Only the debounced value reaches the API, so typing doesn't fire a
-  // request per keystroke. The input itself still reads `query`.
+  const [viewJobId, setViewJobId] = useState<string | null>(null);
   const debouncedQuery = useDebouncedValue(query).trim();
+  const [jobToTakeDown, setJobToTakeDown] = useState<Job | null>(null);
 
-  // Reset to page 1 when the *effective* criteria change. Doing this in the
-  // input's onChange would reset the page before the debounce settles and
-  // fetch page 1 with the old search term.
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedQuery, filter]);
-
-  // Stable object so the query key doesn't change identity every render.
   const apiFilters = useMemo(
     () => (filter !== "All" ? { status: filter as JobStatus } : undefined),
     [filter],
@@ -79,7 +54,9 @@ const AdminJobsPage = () => {
   const jobs: Job[] = data?.data?.jobs ?? [];
   const total = data?.data?.total ?? 0;
   const totalPages = Math.max(1, data?.data?.totalPages ?? 1);
-
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedQuery, filter]);
   return (
     <div onClick={() => openMenuId && setOpenMenuId(null)}>
       {/* Card */}
@@ -152,8 +129,11 @@ const AdminJobsPage = () => {
                 <th className="px-6 py-3.5 font-semibold">Job</th>
                 <th className="px-6 py-3.5 font-semibold">Company</th>
                 <th className="px-6 py-3.5 font-semibold">Applicants</th>
+                <th className="px-6 py-3.5 font-semibold">Posted</th>
                 <th className="px-6 py-3.5 font-semibold">Status</th>
-                <th className="px-6 py-3.5" />
+                <th className="px-6 py-3.5 font-semibold text-center">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -220,14 +200,34 @@ const AdminJobsPage = () => {
                     >
                       {j.applicationsCount ?? 0}
                     </td>
+                    <td className="px-6 py-3.5 text-sm">
+                      {relativeTime(j.createdAt)}
+                    </td>
                     <td className="px-6 py-3.5">
                       <StatusBadge status={j.status} />
                     </td>
                     <td
-                      className="px-6 py-3.5 text-right"
+                      className="px-6 py-3.5 flex justify-center items-center"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <div className="flex justify-end">
+                      <div className="flex items-center justify-end gap-2">
+                        {/* Separate action button */}
+                        {j.status !== "DRAFT" && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => setJobToTakeDown(j)}
+                            variant={
+                              j.status === "CLOSED" ? "primary" : "danger"
+                            }
+                            className="rounded-full"
+                            disabled={isPending && pendingVars?.jobId === j.id}
+                          >
+                            {j.status === "CLOSED" ? "Reopen job" : "Take down"}
+                          </Button>
+                        )}
+
+                        {/* Keep View job inside the menu */}
                         <RowMenu
                           id={j.id}
                           open={openMenuId === j.id}
@@ -235,21 +235,10 @@ const AdminJobsPage = () => {
                           items={[
                             {
                               label: "View job",
-                              onClick: () => console.log("view", j.id),
-                            },
-                            {
-                              label: "View applicants",
-                              onClick: () => console.log("applicants", j.id),
-                            },
-                            {
-                              label: "Take down",
-                              onClick: () =>
-                                updateStatus({ jobId: j.id, status: "CLOSED" }),
-                              danger: true,
-                              // Disable only the row being updated, not every row.
-                              disabled:
-                                j.status === "CLOSED" ||
-                                (isPending && pendingVars?.jobId === j.id),
+                              onClick: () => {
+                                setViewJobId(j.id);
+                                setOpenMenuId(null);
+                              },
                             },
                           ]}
                         />
@@ -288,6 +277,84 @@ const AdminJobsPage = () => {
           itemLabel="jobs"
           isFetching={isFetching}
         />
+        <BottomSheet
+          isOpen={!!viewJobId}
+          onClose={() => setViewJobId(null)}
+          title="Job details"
+        >
+          {viewJobId && <JobDetailView key={viewJobId} id={viewJobId} />}
+        </BottomSheet>
+
+        <Modal
+          isOpen={!!jobToTakeDown}
+          onClose={() => {
+            if (!isPending) setJobToTakeDown(null);
+          }}
+          title={
+            jobToTakeDown?.status === "CLOSED" ? "Reopen job" : "Take down job"
+          }
+        >
+          {jobToTakeDown && (
+            <div className="space-y-5">
+              {(() => {
+                const isReopening = jobToTakeDown.status === "CLOSED";
+
+                return (
+                  <>
+                    <p className="text-sm text-(--text-secondary)">
+                      {isReopening
+                        ? "Are you sure you want to reopen"
+                        : "Are you sure you want to take down"}{" "}
+                      <span className="font-semibold text-(--text-primary)">
+                        {jobToTakeDown.title}
+                      </span>
+                      {isReopening
+                        ? "? This will change the job status to Open."
+                        : "? This will close the job posting."}
+                    </p>
+
+                    <div className="flex justify-end gap-3">
+                      <Button
+                        type="button"
+                        onClick={() => setJobToTakeDown(null)}
+                        disabled={isPending}
+                        variant="ghost"
+                        size="sm"
+                      >
+                        Cancel
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="danger"
+                        onClick={() => {
+                          updateStatus(
+                            {
+                              jobId: jobToTakeDown.id,
+                              status: isReopening ? "OPEN" : "CLOSED",
+                            },
+                            {
+                              onSuccess: () => setJobToTakeDown(null),
+                            },
+                          );
+                        }}
+                        disabled={isPending}
+                      >
+                        {isPending
+                          ? isReopening
+                            ? "Reopening..."
+                            : "Taking down..."
+                          : isReopening
+                            ? "Confirm reopen"
+                            : "Confirm take down"}
+                      </Button>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          )}
+        </Modal>
       </div>
     </div>
   );

@@ -143,6 +143,7 @@ const routes: RouteObject[] = [
     { path: "settings", element: <AdminSettingsPage /> },
     { path: "reports", element: <AdminReportsPage /> },
     { path: "reports/:reportId", element: <AdminReportDetailPage /> },
+    { path: "company", element: <CompanyProfilePage /> },
     { path: "notifications", element: <NotificationPage /> },
   ]),
 
