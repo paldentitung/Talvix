@@ -22,8 +22,8 @@ import AboutPage from "../pages/AboutPage";
 import ContactPage from "../pages/ContactPage";
 import JobsPage from "../pages/JobsPage";
 import JobDetailPage from "../pages/JobDetailPage";
-import AllApplicantsPage from "../recruiter/pages/RecruiterApplicantsPage";
-import JobApplicantsPage from "../recruiter/pages/ApplicantsPage";
+import AllApplicantsPage from "../recruiter/pages/AllApplicantsPage";
+import JobApplicantsPage from "../recruiter/pages/JobApplicantsPage";
 
 // Role pages are lazy-loaded: a candidate never downloads admin code
 const CandidateDashboardPage = lazy(
