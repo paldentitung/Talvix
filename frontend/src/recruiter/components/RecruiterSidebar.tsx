@@ -2,9 +2,7 @@ import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard,
   Briefcase,
-  Users,
   Building2,
-  BarChart3,
   Settings,
   LogOut,
 } from "lucide-react";
@@ -18,7 +16,6 @@ const hiringLinks = [
 
 const companyLinks = [
   { label: "Company Profile", href: "/recruiter/company", icon: Building2 },
-  { label: "Analytics", href: "/recruiter/analytics", icon: BarChart3 },
   { label: "Settings", href: "/recruiter/settings", icon: Settings },
 ];
 

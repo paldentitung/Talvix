@@ -46,7 +46,6 @@ const CandidateSettingsPage = lazy(
 const RecruiterDashboardPage = lazy(
   () => import("../recruiter/pages/RecruiterDashboardPage"),
 );
-const AnalyticsPage = lazy(() => import("../recruiter/pages/AnalyticsPage"));
 const ApplicantsPage = lazy(() => import("../recruiter/pages/ApplicantsPage"));
 const CompanyProfilePage = lazy(
   () => import("../recruiter/pages/CompanyProfilePage"),
@@ -126,7 +125,6 @@ const routes: RouteObject[] = [
 
   guarded(USER_ROLE.RECRUITER, "/recruiter", <RecruiterLayout />, [
     { path: "dashboard", element: <RecruiterDashboardPage /> },
-    { path: "analytics", element: <AnalyticsPage /> },
     { path: "applicants/:id", element: <ApplicantsPage /> },
     { path: "company", element: <CompanyProfilePage /> },
     { path: "jobs", element: <ManageJobsPage /> },
