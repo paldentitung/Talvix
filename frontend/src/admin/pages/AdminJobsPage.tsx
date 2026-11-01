@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Search, Briefcase } from "lucide-react";
+import { Search, Briefcase, RotateCcw, Ban } from "lucide-react";
 import { useAdminJobs } from "../../features/jobs/hooks/useAdminJobs";
 import { useUpdateJobStatus } from "../../features/jobs/hooks/useUpdateJobStatus";
 import { useDebouncedValue } from "../../shared/hooks/useDebouncedValue";
@@ -101,7 +101,7 @@ const AdminJobsPage = () => {
                   key={f}
                   onClick={() => setFilter(f)}
                   aria-pressed={active}
-                  className="rounded-full px-4 py-1.5 text-sm font-medium transition-colors"
+                  className="rounded-full px-4 py-1.5 text-sm font-medium transition-colors cursor-pointer"
                   style={
                     active
                       ? { background: "var(--primary)", color: "#fff" }
@@ -207,27 +207,38 @@ const AdminJobsPage = () => {
                       <StatusBadge status={j.status} />
                     </td>
                     <td
-                      className="px-6 py-3.5 flex justify-center items-center"
+                      className="px-6 py-3.5"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <div className="flex items-center justify-end gap-2">
-                        {/* Separate action button */}
-                        {j.status !== "DRAFT" && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={() => setJobToTakeDown(j)}
-                            variant={
-                              j.status === "CLOSED" ? "primary" : "danger"
-                            }
-                            className="rounded-full"
-                            disabled={isPending && pendingVars?.jobId === j.id}
-                          >
-                            {j.status === "CLOSED" ? "Reopen job" : "Take down"}
-                          </Button>
-                        )}
+                      <div className="flex items-center justify-center gap-2">
+                        {/* Fixed-width slot keeps rows aligned; empty for drafts */}
+                        <div className="flex w-28 justify-end">
+                          {j.status !== "DRAFT" && (
+                            <button
+                              type="button"
+                              onClick={() => setJobToTakeDown(j)}
+                              disabled={
+                                isPending && pendingVars?.jobId === j.id
+                              }
+                              className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors disabled:opacity-60 ${
+                                j.status === "CLOSED"
+                                  ? "border-emerald-200 text-emerald-600 hover:bg-emerald-50"
+                                  : "border-rose-200 text-rose-600 hover:bg-rose-50"
+                              }`}
+                            >
+                              {j.status === "CLOSED" ? (
+                                <>
+                                  <RotateCcw size={12} /> Reopen
+                                </>
+                              ) : (
+                                <>
+                                  <Ban size={12} /> Take down
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </div>
 
-                        {/* Keep View job inside the menu */}
                         <RowMenu
                           id={j.id}
                           open={openMenuId === j.id}
