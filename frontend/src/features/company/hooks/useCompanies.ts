@@ -2,11 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { getCompanies } from "../api/companyApi";
 export const useCompanies = (
   page: number = 1,
-  pageSize: number = 12,
+  limit: number = 12,
   search?: string,
+  isVerified?: boolean,
 ) => {
   return useQuery({
-    queryKey: ["companies", page, pageSize, search],
-    queryFn: () => getCompanies(page, pageSize, search),
+    queryKey: ["companies", page, limit, search, isVerified],
+    queryFn: () => getCompanies({ page, limit, search, isVerified }),
   });
 };

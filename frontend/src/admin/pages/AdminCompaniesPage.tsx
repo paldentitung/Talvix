@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   Search,
   Building2,
@@ -20,6 +20,7 @@ import Modal from "../../components/ui/Modal";
 import toast from "react-hot-toast";
 import { useUpdateUserStatus } from "../../features/users/hooks/useUpdateUserStatus";
 import StatusBadge from "../../features/company/components/StatusBadge";
+import { useDebouncedValue } from "../../shared/hooks/useDebouncedValue";
 const FILTERS = ["All", "Verified", "Unverified"] as const;
 type Filter = (typeof FILTERS)[number];
 
@@ -30,8 +31,15 @@ const AdminCompaniesPage = () => {
   const [page, setPage] = useState(1);
   const limit = 10;
   const [viewId, setViewId] = useState<string | null>(null);
-
-  const { data, isLoading, isError } = useCompanies(page, limit, query);
+  const isVerified =
+    filter === "Verified" ? true : filter === "Unverified" ? false : undefined;
+  const debouncedQuery = useDebouncedValue(query, 300);
+  const { data, isLoading, isError } = useCompanies(
+    page,
+    limit,
+    debouncedQuery,
+    isVerified,
+  );
 
   const companies: CompanyListItem[] = data?.data.companies ?? [];
   const total = data?.data.total ?? 0;
@@ -55,14 +63,6 @@ const AdminCompaniesPage = () => {
       toast.error(e instanceof Error ? e.message : "Failed to update status");
     }
   };
-
-  const filtered = useMemo(() => {
-    return companies.filter((c) => {
-      if (filter === "Verified") return c.isVerified;
-      if (filter === "Unverified") return !c.isVerified;
-      return true;
-    });
-  }, [companies, filter]);
 
   return (
     <div onClick={() => openMenuId && setOpenMenuId(null)}>
@@ -108,7 +108,10 @@ const AdminCompaniesPage = () => {
               return (
                 <button
                   key={f}
-                  onClick={() => setFilter(f)}
+                  onClick={() => {
+                    setFilter(f);
+                    setPage(1);
+                  }}
                   className="rounded-full px-4 py-1.5 text-sm font-medium transition-colors"
                   style={
                     active
@@ -151,7 +154,7 @@ const AdminCompaniesPage = () => {
               {isLoading && (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="px-6 py-16 text-center text-sm"
                     style={{ color: "var(--text-muted)" }}
                   >
@@ -163,7 +166,7 @@ const AdminCompaniesPage = () => {
               {isError && (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="px-6 py-16 text-center text-sm"
                     style={{ color: "var(--danger)" }}
                   >
@@ -174,7 +177,7 @@ const AdminCompaniesPage = () => {
 
               {!isLoading &&
                 !isError &&
-                filtered.map((c) => {
+                companies.map((c) => {
                   const name =
                     c.companyName ?? `${c.firstName} ${c.lastName}`.trim();
                   const tint = tintFor(name);
@@ -278,9 +281,9 @@ const AdminCompaniesPage = () => {
                   );
                 })}
 
-              {!isLoading && !isError && filtered.length === 0 && (
+              {!isLoading && !isError && companies.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-16 text-center">
+                  <td colSpan={6} className="px-6 py-16 text-center">
                     <p
                       className="text-sm font-medium"
                       style={{ color: "var(--text-primary)" }}
@@ -319,7 +322,10 @@ const AdminCompaniesPage = () => {
 
         {(() => {
           const suspending = statusTarget?.status !== "SUSPENDED";
-          const name = statusTarget?.companyName ?? "this company";
+          const name =
+            statusTarget?.companyName ??
+            (`${statusTarget?.firstName ?? ""} ${statusTarget?.lastName ?? ""}`.trim() ||
+              "this company");
           return (
             <Modal
               isOpen={!!statusTarget}
