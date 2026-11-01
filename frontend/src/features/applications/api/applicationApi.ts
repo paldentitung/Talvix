@@ -44,6 +44,27 @@ export const getJobApplications = async (
   return request(`/applications/job/${jobId}?${params.toString()}`, {}, true);
 };
 
+export const getRecruiterApplications = async (params: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  jobId?: string;
+  status?: ApplicationStatus;
+}) => {
+  const { page = 1, limit = 10, search, jobId, status } = params;
+
+  const query = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  });
+
+  if (search?.trim()) query.set("search", search.trim());
+  if (jobId) query.set("jobId", jobId);
+  if (status) query.set("status", status);
+
+  return request(`/applications/recruiter?${query.toString()}`, {}, true);
+};
+
 export const getMyApplications = async (page = 1, limit = 10) => {
   return await request(
     `/applications/me?page=${page}&limit=${limit}`,

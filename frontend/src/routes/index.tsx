@@ -22,6 +22,8 @@ import AboutPage from "../pages/AboutPage";
 import ContactPage from "../pages/ContactPage";
 import JobsPage from "../pages/JobsPage";
 import JobDetailPage from "../pages/JobDetailPage";
+import AllApplicantsPage from "../recruiter/pages/RecruiterApplicantsPage";
+import JobApplicantsPage from "../recruiter/pages/ApplicantsPage";
 
 // Role pages are lazy-loaded: a candidate never downloads admin code
 const CandidateDashboardPage = lazy(
@@ -46,7 +48,6 @@ const CandidateSettingsPage = lazy(
 const RecruiterDashboardPage = lazy(
   () => import("../recruiter/pages/RecruiterDashboardPage"),
 );
-const ApplicantsPage = lazy(() => import("../recruiter/pages/ApplicantsPage"));
 const CompanyProfilePage = lazy(
   () => import("../recruiter/pages/CompanyProfilePage"),
 );
@@ -125,12 +126,13 @@ const routes: RouteObject[] = [
 
   guarded(USER_ROLE.RECRUITER, "/recruiter", <RecruiterLayout />, [
     { path: "dashboard", element: <RecruiterDashboardPage /> },
-    { path: "applicants/:id", element: <ApplicantsPage /> },
+    { path: "applicants/:id", element: <JobApplicantsPage /> },
     { path: "company", element: <CompanyProfilePage /> },
     { path: "jobs", element: <ManageJobsPage /> },
     { path: "jobs/:jobId", element: <JobDetailPage /> },
     { path: "settings", element: <RecruiterSettingsPage /> },
     { path: "notifications", element: <NotificationPage /> },
+    { path: "applicants", element: <AllApplicantsPage /> },
   ]),
 
   guarded(USER_ROLE.ADMIN, "/admin", <AdminLayout />, [

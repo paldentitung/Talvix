@@ -16,6 +16,7 @@ export const useUpdateApplicationStatus = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["jobApplications"] });
       queryClient.invalidateQueries({ queryKey: ["myApplications"] });
+      queryClient.invalidateQueries({ queryKey: ["recruiterApplications"] });
     },
   });
 };

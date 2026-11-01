@@ -91,3 +91,31 @@ export interface Application {
     };
   };
 }
+
+export type RecruiterApplicationItem = {
+  id: string;
+  status: ApplicationStatus;
+  appliedAt: string;
+  resumeUrl: string | null;
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    avatar: string | null;
+    candidateProfile: { title: string | null; resumeUrl: string | null } | null;
+  };
+  job: { id: string; title: string };
+};
+
+export type RecruiterApplicationsResponse = {
+  data: {
+    applications: RecruiterApplicationItem[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  };
+};

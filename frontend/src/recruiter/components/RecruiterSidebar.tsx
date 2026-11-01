@@ -5,6 +5,7 @@ import {
   Building2,
   Settings,
   LogOut,
+  Users,
 } from "lucide-react";
 import Logo from "../../components/layout/Logo";
 import { useLogout } from "../../features/auth/hooks/useLogout";
@@ -16,6 +17,7 @@ const hiringLinks = [
 
 const companyLinks = [
   { label: "Company Profile", href: "/recruiter/company", icon: Building2 },
+  { label: "Applicants", href: "/recruiter/applicants", icon: Users },
   { label: "Settings", href: "/recruiter/settings", icon: Settings },
 ];
 

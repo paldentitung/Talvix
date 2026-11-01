@@ -32,21 +32,34 @@ export const getRecruiterApplicationsController = async (
   res: Response,
 ) => {
   const recruiterId = req.user!.id;
-  const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 10;
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 10));
+
+  const { jobId, status, search } = req.query;
+
+  const validStatus = Object.values(ApplicationStatus).includes(
+    status as ApplicationStatus,
+  )
+    ? (status as ApplicationStatus)
+    : undefined;
 
   const result = await getRecruiterApplicationsService(
     recruiterId,
     page,
     limit,
+    {
+      jobId: typeof jobId === "string" && jobId ? jobId : undefined,
+      status: validStatus,
+      search: typeof search === "string" ? search : undefined,
+    },
   );
+
   res.status(200).json({
     success: true,
     message: "Applications fetched successfully",
     data: result,
   });
 };
-
 export const getApplicationByIdController = async (
   req: Request<{ id: string }>,
   res: Response,

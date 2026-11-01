@@ -7,6 +7,7 @@ import {
 import { ApplicationStatus, Prisma } from "@prisma/client";
 import { createNotificationService } from "../notification/notification.service.js";
 import { NotificationType } from "@prisma/client";
+import { applicantListSelect } from "../users/user.select.js";
 
 export const getApplicationsService = async (page = 1, limit = 10) => {
   const skip = (page - 1) * limit;
@@ -38,13 +39,28 @@ export const getRecruiterApplicationsService = async (
   recruiterId: string,
   page = 1,
   limit = 10,
+  filters: {
+    jobId?: string;
+    status?: ApplicationStatus;
+    search?: string;
+  } = {},
 ) => {
   const skip = (page - 1) * limit;
+  const term = filters.search?.trim();
 
-  const where = {
-    job: {
-      recruiterId,
-    },
+  const where: Prisma.ApplicationWhereInput = {
+    job: { recruiterId }, // ownership check, always applied
+    ...(filters.jobId && { jobId: filters.jobId }),
+    ...(filters.status && { status: filters.status }),
+    ...(term && {
+      user: {
+        OR: [
+          { firstName: { contains: term, mode: "insensitive" } },
+          { lastName: { contains: term, mode: "insensitive" } },
+          { email: { contains: term, mode: "insensitive" } },
+        ],
+      },
+    }),
   };
 
   const [applications, total] = await Promise.all([
@@ -52,14 +68,18 @@ export const getRecruiterApplicationsService = async (
       where,
       skip,
       take: limit,
-      orderBy: {
-        appliedAt: "desc",
+      orderBy: [{ appliedAt: "desc" }, { id: "asc" }],
+      select: {
+        id: true,
+        status: true,
+        appliedAt: true,
+        resumeUrl: true,
+        user: { select: applicantListSelect },
+        job: { select: { id: true, title: true } },
       },
     }),
 
-    prisma.application.count({
-      where,
-    }),
+    prisma.application.count({ where }),
   ]);
 
   return {
@@ -72,7 +92,6 @@ export const getRecruiterApplicationsService = async (
     },
   };
 };
-
 export const getApplicationByIdService = async (
   applicationId: string,
   userId: string,
@@ -217,7 +236,7 @@ export const getJobApplicationsService = async (
     prisma.application.findMany({
       where,
       include: {
-        user: true,
+        user: { select: applicantListSelect },
         job: true,
         statusHistory: {
           orderBy: {

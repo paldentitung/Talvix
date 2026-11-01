@@ -6,7 +6,7 @@ export const userResponseSelect = {
   lastName: true,
   email: true,
   role: true,
-  status:true,
+  status: true,
 
   avatar: true,
   phone: true,
@@ -63,4 +63,17 @@ export const userResponseSelect = {
 
 export type UserResponsePayload = Prisma.UserGetPayload<{
   select: typeof userResponseSelect;
+}>;
+
+export const applicantListSelect = {
+  id: true,
+  firstName: true,
+  lastName: true,
+  email: true,
+  avatar: true,
+  candidateProfile: { select: { title: true, resumeUrl: true } },
+} satisfies Prisma.UserSelect;
+
+export type ApplicantListPayload = Prisma.UserGetPayload<{
+  select: typeof applicantListSelect;
 }>;

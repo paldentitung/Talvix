@@ -100,7 +100,7 @@ const formatHistoryDate = (date: string): string => {
   });
 };
 
-const ApplicantsPage = () => {
+const JobApplicantsPage = () => {
   const { id: jobId } = useParams();
   const navigate = useNavigate();
 
@@ -636,4 +636,4 @@ const ApplicantsPage = () => {
   );
 };
 
-export default ApplicantsPage;
+export default JobApplicantsPage;
