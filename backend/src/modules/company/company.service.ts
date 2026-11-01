@@ -7,15 +7,16 @@ export const getCompaniesService = async (
   page = 1,
   pageSize = 10,
   search?: string,
+  isVerified?: boolean,
 ) => {
+  const term = search?.trim();
+
   const where: Prisma.UserWhereInput = {
     role: "RECRUITER",
-    ...(search?.trim() && {
+    ...(isVerified !== undefined && { isVerified }),
+    ...(term && {
       recruiterProfile: {
-        companyName: {
-          contains: search.trim(),
-          mode: "insensitive",
-        },
+        companyName: { contains: term, mode: "insensitive" },
       },
     }),
   };
@@ -26,7 +27,7 @@ export const getCompaniesService = async (
       select: companySelect,
       skip: (page - 1) * pageSize,
       take: pageSize,
-      orderBy: { recruiterProfile: { companyName: "asc" } },
+      orderBy: [{ recruiterProfile: { companyName: "asc" } }, { id: "asc" }],
     }),
     prisma.user.count({ where }),
   ]);
@@ -38,7 +39,6 @@ export const getCompaniesService = async (
     totalPages: Math.ceil(total / pageSize),
   };
 };
-
 export const getCompanyByIdService = async (recruiterId: string) => {
   const company = await prisma.user.findFirst({
     where: { id: recruiterId, role: "RECRUITER" },

@@ -9,7 +9,14 @@ export const getCompaniesController = async (req: Request, res: Response) => {
   const pageSize = Number(req.query.pageSize) || 12;
   const search = req.query.search as string | undefined;
 
-  const result = await getCompaniesService(page, pageSize, search);
+  const isVerified =
+    req.query.isVerified === "true"
+      ? true
+      : req.query.isVerified === "false"
+        ? false
+        : undefined;
+
+  const result = await getCompaniesService(page, pageSize, search, isVerified);
 
   res.status(200).json({
     success: true,
