@@ -1,6 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Search, UserCheck, Eye, XCircle, CheckCircle2 } from "lucide-react";
+import {
+  Search,
+  UserCheck,
+  Eye,
+  XCircle,
+  CheckCircle2,
+  FileText,
+} from "lucide-react";
 import { useRecruiterApplications } from "../../features/applications/hooks/useRecruiterApplications";
 import { useUpdateApplicationStatus } from "../../features/applications/hooks/useUpdateApplicationStatus";
 import { useRecruiterJobs } from "../../features/jobs/hooks/useRecruiterJobs";
@@ -14,6 +21,9 @@ import toast from "react-hot-toast";
 import Avatar from "../../shared/components/Avatar";
 import { assetUrl } from "../../shared/utils/assetUrl";
 import StatusBadge from "../../shared/components/StatusBadge";
+import BottomSheet from "../../components/ui/BottomSheet";
+import ApplicationDetailView from "../../features/applications/components/ApplicationDetailView";
+import Button from "../../components/ui/Button";
 
 const STATUS_FILTERS: ApplicationStatus[] = [
   "PENDING",
@@ -32,11 +42,44 @@ const STATUS_LABEL: Record<ApplicationStatus, string> = {
   WITHDRAWN: "Withdrawn",
 };
 
+const NEXT_STEP: Partial<
+  Record<ApplicationStatus, { label: string; to: ApplicationStatus }>
+> = {
+  PENDING: { label: "Start review", to: "REVIEWING" },
+  REVIEWING: { label: "Shortlist", to: "SHORTLISTED" },
+  SHORTLISTED: { label: "Accept", to: "ACCEPTED" },
+};
+
+const TRANSITIONS: Record<ApplicationStatus, ApplicationStatus[]> = {
+  PENDING: ["REVIEWING", "REJECTED"],
+  REVIEWING: ["SHORTLISTED", "REJECTED"],
+  SHORTLISTED: ["ACCEPTED", "REJECTED"],
+  ACCEPTED: [],
+  REJECTED: [],
+  WITHDRAWN: [],
+};
+
+const ACTION_META: Partial<
+  Record<
+    ApplicationStatus,
+    { label: string; icon: typeof Eye; tone?: "success" | "danger" }
+  >
+> = {
+  REVIEWING: { label: "Mark as reviewing", icon: Eye },
+  SHORTLISTED: { label: "Shortlist", icon: UserCheck },
+  ACCEPTED: { label: "Accept", icon: CheckCircle2, tone: "success" },
+  REJECTED: { label: "Reject", icon: XCircle, tone: "danger" },
+};
+
+// The API can't move a status backwards, so "Undo" works by holding the change
+// back for this long before sending it. Undo within the window = nothing sent.
+const UNDO_MS = 5000;
+
 const LIMIT = 10;
 
 const AllApplicantsPage = () => {
   const [params, setParams] = useSearchParams();
-
+  const [viewId, setViewId] = useState<string | null>(null);
   const jobId = params.get("jobId") || undefined;
   const rawStatus = params.get("status") as ApplicationStatus | null;
   const status =
@@ -78,21 +121,76 @@ const AllApplicantsPage = () => {
   const { data: jobsData } = useRecruiterJobs(1, 100);
   const jobs: { id: string; title: string }[] = jobsData?.jobs ?? [];
 
-  const {
-    mutate: updateStatus,
-    isPending,
-    variables,
-  } = useUpdateApplicationStatus();
+  const { mutateAsync: updateStatus } = useUpdateApplicationStatus();
 
-  const changeStatus = (applicationId: string, next: ApplicationStatus) =>
-    updateStatus(
-      { applicationId, status: next },
-      {
-        onSuccess: () => toast.success(`Marked as ${STATUS_LABEL[next]}`),
-        onError: (e) =>
-          toast.error(e instanceof Error ? e.message : "Failed to update"),
-      },
+  // Changes waiting out the undo window: applicationId -> target status.
+  const [queued, setQueued] = useState<Record<string, ApplicationStatus>>({});
+  const timers = useRef(
+    new Map<
+      string,
+      { timer: ReturnType<typeof setTimeout>; to: ApplicationStatus }
+    >(),
+  );
+
+  const dequeue = (id: string) =>
+    setQueued((q) => {
+      const { [id]: _removed, ...rest } = q;
+      return rest;
+    });
+
+  const commit = async (id: string, to: ApplicationStatus) => {
+    timers.current.delete(id);
+    try {
+      await updateStatus({ applicationId: id, status: to });
+      toast.success(`Marked as ${STATUS_LABEL[to]}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to update");
+    } finally {
+      dequeue(id);
+    }
+  };
+
+  const undo = (id: string, toastId: string) => {
+    const entry = timers.current.get(id);
+    if (entry) clearTimeout(entry.timer);
+    timers.current.delete(id);
+    dequeue(id);
+    toast.dismiss(toastId);
+  };
+
+  const scheduleChange = (id: string, to: ApplicationStatus) => {
+    setQueued((q) => ({ ...q, [id]: to }));
+    const timer = setTimeout(() => commit(id, to), UNDO_MS);
+    timers.current.set(id, { timer, to });
+
+    toast(
+      (t) => (
+        <span className="flex items-center gap-3 text-sm">
+          Marked as {STATUS_LABEL[to]}
+          <button
+            type="button"
+            className="font-semibold text-(--primary) hover:underline"
+            onClick={() => undo(id, t.id)}
+          >
+            Undo
+          </button>
+        </span>
+      ),
+      { duration: UNDO_MS },
     );
+  };
+
+  // Leaving the page shouldn't silently drop a change: send what's pending now.
+  useEffect(() => {
+    const pending = timers.current;
+    return () => {
+      pending.forEach(({ timer, to }, id) => {
+        clearTimeout(timer);
+        updateStatus({ applicationId: id, status: to }).catch(() => {});
+      });
+      pending.clear();
+    };
+  }, []);
 
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
@@ -189,7 +287,7 @@ const AllApplicantsPage = () => {
                 <th className="px-6 py-3.5 font-semibold">Applied for</th>
                 <th className="px-6 py-3.5 font-semibold">Applied</th>
                 <th className="px-6 py-3.5 font-semibold">Status</th>
-                <th className="px-6 py-3.5 text-center font-semibold">
+                <th className="px-6 py-3.5 text-right font-semibold">
                   Actions
                 </th>
               </tr>
@@ -223,34 +321,26 @@ const AllApplicantsPage = () => {
                 !isError &&
                 applications.map((a) => {
                   const name = fullName(a.user);
-                  const busy = isPending && variables?.applicationId === a.id;
+                  const busy = a.id in queued;
+                  // Show the change immediately while it waits out the undo window.
+                  const current = queued[a.id] ?? a.status;
                   const resume = assetUrl(a.resumeUrl);
-
                   const avatarSrc = assetUrl(a.user.avatar);
+                  const nextStep = NEXT_STEP[current];
 
                   const items = [
-                    a.status !== "REVIEWING" && {
-                      label: "Mark as reviewing",
-                      icon: Eye,
-                      onClick: () => changeStatus(a.id, "REVIEWING"),
+                    resume && {
+                      label: "View resume",
+                      icon: FileText,
+                      onClick: () =>
+                        window.open(resume, "_blank", "noopener,noreferrer"),
                     },
-                    a.status !== "SHORTLISTED" && {
-                      label: "Shortlist",
-                      icon: UserCheck,
-                      onClick: () => changeStatus(a.id, "SHORTLISTED"),
-                    },
-                    a.status !== "ACCEPTED" && {
-                      label: "Accept",
-                      icon: CheckCircle2,
-                      tone: "success" as const,
-                      onClick: () => changeStatus(a.id, "ACCEPTED"),
-                    },
-                    a.status !== "REJECTED" && {
-                      label: "Reject",
-                      icon: XCircle,
-                      tone: "danger" as const,
-                      onClick: () => changeStatus(a.id, "REJECTED"),
-                    },
+                    ...TRANSITIONS[current]
+                      .filter((to) => to !== nextStep?.to)
+                      .map((to) => ({
+                        ...ACTION_META[to]!,
+                        onClick: () => scheduleChange(a.id, to),
+                      })),
                   ]
                     .filter(Boolean)
                     .map((item) => ({
@@ -264,19 +354,23 @@ const AllApplicantsPage = () => {
                   return (
                     <tr
                       key={a.id}
-                      className="border-t transition-colors hover:bg-slate-50/70"
+                      onClick={() => setViewId(a.id)}
+                      className="cursor-pointer border-t transition-colors hover:bg-slate-50/70"
                       style={{ borderColor: "var(--border)" }}
                     >
                       <td className="px-6 py-3.5">
                         <div className="flex items-center gap-3">
                           <Avatar src={avatarSrc} name={name} size="sm" />
                           <div className="min-w-0">
-                            <p
-                              className="truncate text-sm font-semibold"
+                            <button
+                              type="button"
+                              onClick={() => setViewId(a.id)}
+                              aria-label={`View application from ${name}`}
+                              className="block max-w-full truncate text-left text-sm font-semibold hover:underline"
                               style={{ color: "var(--text-primary)" }}
                             >
                               {name}
-                            </p>
+                            </button>
                             <p
                               className="truncate text-xs"
                               style={{ color: "var(--text-muted)" }}
@@ -300,36 +394,49 @@ const AllApplicantsPage = () => {
                       </td>
 
                       <td className="px-6 py-3.5">
-                        <StatusBadge status={a.status} />
+                        <StatusBadge status={current} />
                       </td>
                       <td
                         className="px-6 py-3.5"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <div className="flex items-center justify-center gap-2">
-                          {resume && (
-                            <a
-                              href={resume}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="rounded-full border border-(--border) bg-(--card) px-3.5 py-1.5 text-xs font-semibold text-(--text-secondary) transition-colors hover:border-(--primary) hover:text-(--primary)"
+                        <div className="flex items-center justify-end gap-2">
+                          {current === "WITHDRAWN" ? (
+                            <span
+                              className="text-xs"
+                              style={{ color: "var(--text-muted)" }}
                             >
-                              Resume
-                            </a>
-                          )}
-                          {a.status !== "WITHDRAWN" && (
-                            <div
-                              className={
-                                busy ? "pointer-events-none opacity-50" : ""
-                              }
-                            >
-                              <RowMenu
-                                id={a.id}
-                                open={openMenuId === a.id}
-                                onToggle={setOpenMenuId}
-                                items={items as any}
-                              />
-                            </div>
+                              Withdrawn by applicant
+                            </span>
+                          ) : (
+                            <>
+                              {nextStep && (
+                                <Button
+                                  size="sm"
+                                  variant="primary"
+                                  disabled={busy}
+                                  onClick={() =>
+                                    scheduleChange(a.id, nextStep.to)
+                                  }
+                                >
+                                  {nextStep.label}
+                                </Button>
+                              )}
+                              {items.length > 0 && (
+                                <div
+                                  className={
+                                    busy ? "pointer-events-none opacity-50" : ""
+                                  }
+                                >
+                                  <RowMenu
+                                    id={a.id}
+                                    open={openMenuId === a.id}
+                                    onToggle={setOpenMenuId}
+                                    items={items as any}
+                                  />
+                                </div>
+                              )}
+                            </>
                           )}
                         </div>
                       </td>
@@ -367,6 +474,14 @@ const AllApplicantsPage = () => {
           itemLabel="applicants"
           isFetching={isFetching}
         />
+
+        <BottomSheet
+          isOpen={!!viewId}
+          onClose={() => setViewId(null)}
+          title="Applicant details"
+        >
+          {viewId && <ApplicationDetailView key={viewId} id={viewId} />}
+        </BottomSheet>
       </div>
     </div>
   );

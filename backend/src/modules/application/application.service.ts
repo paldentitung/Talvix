@@ -99,20 +99,56 @@ export const getApplicationByIdService = async (
   return prisma.application.findFirst({
     where: {
       id: applicationId,
-      OR: [
-        {
-          userId,
-        },
-        {
-          job: {
-            recruiterId: userId,
+      OR: [{ userId }, { job: { recruiterId: userId } }],
+    },
+    select: {
+      id: true,
+      status: true,
+      appliedAt: true,
+      coverLetter: true,
+      resumeUrl: true,
+      statusHistory: { orderBy: { createdAt: "asc" } },
+      user: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          phone: true,
+          avatar: true,
+          candidateProfile: {
+            select: {
+              bio: true,
+              location: true,
+              title: true,
+              resumeUrl: true,
+              skills: true,
+            },
           },
         },
-      ],
-    },
-    include: {
-      user: true,
-      job: true,
+      },
+      job: {
+        select: {
+          id: true,
+          title: true,
+          location: true,
+          recruiter: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              avatar: true,
+              recruiterProfile: {
+                select: {
+                  companyName: true,
+                  companyLogo: true,
+                  companyWebsite: true,
+                },
+              },
+            },
+          },
+        },
+      },
     },
   });
 };
@@ -376,6 +412,14 @@ const allowedTransitions: Record<ApplicationStatus, ApplicationStatus[]> = {
   REJECTED: [],
   WITHDRAWN: [],
 };
+const statusLabel: Record<ApplicationStatus, string> = {
+  PENDING: "Pending",
+  REVIEWING: "Under review",
+  SHORTLISTED: "Shortlisted",
+  ACCEPTED: "Accepted",
+  REJECTED: "Not selected",
+  WITHDRAWN: "Withdrawn",
+};
 
 export const updateApplicationService = async (
   applicationId: string,
@@ -423,14 +467,21 @@ export const updateApplicationService = async (
   ]);
 
   if (statusChanged) {
-    await createNotificationService({
-      userId: application.userId,
-      type: NotificationType.APPLICATION_STATUS_CHANGED,
-      title: "Application status updated",
-      message: `Your application status has been changed to ${data.status}.`,
-      entityId: application.id,
-      entityType: "APPLICATION",
-    });
+    try {
+      await createNotificationService({
+        userId: application.userId,
+        type: NotificationType.APPLICATION_STATUS_CHANGED,
+        title: "Application status updated",
+        message: `Your application is now: ${statusLabel[data.status!]}.`,
+        entityId: application.id,
+        entityType: "APPLICATION",
+      });
+    } catch (err) {
+      console.error("Failed to send status-change notification", {
+        applicationId,
+        err,
+      });
+    }
   }
 
   return updated;

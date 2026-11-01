@@ -119,3 +119,28 @@ export type RecruiterApplicationsResponse = {
     };
   };
 };
+
+export type ApplicationDetail = {
+  id: string;
+  status: ApplicationStatus;
+  appliedAt: string;
+  coverLetter: string | null;
+  resumeUrl: string | null;
+  statusHistory: StatusHistoryEntry[];
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string | null;
+    avatar: string | null;
+    candidateProfile: {
+      bio: string | null;
+      location: string | null;
+      title: string | null;
+      resumeUrl: string | null;
+      skills: string[];
+    } | null;
+  };
+  job: { id: string; title: string; location?: string };
+};

@@ -1,5 +1,7 @@
 import request from "../../../shared/services/api";
+import type { ApiResponse } from "../../../shared/types/api.types";
 import type {
+  ApplicationDetail,
   ApplicationStatus,
   ApplyJobData,
 } from "../types/application.types";
@@ -72,6 +74,13 @@ export const getMyApplications = async (page = 1, limit = 10) => {
     true,
   );
 };
+
+export const getApplicationById = async (
+  id: string,
+): Promise<ApiResponse<ApplicationDetail>> => {
+  return request(`/applications/${id}`, {}, true);
+};
+
 export const withdrawApplication = async (applicationId: string) => {
   return await request(
     `/applications/${applicationId}/withdraw`,
