@@ -1,7 +1,8 @@
 export type ApplyJobData = {
   jobId: string;
   coverLetter: string;
-  resume: File;
+  resume?: File;
+  useProfileResume?: boolean;
 };
 export type Applicant = {
   id: string;

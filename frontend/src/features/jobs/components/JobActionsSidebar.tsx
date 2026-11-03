@@ -12,6 +12,7 @@ import ApplyJobModal from "../../applications/components/ApplyJobModal";
 import Modal from "../../../components/ui/Modal";
 import { useJobSaveActions } from "../hooks/useJobSaveActions";
 import ReportModal from "../../reports/components/ReportModal";
+import { useGetCurrentUser } from "../../users/hooks/useGetCurrentUser";
 
 type Props = {
   variant: "public" | "candidate" | "recruiter";
@@ -148,21 +149,26 @@ const RecruiterActions = ({ job }: { job: Job }) => {
 };
 
 const CandidateActions = ({ job }: { job: Job }) => {
+  const { data: user } = useGetCurrentUser();
   const [isApplyOpen, setIsApplyOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const applyJobMutation = useApplyJob();
   const { isJobSaved, isSavingJob, toggleSave } = useJobSaveActions();
+
   const handleApply = async ({
     coverLetter,
     resume,
+    useProfileResume,
   }: {
     coverLetter: string;
-    resume: File;
+    resume?: File;
+    useProfileResume: boolean;
   }) => {
     await applyJobMutation.mutateAsync({
       jobId: job.id,
       coverLetter,
       resume,
+      useProfileResume,
     });
 
     toast.success("Application submitted successfully");
@@ -211,6 +217,7 @@ const CandidateActions = ({ job }: { job: Job }) => {
         onClose={() => setIsApplyOpen(false)}
         jobTitle={job.title}
         onSubmit={handleApply}
+        existingResumeUrl={user?.resumeUrl}
       />
 
       <ReportModal
