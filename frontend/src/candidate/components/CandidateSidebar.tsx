@@ -18,13 +18,11 @@ const jobLinks = [
     label: "Saved Jobs",
     href: "/candidate/saved-jobs",
     icon: Bookmark,
-    badge: 12,
   },
   {
     label: "Applications",
     href: "/candidate/applications",
     icon: FileText,
-    badge: 4,
   },
 ];
 
@@ -48,7 +46,7 @@ const NavSection = ({
     <p className="px-3 text-xs font-semibold uppercase tracking-wider text-(--text-muted) mb-1">
       {title}
     </p>
-    {links.map(({ label, href, icon: Icon, badge }) => {
+    {links.map(({ label, href, icon: Icon }) => {
       const isActive = pathname === href;
       return (
         <Link
@@ -72,11 +70,11 @@ const NavSection = ({
             />
             {label}
           </span>
-          {badge !== undefined && (
+          {/* {badge !== undefined && (
             <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-(--primary) text-[11px] font-semibold text-white">
               {badge}
             </span>
-          )}
+          )} */}
         </Link>
       );
     })}
