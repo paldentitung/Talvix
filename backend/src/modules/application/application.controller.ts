@@ -11,6 +11,7 @@ import {
   getJobApplicationsService,
 } from "./application.service.js";
 import { Request, Response } from "express";
+import prisma from "../../lib/prisma.js";
 
 export const getApplicationsController = async (
   req: Request,
@@ -124,12 +125,31 @@ export const createApplicationController = async (
   req: Request,
   res: Response,
 ) => {
-  if (!req.file) {
+  let resumeUrl: string;
+
+  if (req.body.useProfileResume === "true") {
+    const candidateProfile = await prisma.candidateProfile.findUnique({
+      where: {
+        userId: req.user!.id,
+      },
+      select: {
+        resumeUrl: true,
+      },
+    });
+
+    if (!candidateProfile?.resumeUrl) {
+      throw new AppError("No resume found in your profile", 400);
+    }
+
+    resumeUrl = candidateProfile.resumeUrl;
+  } else if (req.file) {
+    resumeUrl = `/uploads/resumes/${req.file.filename}`;
+  } else {
     throw new AppError("Resume is required", 400);
   }
   const result = await createApplicationService(req.user!.id, {
     ...req.body,
-    resumeUrl: `/uploads/resumes/${req.file.filename}`,
+    resumeUrl,
   });
 
   res.status(201).json({
@@ -138,7 +158,6 @@ export const createApplicationController = async (
     data: result,
   });
 };
-
 export const withdrawApplicationController = async (
   req: Request<{ id: string }>,
   res: Response,

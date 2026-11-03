@@ -11,7 +11,12 @@ export const applyJob = (applicationData: ApplyJobData) => {
 
   formData.append("jobId", applicationData.jobId);
   formData.append("coverLetter", applicationData.coverLetter);
-  formData.append("resume", applicationData.resume);
+
+  if (applicationData.useProfileResume) {
+    formData.append("useProfileResume", "true");
+  } else if (applicationData.resume) {
+    formData.append("resume", applicationData.resume);
+  }
 
   return request(
     "/applications",
