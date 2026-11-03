@@ -4,6 +4,8 @@ import toast from "react-hot-toast";
 import { useRemoveAvatar } from "../../../features/users/hooks/useRemoveAvatar";
 import { useUpdateAvatar } from "../../../features/users/hooks/useUpdateAvatar";
 import Modal from "../../../components/ui/Modal";
+import { cardCls } from "./shared";
+
 const MAX_SIZE = 2 * 1024 * 1024;
 
 export default function ProfileHeader({ user }: { user: any }) {
@@ -38,7 +40,7 @@ export default function ProfileHeader({ user }: { user: any }) {
 
   return (
     <>
-      <div className="flex items-center gap-5">
+      <div className={`flex items-center gap-5  ${cardCls}`}>
         <div className="relative shrink-0">
           {avatarUrl ? (
             <button

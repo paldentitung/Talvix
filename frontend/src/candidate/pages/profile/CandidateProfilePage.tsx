@@ -6,7 +6,6 @@ import {
   GraduationCap,
   FileText,
 } from "lucide-react";
-import { useMe } from "../../../features/auth/hooks/useMe";
 import ProfileHeader from "./ProfileHeader";
 import OverviewTab from "./OverviewTab";
 import BasicTab from "./BasicTab";
@@ -15,6 +14,7 @@ import EducationSection, { toEducationEntry } from "./EducationSection";
 import ExperienceSection, { toExperienceEntry } from "./ExperienceSection";
 import type { Tab } from "./shared";
 import { useGetCurrentUser } from "../../../features/users/hooks/useGetCurrentUser";
+import { cardCls } from "./shared";
 
 const TABS = [
   { id: "overview", label: "Overview", icon: LayoutGrid },
