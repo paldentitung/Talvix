@@ -112,7 +112,7 @@ export const updateJobStatusService = async (
     throw new AppError("You cannot update this job", 403);
   }
 
-  if (job.status === "DRAFT") {
+  if (role === "ADMIN" && job.status === "DRAFT") {
     throw new AppError("Draft jobs cannot be taken down or reopened", 400);
   }
 

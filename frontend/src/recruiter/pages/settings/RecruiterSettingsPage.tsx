@@ -10,6 +10,7 @@ import ChangePasswordCard from "../../../shared/components/ChangePasswordCard";
 import { useUpdateAvatar } from "../../../features/users/hooks/useUpdateAvatar";
 import initials from "../../../shared/utils/getInitials";
 import { useRemoveAvatar } from "../../../features/users/hooks/useRemoveAvatar";
+
 const tabs: { id: TabId; label: string }[] = [
   { id: "profile", label: "Profile" },
   { id: "notifications", label: "Notifications" },
@@ -20,17 +21,12 @@ const tabs: { id: TabId; label: string }[] = [
 const RecruiterSettingsPage = () => {
   const [activeTab, setActiveTab] = useState<TabId>("profile");
   const { data: currentUser, isLoading } = useGetCurrentUser();
-  const {
-    mutate: updateProfile,
-    isPending: isSaving,
-    isSuccess,
-    isError,
-  } = useUserUpdateProfile();
+  const { mutate: updateProfile, isPending: isSaving } = useUserUpdateProfile();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
-
+  const [saveError, setSaveError] = useState<string | null>(null);
   useEffect(() => {
     if (!currentUser) return;
 
@@ -40,6 +36,7 @@ const RecruiterSettingsPage = () => {
   }, [currentUser]);
 
   const handleSaveProfile = () => {
+    setSaveError(null);
     updateProfile(
       {
         firstName: firstName.trim(),
@@ -51,12 +48,11 @@ const RecruiterSettingsPage = () => {
           toast.success("Profile updated successfully!");
         },
         onError: (error) => {
-          toast.error(error.message || "Failed to update profile.");
+          setSaveError(error.message || "Failed to update profile.");
         },
       },
     );
   };
-
   const [notifications, setNotifications] = useState<Notifications>({
     newApplicants: true,
     jobExpiring: true,
@@ -108,6 +104,8 @@ const RecruiterSettingsPage = () => {
           isLoading={isLoading}
           removeAvatar={removeAvatar}
           isRemovingAvatar={isRemovingAvatar}
+          saveError={saveError}
+          onClearSaveError={() => setSaveError(null)}
         />
       )}
 

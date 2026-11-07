@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState, useId, type ReactNode } from "react";
 import { Eye, EyeOff } from "lucide-react";
 export type Notifications = {
   newApplicants: boolean;
@@ -52,6 +52,8 @@ export const TextField = ({
   label,
   value,
   onChange,
+  onBlur,
+  error,
   type = "text",
   placeholder,
   disabled,
@@ -60,6 +62,8 @@ export const TextField = ({
   label: string;
   value: string;
   onChange?: (value: string) => void;
+  onBlur?: () => void;
+  error?: string;
   type?: string;
   placeholder?: string;
   disabled?: boolean;
@@ -67,6 +71,7 @@ export const TextField = ({
 }) => {
   const [visible, setVisible] = useState(false);
   const isPassword = type === "password";
+  const errorId = useId();
 
   return (
     <label
@@ -81,9 +86,14 @@ export const TextField = ({
           disabled={disabled}
           placeholder={placeholder}
           onChange={(e) => onChange?.(e.target.value)}
-          className={`w-full rounded-(--radius-md) border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none focus:border-(--primary) ${
-            isPassword ? "pr-10" : ""
-          }`}
+          onBlur={onBlur}
+          aria-invalid={!!error}
+          aria-describedby={error ? errorId : undefined}
+          className={`w-full rounded-(--radius-md) border bg-(--card) px-3 py-2 text-sm text-(--text-primary) outline-none ${
+            error
+              ? "border-(--danger) focus:border-(--danger)"
+              : "border-(--border) focus:border-(--primary)"
+          } ${isPassword ? "pr-10" : ""}`}
         />
 
         {isPassword && (
@@ -102,6 +112,16 @@ export const TextField = ({
           </button>
         )}
       </div>
+
+      {error && (
+        <p
+          id={errorId}
+          role="alert"
+          className="text-xs font-medium text-(--danger)"
+        >
+          {error}
+        </p>
+      )}
     </label>
   );
 };

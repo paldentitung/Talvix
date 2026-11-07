@@ -7,6 +7,8 @@ import { useUnreadNotificationCount } from "../../features/notification/hooks/us
 import { useMarkNotificationRead } from "../../features/notification/hooks/useMarkNotificationRead";
 import { useMarkAllNotificationsRead } from "../../features/notification/hooks/useMarkAllNotificationsRead";
 import { useGetCurrentUser } from "../../features/users/hooks/useGetCurrentUser";
+import Avatar from "../../shared/components/Avatar";
+import { assetUrl } from "../../shared/utils/assetUrl";
 
 const pageMeta: Record<string, { title: string; subtitle: string }> = {
   "/recruiter/dashboard": {
@@ -65,6 +67,12 @@ const RecruiterHeader = ({ onMenuClick, openJobPostingModal }: any) => {
   const { mutate: markAsRead } = useMarkNotificationRead();
   const { mutate: markAllAsRead } = useMarkAllNotificationsRead();
   const navigate = useNavigate();
+
+  const userAvatarSrc = assetUrl(currentUser?.avatar);
+  const fullName = currentUser
+    ? `${currentUser.firstName} ${currentUser.lastName}`
+    : "User";
+
   return (
     <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
       <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
@@ -99,19 +107,7 @@ const RecruiterHeader = ({ onMenuClick, openJobPostingModal }: any) => {
           onClick={() => navigate("/recruiter/settings")}
           className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-(--card) text-(--text-secondary) transition-colors hover:text-(--text-primary) sm:h-10 sm:w-10"
         >
-          {currentUser?.avatar ? (
-            <img
-              src={`${import.meta.env.VITE_API_BACKEND_URL}${currentUser.avatar}`}
-              alt="Your profile"
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <User size={20} className="sm:hidden" />
-          )}
-
-          {!currentUser?.avatar && (
-            <User size={24} className="hidden sm:block" />
-          )}
+          <Avatar src={userAvatarSrc} size="sm" name={fullName} />
         </button>
 
         <Button
