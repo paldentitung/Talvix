@@ -6,6 +6,9 @@ import { useNotifications } from "../../features/notification/hooks/useNotificat
 import { useUnreadNotificationCount } from "../../features/notification/hooks/useUnreadNotificationCount";
 import { useMarkNotificationRead } from "../../features/notification/hooks/useMarkNotificationRead";
 import { useMarkAllNotificationsRead } from "../../features/notification/hooks/useMarkAllNotificationsRead";
+import Avatar from "../../shared/components/Avatar";
+import { assetUrl } from "../../shared/utils/assetUrl";
+import { useGetCurrentUser } from "../../features/users/hooks/useGetCurrentUser";
 
 const pageMeta: Record<string, { title: string; subtitle: string }> = {
   "/candidate/dashboard": {
@@ -53,11 +56,8 @@ type Props = {
   avatarUrl?: string | null;
 };
 
-const CandidateHeader = ({
-  onMenuClick,
-  userName = "User",
-  avatarUrl,
-}: Props) => {
+const CandidateHeader = ({ onMenuClick, avatarUrl }: Props) => {
+  const { data: currentUser } = useGetCurrentUser();
   const { pathname } = useLocation();
   const { title, subtitle } = getMeta(pathname);
 
@@ -103,15 +103,7 @@ const CandidateHeader = ({
           onClick={() => navigate("/candidate/profile")}
           className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-linear-to-br from-(--primary) to-(--primary-dark) text-sm font-semibold text-white shadow-(--shadow-sm) ring-2 ring-transparent transition-all hover:ring-(--primary-light) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--primary)"
         >
-          {avatarUrl ? (
-            <img
-              src={`${import.meta.env.VITE_API_BACKEND_URL}${avatarUrl}`}
-              alt=""
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            initials(userName)
-          )}
+          <Avatar user={currentUser} />
         </button>
       </div>
     </header>

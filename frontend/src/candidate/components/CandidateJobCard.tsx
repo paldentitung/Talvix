@@ -1,4 +1,3 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import {
   Bookmark,
@@ -16,7 +15,8 @@ import type {
   WorkMode,
   EmploymentType,
 } from "../../features/jobs/types/job.types";
-
+import { assetUrl } from "../../shared/utils/assetUrl";
+import formatSalary from "../../shared/utils/formatSalary";
 const EMPLOYMENT_TYPE_LABELS: Record<EmploymentType, string> = {
   FULL_TIME: "Full-time",
   PART_TIME: "Part-time",
@@ -38,39 +38,6 @@ function formatWorkMode(workMode: WorkMode): string {
   return WORK_MODE_LABELS[workMode] ?? workMode;
 }
 
-function formatCurrencyAmount(amount: number, currency: string): string {
-  // Falls back gracefully if the currency code isn't recognized by Intl.
-  try {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency,
-      maximumFractionDigits: 0,
-      notation: amount >= 100000 ? "compact" : "standard",
-    }).format(amount);
-  } catch {
-    return `${currency} ${amount.toLocaleString()}`;
-  }
-}
-
-function formatSalary(
-  job: Pick<Job, "salaryMin" | "salaryMax" | "currency">,
-): string {
-  const { salaryMin, salaryMax, currency } = job;
-
-  if (!salaryMin && !salaryMax) return "Salary not disclosed";
-
-  if (salaryMin && salaryMax) {
-    return `${formatCurrencyAmount(salaryMin, currency)} - ${formatCurrencyAmount(salaryMax, currency)}`;
-  }
-
-  const single = salaryMin ?? salaryMax ?? 0;
-  return `Up to ${formatCurrencyAmount(single, currency)}`;
-}
-
-/* ------------------------------------------------------------------ */
-/*  Component                                                          */
-/* ------------------------------------------------------------------ */
-
 const CandidateJobCard = ({
   job,
   isSaved,
@@ -82,14 +49,15 @@ const CandidateJobCard = ({
   onToggleSave: (jobId: string) => void;
   isSaving: boolean;
 }) => {
+  const companySrc = assetUrl(job.recruiter?.recruiterProfile?.companyLogo);
   return (
     <div className="flex flex-col gap-4 rounded-(--radius-md) border border-(--border) bg-(--card) p-5 shadow-(--shadow-sm) transition-shadow hover:shadow-md">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-(--radius-md) border border-(--border) bg-(--bg)">
-            {`${import.meta.env.VITE_API_BACKEND_URL}${job.recruiter?.recruiterProfile?.companyLogo}` ? (
+            {companySrc ? (
               <img
-                src={`${import.meta.env.VITE_API_BACKEND_URL}${job.recruiter?.recruiterProfile?.companyLogo}`}
+                src={companySrc}
                 alt={
                   job.recruiter?.recruiterProfile?.companyName ?? "Company logo"
                 }

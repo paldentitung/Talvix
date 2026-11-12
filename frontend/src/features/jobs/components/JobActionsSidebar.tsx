@@ -170,8 +170,6 @@ const CandidateActions = ({ job }: { job: Job }) => {
       resume,
       useProfileResume,
     });
-
-    toast.success("Application submitted successfully");
     setIsApplyOpen(false);
   };
 

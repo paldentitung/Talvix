@@ -1,9 +1,18 @@
 import { useState } from "react";
+import { assetUrl } from "../utils/assetUrl";
 
 type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl";
 type AvatarVariant = "soft" | "solid";
 
+export interface AvatarUser {
+  firstName?: string | null;
+  lastName?: string | null;
+  name?: string | null; // for objects that only have a full name
+  avatar?: string | null; // relative path from the API
+}
+
 interface AvatarProps {
+  user?: AvatarUser | null;
   src?: string | null;
   name?: string;
   initials?: string;
@@ -34,7 +43,14 @@ const getInitialsFromName = (name?: string): string => {
   return `${first}${last}`.toUpperCase() || "?";
 };
 
+const getUserFullName = (user?: AvatarUser | null): string | undefined => {
+  if (!user) return undefined;
+  const full = [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
+  return full || user.name?.trim() || undefined;
+};
+
 const Avatar = ({
+  user,
   src,
   name,
   initials,
@@ -42,18 +58,22 @@ const Avatar = ({
   variant = "soft",
   className = "",
 }: AvatarProps) => {
+  // Explicit props win; user fills in whatever is missing.
+  const resolvedName = name ?? getUserFullName(user);
+  const resolvedSrc = src ?? (user?.avatar ? assetUrl(user.avatar) : null);
+
   // Remember which src failed, so a new src gets a fresh attempt.
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
-  const showImage = !!src && src !== failedSrc;
+  const showImage = !!resolvedSrc && resolvedSrc !== failedSrc;
 
   const base = `shrink-0 rounded-full ${sizeClasses[size]} ${className}`;
 
   if (showImage) {
     return (
       <img
-        src={src}
-        alt={name ?? ""}
-        onError={() => setFailedSrc(src)}
+        src={resolvedSrc}
+        alt={resolvedName ?? ""}
+        onError={() => setFailedSrc(resolvedSrc)}
         className={`${base} object-cover`}
       />
     );
@@ -61,10 +81,10 @@ const Avatar = ({
 
   return (
     <div
-      aria-label={name}
+      aria-label={resolvedName}
       className={`flex items-center justify-center font-bold ${variantClasses[variant]} ${base}`}
     >
-      {initials ?? getInitialsFromName(name)}
+      {initials || getInitialsFromName(resolvedName)}
     </div>
   );
 };

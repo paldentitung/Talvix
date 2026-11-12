@@ -486,13 +486,11 @@ const CandidateDashboardPage = () => {
       </div>
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 gap-x-6 gap-y-2 rounded-(--radius-lg) border border-(--border) bg-(--card) p-2 sm:grid-cols-2 lg:grid-cols-4 lg:gap-x-0 lg:gap-y-0 lg:p-0">
-        {stats.map((stat, i) => (
+      <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
+        {stats.map((stat) => (
           <div
             key={stat.label}
-            className={
-              i !== stats.length - 1 ? "lg:border-r lg:border-(--border)" : ""
-            }
+            className="rounded-(--radius-lg) border border-(--border) bg-(--card)"
           >
             <StatCard stat={stat} />
           </div>
@@ -500,7 +498,7 @@ const CandidateDashboardPage = () => {
       </div>
 
       {/* Main column + sidebar. On mobile the sidebar stacks below. */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 ">
         {/* ---------------- Main column ---------------- */}
         <div className="flex flex-col gap-6 lg:col-span-2">
           {/* Recent applications */}

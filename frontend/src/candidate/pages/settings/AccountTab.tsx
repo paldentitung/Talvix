@@ -1,12 +1,13 @@
 import { useState, useRef } from "react";
-import { User, Plus, X, Loader2, Upload, FileText } from "lucide-react";
+import { User2, Plus, X, Loader2, Upload, FileText } from "lucide-react";
 import toast from "react-hot-toast";
 import { useUserUpdateProfile } from "../../../features/users/hooks/useUpdateUserProfile";
 import { useUpdateCandidateProfile } from "../../../features/users/hooks/useUpdateCandidateProfile";
 import { useUploadResume } from "../../../features/users/hooks/useUploadResume";
 import { Card, FieldLabel, SectionHeading, TextField } from "./shared";
+import type { User } from "../../../features/users/types/user.types";
 
-export default function AccountTab({ user }: { user: any }) {
+export default function AccountTab({ user }: { user: User }) {
   const initial = {
     firstName: user.firstName ?? "",
     lastName: user.lastName ?? "",
@@ -81,7 +82,7 @@ export default function AccountTab({ user }: { user: any }) {
     <>
       <Card className="p-6 sm:p-7">
         <SectionHeading
-          icon={User}
+          icon={User2}
           title="Basic information"
           subtitle="This is what recruiters see."
         />
@@ -207,7 +208,7 @@ export default function AccountTab({ user }: { user: any }) {
 
       <Card className="p-6 sm:p-7">
         <SectionHeading
-          icon={User}
+          icon={User2}
           title="Skills"
           subtitle="Add the skills you want to be found for."
         />

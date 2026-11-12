@@ -1,19 +1,32 @@
 import type { Job } from "../../features/jobs/types/job.types";
 
-const formatSalary = (job: Job) => {
+function formatCurrencyAmount(amount: number, currency: string): string {
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 0,
+      notation: amount >= 100000 ? "compact" : "standard",
+    }).format(amount);
+  } catch {
+    return `${currency} ${amount.toLocaleString()}`;
+  }
+}
+
+const formatSalary = (
+  job: Pick<Job, "salaryMin" | "salaryMax" | "currency">,
+): string => {
   const { salaryMin, salaryMax, currency } = job;
-  if (salaryMin == null && salaryMax == null) return "Not disclosed";
 
-  const fmt = (n: number) => {
-    if (n < 1000) return `${currency} ${n}`;
-    const k = (n / 1000).toFixed(1).replace(/\.0$/, "");
-    return `${currency} ${k}k`;
-  };
+  if (salaryMin == null && salaryMax == null) return "Salary not disclosed";
 
-  if (salaryMin != null && salaryMax != null)
-    return `${fmt(salaryMin)} – ${fmt(salaryMax)}`;
-  if (salaryMin != null) return `From ${fmt(salaryMin)}`;
-  return `Up to ${fmt(salaryMax!)}`;
+  if (salaryMin != null && salaryMax != null) {
+    return `${formatCurrencyAmount(salaryMin, currency)} - ${formatCurrencyAmount(salaryMax, currency)}`;
+  }
+
+  if (salaryMin != null)
+    return `From ${formatCurrencyAmount(salaryMin, currency)}`;
+  return `Up to ${formatCurrencyAmount(salaryMax!, currency)}`;
 };
 
 export default formatSalary;
